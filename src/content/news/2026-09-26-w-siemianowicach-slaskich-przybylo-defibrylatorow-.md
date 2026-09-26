@@ -3,7 +3,7 @@ title: "W Siemianowicach Śląskich przybyło defibrylatorów AED"
 pubDate: 2026-09-26
 city: "siemianowice"
 category: "alerty"
-status: "published"
+status: "deleted"
 summary: "Sieć defibrylatorów AED w Siemianowicach Śląskich powiększyła się do 41 urządzeń. Nowe aparaty trafiły do sześciu placówek oświatowych w mieście."
 location: "Siemianowice Śląskie"
 isAlert: false

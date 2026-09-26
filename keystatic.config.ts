@@ -59,10 +59,11 @@ export default config({
         }),
         status: fields.select({
           label: 'Status publikacji',
+          description: 'Aby wycofać artykuł bez kasowania pliku, wybierz „Usunięty” i zapisz. Nie używaj ikony kosza „Delete entry” — trwale usuwa plik i nie tworzy blokady dla digestu.',
           options: [
             { label: 'Opublikowany (widoczny na stronie)', value: 'published' },
             { label: 'Szkic / Do moderacji (ukryty)', value: 'draft' },
-            { label: 'Usunięty (zachowaj jako blokadę ponownej publikacji)', value: 'deleted' },
+            { label: 'Usunięty / wycofany (soft delete)', value: 'deleted' },
           ],
           defaultValue: 'published',
         }),

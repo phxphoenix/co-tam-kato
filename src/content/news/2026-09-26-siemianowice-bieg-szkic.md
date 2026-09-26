@@ -3,7 +3,7 @@ title: "Bieg Hutnika i piknik sportowy w Parku Miejskim w Siemianowicach Śląsk
 pubDate: 2026-09-26
 city: "siemianowice"
 category: "sport"
-status: "draft"
+status: "deleted"
 summary: "Sportowe zmagania na dystansach 5 i 10 km wokół zabytkowego Pałacu Donnersmarcków. Zapisy trwają do końca tygodnia."
 location: "Park Miejski przy Pałacu, Siemianowice Śląskie"
 isAlert: false
