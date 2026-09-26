@@ -1,6 +1,7 @@
 ---
 title: "Nocne prace na Drogowej Trasie Średnicowej (DTŚ) – zwężenie w stronę Gliwic"
 pubDate: 2026-09-26
+sourceDate: 2026-09-26
 city: "cala-okolica"
 category: "drogi-komunikacja"
 status: "published"

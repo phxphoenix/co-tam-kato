@@ -1,6 +1,7 @@
 ---
 title: "Nowa rzemieślnicza piekarnia i kawiarnia speciality otwiera się na Koszutce"
 pubDate: 2026-09-26
+sourceDate: 2026-09-26
 city: "katowice"
 category: "gastro"
 status: "published"

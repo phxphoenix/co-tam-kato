@@ -1,6 +1,7 @@
 ---
 title: "Festiwal Eksperymentów i Magii w Bajce Pana Kleksa w Fabryce Porcelany"
 pubDate: 2026-09-26
+sourceDate: 2026-09-26
 city: "katowice"
 category: "dla-dzieci"
 status: "published"

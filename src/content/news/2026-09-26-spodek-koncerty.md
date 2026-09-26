@@ -1,6 +1,7 @@
 ---
 title: Wielki koncertowy weekend w Spodku – gwiazdy muzyki i widowiskowe lasery
 pubDate: 2026-09-26
+sourceDate: 2026-09-26
 city: katowice
 category: wydarzenia
 isForKids: false

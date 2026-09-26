@@ -1,6 +1,7 @@
 ---
 title: W Siemianowicach Śląskich przybyło defibrylatorów AED
 pubDate: 2026-09-26
+sourceDate: 2026-09-18
 city: siemianowice
 category: alerty
 isForKids: false

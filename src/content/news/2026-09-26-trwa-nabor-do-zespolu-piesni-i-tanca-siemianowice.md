@@ -1,6 +1,7 @@
 ---
 title: Trwa nabór do Zespołu Pieśni i Tańca „Siemianowice”
 pubDate: 2026-09-26
+sourceDate: 2026-09-18
 city: siemianowice
 category: kultura
 isForKids: false

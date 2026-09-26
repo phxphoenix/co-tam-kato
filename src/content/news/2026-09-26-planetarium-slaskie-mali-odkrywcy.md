@@ -1,6 +1,7 @@
 ---
 title: "Kosmiczna przygoda w Planetarium Śląskim – seanse 3D i symulatory dla młodych astronautów"
 pubDate: 2026-09-26
+sourceDate: 2026-09-26
 city: "chorzow"
 category: "dla-dzieci"
 status: "published"

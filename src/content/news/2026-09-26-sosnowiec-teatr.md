@@ -1,6 +1,7 @@
 ---
 title: Nocna premiera i spektakle plenerowe w Teatrze Zagłębia w Sosnowcu
 pubDate: 2026-09-26
+sourceDate: 2026-09-26
 city: sosnowiec
 category: kultura
 isForKids: false
