@@ -13,7 +13,8 @@ interface QuickAlertProps {
 
 export const QuickAlertBar: React.FC<QuickAlertProps> = ({ alerts }) => {
   const [dismissed, setDismissed] = useState(false);
-  const baseUrl = import.meta.env.BASE_URL || '/';
+  const rawBase = import.meta.env.BASE_URL || '/';
+  const baseUrl = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 
   if (dismissed || !alerts || alerts.length === 0) {
     return null;

@@ -9,7 +9,8 @@ const today = new Intl.DateTimeFormat('pl-PL', {
 }).format(new Date());
 
 const capitalizedDate = today.charAt(0).toUpperCase() + today.slice(1);
-const base = import.meta.env.BASE_URL;
+const rawBase = import.meta.env.BASE_URL || '/';
+const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 ---
 
 <header class="border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-40 transition-colors">
