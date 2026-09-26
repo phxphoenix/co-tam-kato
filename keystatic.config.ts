@@ -6,7 +6,7 @@ export default config({
   },
   collections: {
     news: collection({
-      label: 'Aktualności i Wydarzenia',
+      label: 'Wszystkie artykuły (opublikowane, szkice i usunięte)',
       slugField: 'title',
       path: 'src/content/news/*',
       format: { contentField: 'content' },
@@ -61,6 +61,7 @@ export default config({
           options: [
             { label: 'Opublikowany (widoczny na stronie)', value: 'published' },
             { label: 'Szkic / Do moderacji (ukryty)', value: 'draft' },
+            { label: 'Usunięty (zachowaj jako blokadę ponownej publikacji)', value: 'deleted' },
           ],
           defaultValue: 'published',
         }),

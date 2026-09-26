@@ -44,6 +44,7 @@ Masz do wyboru dwie metody edycji i publikacji:
 3. Zobaczysz listę wszystkich wpisów. Możesz:
    - Dodać nowy wpis (przycisk *"Create news"*).
    - Zmienić status ze **Szkic (draft)** na **Opublikowany (published)**.
+   - Wycofać niechciany wpis, ustawiając status **Usunięty (deleted)**. Plik pozostaje w repozytorium jako blokada ponownej publikacji tego źródła lub tematu.
    - Edytować treść w wygodnym edytorze wizualnym.
 
 ### Sposób B: Zwykłe pliki Markdown

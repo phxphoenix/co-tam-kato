@@ -30,7 +30,7 @@ const news = defineCollection({
       'sport',
       'alerty',
     ]),
-    status: z.enum(['published', 'draft']).default('published'),
+    status: z.enum(['published', 'draft', 'deleted']).default('published'),
     summary: z.string(),
     location: z.string().optional(),
     isAlert: z.boolean().default(false),

@@ -130,6 +130,67 @@ function toIsoDate(value) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(parsed);
 }
 
+function readYamlString(frontmatter, key) {
+  const line = frontmatter.match(new RegExp(`^${key}:\\s*(.*)$`, 'm'))?.[1]?.trim();
+  if (!line) return '';
+  if (line.startsWith('"')) {
+    try { return JSON.parse(line); } catch { return ''; }
+  }
+  return line.replace(/^['"]|['"]$/g, '');
+}
+
+function normalizeTitle(value = '') {
+  return value.toLocaleLowerCase('pl-PL').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
+}
+
+function normalizeSourceUrl(value = '') {
+  try {
+    const url = new URL(value);
+    url.hash = '';
+    url.search = '';
+    url.pathname = url.pathname.replace(/\/+$/, '');
+    return url.toString().toLowerCase();
+  } catch {
+    return value.trim().toLowerCase();
+  }
+}
+
+function loadDeletedRecords() {
+  if (!fs.existsSync(NEWS_DIR)) return [];
+  return fs.readdirSync(NEWS_DIR)
+    .filter((name) => /\.(md|mdx)$/i.test(name))
+    .flatMap((name) => {
+      const content = fs.readFileSync(path.join(NEWS_DIR, name), 'utf8');
+      const frontmatter = content.match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
+      if (!frontmatter || readYamlString(frontmatter[1], 'status') !== 'deleted') return [];
+      return [{
+        title: readYamlString(frontmatter[1], 'title'),
+        sourceUrl: readYamlString(frontmatter[1], 'sourceUrl'),
+      }];
+    });
+}
+
+function matchesDeletedArticle(article, sourceItems, deletedRecords) {
+  if (!article || typeof article !== 'object') return false;
+  const item = sourceItems.find((candidate) => candidate.link === article.sourceUrl);
+  const proposedTitles = [article.title, item?.title].map(normalizeTitle).filter(Boolean);
+  return deletedRecords.some((deleted) => {
+    if (deleted.sourceUrl && normalizeSourceUrl(deleted.sourceUrl) === normalizeSourceUrl(article.sourceUrl)) return true;
+    const deletedTitle = normalizeTitle(deleted.title);
+    if (!deletedTitle) return false;
+    return proposedTitles.some((title) => {
+      if (title === deletedTitle) return true;
+      const deletedWords = new Set(deletedTitle.split(' ').filter((word) => word.length > 2));
+      const titleWords = new Set(title.split(' ').filter((word) => word.length > 2));
+      if (Math.min(deletedWords.size, titleWords.size) < 4) return false;
+      let common = 0;
+      for (const word of deletedWords) if (titleWords.has(word)) common++;
+      return common / Math.min(deletedWords.size, titleWords.size) >= 0.8;
+    });
+  });
+}
+
 function validateArticle(article, sourceItems) {
   if (!article || typeof article !== 'object') throw new Error('Pozycja nie jest obiektem.');
   for (const field of ['title', 'summary', 'content', 'sourceUrl']) {
@@ -192,9 +253,16 @@ async function main() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('Brak GEMINI_API_KEY. Bez klucza automatyczna publikacja jest wyłączona.');
   const sourceItems = await collectNews();
+  const deletedRecords = loadDeletedRecords();
   const proposed = await analyzeWithGemini(sourceItems, apiKey);
   if (proposed.length > MAX_ARTICLES) throw new Error(`Gemini zwróciło więcej niż ${MAX_ARTICLES} wpisy.`);
-  const articles = proposed.map((item) => validateArticle(item, sourceItems));
+  const articles = proposed
+    .filter((item) => {
+      if (!matchesDeletedArticle(item, sourceItems, deletedRecords)) return true;
+      console.log(`Pominięto wcześniej usunięty temat: ${item.title}`);
+      return false;
+    })
+    .map((item) => validateArticle(item, sourceItems));
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(new Date());
   fs.mkdirSync(NEWS_DIR, { recursive: true });
   const saved = articles.reduce((count, article) => count + Number(writeArticle(article, today)), 0);

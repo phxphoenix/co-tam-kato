@@ -6,7 +6,7 @@ import { CategoryBadge } from '../../components/CategoryBadge';
 import { Calendar, MapPin, ExternalLink, ArrowLeft, Bot, AlertTriangle, Sparkles, Smile } from 'lucide-react';
 
 export async function getStaticPaths() {
-  const news = await getCollection('news');
+  const news = await getCollection('news', ({ data }) => data.status !== 'deleted');
   return news.map((entry) => ({
     params: { slug: entry.id.replace(/\.(md|mdx)$/, '') },
     props: { entry },

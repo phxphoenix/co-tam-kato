@@ -4,7 +4,7 @@ import { InteractiveFeed } from '../components/InteractiveFeed';
 import { getCollection } from 'astro:content';
 import { Smile, Sparkles, MapPin, Heart, Compass, Star } from 'lucide-react';
 
-const allNews = await getCollection('news');
+const allNews = (await getCollection('news')).filter((item) => item.data.status !== 'deleted');
 
 // Sortowanie od najnowszych
 const sortedNews = allNews.sort(

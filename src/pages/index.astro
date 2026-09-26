@@ -5,7 +5,7 @@ import { getCollection } from 'astro:content';
 import { Sparkles, Clock, MapPin, Compass } from 'lucide-react';
 
 // Pobranie wszystkich wpisów z kolekcji
-const allNews = await getCollection('news');
+const allNews = (await getCollection('news')).filter((item) => item.data.status !== 'deleted');
 
 // Sortowanie od najnowszej publikacji źródłowej; wpisy bez niej używają daty dodania
 const sortedNews = allNews.sort(
