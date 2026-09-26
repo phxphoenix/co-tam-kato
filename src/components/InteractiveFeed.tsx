@@ -32,6 +32,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
   defaultCategory = 'all',
   defaultOnlyKids = false,
 }) => {
+  const baseUrl = import.meta.env.BASE_URL || '/';
   const [selectedCity, setSelectedCity] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>(defaultCategory);
   const [onlyKids, setOnlyKids] = useState<boolean>(defaultOnlyKids);
@@ -159,7 +160,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
               {showDrafts ? 'Wróć do opublikowanych' : 'Podgląd szkiców'}
             </button>
             <a
-              href="/keystatic"
+              href={`${baseUrl}keystatic`}
               target="_blank"
               rel="noreferrer"
               className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 transition-colors inline-flex items-center gap-1"
@@ -371,7 +372,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
 
               {/* Tytuł */}
               <h2 className="text-lg font-bold text-zinc-100 group-hover:text-amber-400 transition-colors line-clamp-2 mb-2 leading-snug">
-                <a href={`/wpis/${item.slug}`} className="hover:underline">
+                <a href={`${baseUrl}wpis/${item.slug}`} className="hover:underline">
                   {item.title}
                 </a>
               </h2>
@@ -410,7 +411,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
 
               {/* Przycisk Przejdź do wpisu */}
               <a
-                href={`/wpis/${item.slug}`}
+                href={`${baseUrl}wpis/${item.slug}`}
                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-800/70 hover:bg-amber-400 text-zinc-300 hover:text-zinc-950 transition-all group-hover:bg-zinc-800"
               >
                 Czytaj szczegóły

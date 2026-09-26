@@ -13,6 +13,7 @@ interface QuickAlertProps {
 
 export const QuickAlertBar: React.FC<QuickAlertProps> = ({ alerts }) => {
   const [dismissed, setDismissed] = useState(false);
+  const baseUrl = import.meta.env.BASE_URL || '/';
 
   if (dismissed || !alerts || alerts.length === 0) {
     return null;
@@ -36,7 +37,7 @@ export const QuickAlertBar: React.FC<QuickAlertProps> = ({ alerts }) => {
             {firstAlert.title}
           </span>
           <a
-            href={`/wpis/${firstAlert.slug}`}
+            href={`${baseUrl}wpis/${firstAlert.slug}`}
             className="hidden md:inline-flex items-center gap-1 text-xs text-amber-300 hover:text-amber-200 underline underline-offset-2 flex-shrink-0"
           >
             Szczegóły <ChevronRight className="w-3 h-3" />

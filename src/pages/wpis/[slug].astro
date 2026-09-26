@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, render } from 'astro:content';
 import { CityBadge } from '../../components/CityBadge';
 import { CategoryBadge } from '../../components/CategoryBadge';
-import { Calendar, MapPin, ExternalLink, ArrowLeft, Bot, AlertTriangle, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, ExternalLink, ArrowLeft, Bot, AlertTriangle, Sparkles, Smile } from 'lucide-react';
 
 export async function getStaticPaths() {
   const news = await getCollection('news');
@@ -15,6 +15,8 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+
+const base = import.meta.env.BASE_URL;
 
 const formattedDate = new Intl.DateTimeFormat('pl-PL', {
   weekday: 'long',
@@ -37,7 +39,7 @@ const relatedNews = allNews
   <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10">
     <!-- Przycisk powrotu -->
     <a
-      href="/"
+      href={base}
       class="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-amber-400 mb-8 transition-colors group"
     >
       <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
@@ -50,6 +52,12 @@ const relatedNews = allNews
       <div class="flex flex-wrap items-center gap-3 mb-6">
         <CityBadge city={entry.data.city} />
         <CategoryBadge category={entry.data.category} />
+        {entry.data.ageRange && (
+          <span class="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold">
+            <Smile className="w-3.5 h-3.5" />
+            Wiek: {entry.data.ageRange}
+          </span>
+        )}
         {entry.data.status === 'draft' && (
           <span class="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold">
             Status: Szkic (Draft)
@@ -127,7 +135,7 @@ const relatedNews = allNews
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {relatedNews.map((item) => (
             <a
-              href={`/wpis/${item.id.replace(/\.(md|mdx)$/, '')}`}
+              href={`${base}wpis/${item.id.replace(/\.(md|mdx)$/, '')}`}
               class="block p-5 rounded-2xl bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 transition-all group"
             >
               <h4 class="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors line-clamp-1 mb-2 text-sm">

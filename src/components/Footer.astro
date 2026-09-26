@@ -1,5 +1,7 @@
 ---
-import { Heart, Cpu, GitBranch } from 'lucide-react';
+import { Heart, Cpu } from 'lucide-react';
+
+const base = import.meta.env.BASE_URL;
 ---
 
 <footer class="border-t border-zinc-800/80 bg-zinc-950 text-zinc-400 mt-20 transition-colors">
@@ -43,13 +45,16 @@ import { Heart, Cpu, GitBranch } from 'lucide-react';
         </h4>
         <ul class="text-xs space-y-2">
           <li>
-            <a href="/" class="hover:text-amber-400 transition-colors">Wszystkie wiadomości</a>
+            <a href={base} class="hover:text-amber-400 transition-colors">Wszystkie wiadomości</a>
           </li>
           <li>
-            <a href="/o-projekcie" class="hover:text-amber-400 transition-colors">O projekcie i misji</a>
+            <a href={`${base}dla-dzieci`} class="hover:text-amber-400 transition-colors">Dla Dzieci (4-10 lat)</a>
           </li>
           <li>
-            <a href="/keystatic" class="hover:text-amber-400 transition-colors inline-flex items-center gap-1 text-amber-400/90">
+            <a href={`${base}o-projekcie`} class="hover:text-amber-400 transition-colors">O projekcie i misji</a>
+          </li>
+          <li>
+            <a href={`${base}keystatic`} class="hover:text-amber-400 transition-colors inline-flex items-center gap-1 text-amber-400/90">
               Panel administracyjny Keystatic →
             </a>
           </li>
