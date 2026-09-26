@@ -24,18 +24,21 @@ jobs:
           cache: 'npm'
 
       - name: Instalacja zależności
-        run: npm install
+        run: npm ci
 
       - name: Uruchomienie Agenta AI (Zbieranie i redagowanie wiadomości)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: npm run digest
 
+      - name: Walidacja treści Astro
+        run: npm run build
+
       - name: Zapisanie i publikacja nowych wpisów w repozytorium
         run: |
           git config --global user.name "Co Tam KATO Bot"
           git config --global user.email "bot@co-tam-kato.local"
-          git add src/content/news/
+          git add -- src/content/news/
           if ! git diff-index --quiet HEAD --; then
             echo "Wykryto nowe wiadomości! Tworzenie commita..."
             git commit -m "🤖 Automatyczne poranne wydanie Co Tam KATO [skip ci]"
