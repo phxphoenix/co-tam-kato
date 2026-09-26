@@ -7,7 +7,7 @@ city: katowice
 category: dla-dzieci
 isForKids: true
 ageRange: 4-8 lat
-status: deleted
+status: published
 summary: >-
   Ciepła, mądra baśń o przyjaźni połączona z krótkimi warsztatami teatralnymi,
   podczas których dzieci mogą spróbować swoich sił w poruszaniu pacynkami i

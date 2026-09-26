@@ -4,7 +4,7 @@ pubDate: 2026-09-26
 city: sosnowiec
 category: kultura
 isForKids: false
-status: deleted
+status: published
 summary: >-
   Teatr Zagłębia inauguruje nowy sezon artystyczny głośną adaptacją
   współczesnego dramatu oraz otwartym spotkaniem dyskusyjnym z aktorami.

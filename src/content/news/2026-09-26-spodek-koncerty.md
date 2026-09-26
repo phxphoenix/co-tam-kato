@@ -4,7 +4,7 @@ pubDate: 2026-09-26
 city: katowice
 category: wydarzenia
 isForKids: false
-status: deleted
+status: published
 summary: >-
   Legendarny katowicki Spodek wypełni się fanami muzyki elektronicznej i
   nowoczesnych brzmień. Organizatorzy przygotowali scenę 360 stopni oraz
