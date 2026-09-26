@@ -8,7 +8,7 @@ const allNews = await getCollection('news');
 
 // Sortowanie od najnowszych
 const sortedNews = allNews.sort(
-  (a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
+  (a, b) => (b.data.sourceDate ?? b.data.pubDate).getTime() - (a.data.sourceDate ?? a.data.pubDate).getTime()
 );
 
 const serializedItems = sortedNews.map((item) => ({
@@ -16,6 +16,7 @@ const serializedItems = sortedNews.map((item) => ({
   slug: item.id.replace(/\.(md|mdx)$/, ''),
   title: item.data.title,
   pubDate: item.data.pubDate.toISOString(),
+  sourceDate: (item.data.sourceDate ?? item.data.pubDate).toISOString(),
   city: item.data.city,
   category: item.data.category,
   status: item.data.status,

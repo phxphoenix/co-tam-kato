@@ -24,7 +24,7 @@ const formattedDate = new Intl.DateTimeFormat('pl-PL', {
   day: 'numeric',
   month: 'long',
   year: 'numeric',
-}).format(new Date(entry.data.pubDate));
+}).format(new Date(entry.data.sourceDate ?? entry.data.pubDate));
 
 // Inne wpisy z tego samego miasta
 const allNews = await getCollection('news');

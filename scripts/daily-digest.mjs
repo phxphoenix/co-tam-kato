@@ -124,6 +124,12 @@ function slugify(text) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50);
 }
 
+function toIsoDate(value) {
+  const parsed = new Date(value);
+  if (!Number.isFinite(parsed.getTime())) return undefined;
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(parsed);
+}
+
 function validateArticle(article, sourceItems) {
   if (!article || typeof article !== 'object') throw new Error('Pozycja nie jest obiektem.');
   for (const field of ['title', 'summary', 'content', 'sourceUrl']) {
@@ -152,6 +158,8 @@ function validateArticle(article, sourceItems) {
   article.summary = article.summary.trim();
   article.content = article.content.trim();
   article.location = typeof article.location === 'string' ? article.location.trim() : '';
+  const sourceItem = sourceItems.find((item) => item.link === article.sourceUrl);
+  article.sourceDate = sourceItem ? toIsoDate(sourceItem.pubDate) : undefined;
   return article;
 }
 
@@ -167,6 +175,7 @@ function writeArticle(article, today) {
   }
   const frontmatter = [
     '---', `title: ${JSON.stringify(article.title)}`, `pubDate: ${today}`,
+    ...(article.sourceDate ? [`sourceDate: ${article.sourceDate}`] : []),
     `city: ${JSON.stringify(article.city)}`, `category: ${JSON.stringify(article.category)}`,
     `status: ${JSON.stringify(article.status)}`, `summary: ${JSON.stringify(article.summary)}`,
     `location: ${JSON.stringify(article.location)}`, `isAlert: ${article.isAlert}`,

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, MapPin, Calendar, ExternalLink, Bot, ShieldAlert, Sparkles, Filter, X, Smile } from 'lucide-react';
+import { Search, MapPin, Calendar, ExternalLink, Bot, ShieldAlert, Sparkles, Filter, X, Smile, ArrowDownWideNarrow } from 'lucide-react';
 import { CITIES, CATEGORIES } from '../lib/constants';
 import { CityBadge } from './CityBadge';
 import { CategoryBadge } from './CategoryBadge';
@@ -9,6 +9,7 @@ export interface FeedItem {
   slug: string;
   title: string;
   pubDate: string; // ISO date string
+  sourceDate?: string; // ISO date string from the original publisher
   city: string;
   category: string;
   status: 'published' | 'draft';
@@ -39,6 +40,30 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
   const [onlyKids, setOnlyKids] = useState<boolean>(defaultOnlyKids);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showDrafts, setShowDrafts] = useState<boolean>(false);
+  const [datePreset, setDatePreset] = useState<'all' | '7' | '30' | 'custom'>('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+
+  const getItemDate = (item: FeedItem) => (item.sourceDate || item.pubDate).slice(0, 10);
+  const setPreset = (preset: 'all' | '7' | '30' | 'custom') => {
+    setDatePreset(preset);
+    if (preset === 'all') {
+      setDateFrom('');
+      setDateTo('');
+      return;
+    }
+    if (preset === 'custom') return;
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - (Number(preset) - 1));
+    const toInputDate = (date: Date) => {
+      const offset = date.getTimezoneOffset();
+      return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 10);
+    };
+    setDateFrom(toInputDate(start));
+    setDateTo(toInputDate(end));
+  };
 
   // Liczba wydarzeń dla dzieci
   const kidsCount = useMemo(() => {
@@ -92,6 +117,10 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
         return false;
       }
 
+      const itemDate = getItemDate(item);
+      if (dateFrom && itemDate < dateFrom) return false;
+      if (dateTo && itemDate > dateTo) return false;
+
       // Filtr wyszukiwarki
       if (searchQuery.trim() !== '') {
         const query = searchQuery.toLowerCase();
@@ -105,8 +134,11 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
       }
 
       return true;
+    }).sort((a, b) => {
+      const difference = getItemDate(b).localeCompare(getItemDate(a));
+      return sortOrder === 'newest' ? difference : -difference;
     });
-  }, [initialItems, selectedCity, selectedCategory, searchQuery, showDrafts, onlyKids]);
+  }, [initialItems, selectedCity, selectedCategory, searchQuery, showDrafts, onlyKids, dateFrom, dateTo, sortOrder]);
 
   // Formatowanie daty po polsku
   const formatDate = (dateStr: string) => {
@@ -122,13 +154,14 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
     }
   };
 
-  const hasActiveFilters = selectedCity !== 'all' || selectedCategory !== 'all' || searchQuery !== '' || onlyKids;
+  const hasActiveFilters = selectedCity !== 'all' || selectedCategory !== 'all' || searchQuery !== '' || onlyKids || dateFrom !== '' || dateTo !== '';
 
   const clearFilters = () => {
     setSelectedCity('all');
     setSelectedCategory('all');
     setOnlyKids(false);
     setSearchQuery('');
+    setPreset('all');
   };
 
   return (
@@ -211,6 +244,38 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
               {kidsCount}
             </span>
           </button>
+        </div>
+
+        <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4 space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-amber-400" /> Data publikacji źródła
+              </span>
+              <p className="text-xs text-zinc-500 mt-1">Starsze wpisy bez daty źródłowej używają daty dodania do portalu.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {([
+                ['all', 'Dowolna data'], ['7', 'Ostatnie 7 dni'], ['30', 'Ostatnie 30 dni'], ['custom', 'Wybierz zakres'],
+              ] as const).map(([preset, label]) => (
+                <button key={preset} onClick={() => setPreset(preset)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${datePreset === preset ? 'bg-amber-400 text-zinc-950 border-amber-400' : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:border-zinc-500'}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {datePreset === 'custom' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
+              <label className="text-xs text-zinc-400 space-y-1.5">
+                <span>Od</span>
+                <input type="date" value={dateFrom} max={dateTo || undefined} onChange={(event) => setDateFrom(event.target.value)} className="block w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-amber-400 focus:outline-none" />
+              </label>
+              <label className="text-xs text-zinc-400 space-y-1.5">
+                <span>Do</span>
+                <input type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => setDateTo(event.target.value)} className="block w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-amber-400 focus:outline-none" />
+              </label>
+            </div>
+          )}
         </div>
 
         {/* Pigułki miast */}
@@ -317,9 +382,14 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
           {selectedCity !== 'all' && ` dla miasta: ${CITIES[selectedCity]?.name}`}
           {showDrafts && ' (Tryb szkiców)'}
         </span>
-        <span className="text-xs text-zinc-500 hidden sm:inline">
-          Aktualizowane codziennie o 6:00
-        </span>
+        <label className="inline-flex items-center gap-2 text-xs text-zinc-400">
+          <ArrowDownWideNarrow className="w-3.5 h-3.5 text-amber-400" />
+          <span>Sortuj</span>
+          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as 'newest' | 'oldest')} className="bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:border-amber-400 focus:outline-none">
+            <option value="newest">Najnowsze najpierw</option>
+            <option value="oldest">Najstarsze najpierw</option>
+          </select>
+        </label>
       </div>
 
       {/* Brak wyników */}
@@ -396,7 +466,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-zinc-500">
                     <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span>{formatDate(item.pubDate)}</span>
+                    <span>{formatDate(item.sourceDate || item.pubDate)}</span>
                   </div>
                   {item.aiGenerated && (
                     <span

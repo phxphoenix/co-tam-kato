@@ -13,8 +13,11 @@ export default config({
       schema: {
         title: fields.slug({ name: { label: 'Tytuł' } }),
         pubDate: fields.date({
-          label: 'Data publikacji',
+          label: 'Data dodania do Co Tam KATO',
           defaultValue: { kind: 'today' },
+        }),
+        sourceDate: fields.date({
+          label: 'Data publikacji oryginalnego źródła (opcjonalnie)',
         }),
         city: fields.select({
           label: 'Miasto / Rejon',

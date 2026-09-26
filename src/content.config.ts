@@ -6,6 +6,7 @@ const news = defineCollection({
   schema: z.object({
     title: z.string(),
     pubDate: z.coerce.date(),
+    sourceDate: z.coerce.date().optional(),
     city: z.enum([
       'katowice',
       'chorzow',
