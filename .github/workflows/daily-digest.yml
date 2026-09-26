@@ -1,0 +1,45 @@
+name: Poranny Agent AI (Co Tam KATO)
+
+on:
+  schedule:
+    # Uruchomienie codziennie o 04:00 UTC (06:00 czasu polskiego CEST)
+    - cron: '0 4 * * *'
+  # Możliwość ręcznego uruchomienia jednym kliknięciem z panelu GitHub Actions
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  daily-digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobranie kodu repozytorium
+        uses: actions/checkout@v4
+
+      - name: Konfiguracja Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Instalacja zależności
+        run: npm install
+
+      - name: Uruchomienie Agenta AI (Zbieranie i redagowanie wiadomości)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: npm run digest
+
+      - name: Zapisanie i publikacja nowych wpisów w repozytorium
+        run: |
+          git config --global user.name "Co Tam KATO Bot"
+          git config --global user.email "bot@co-tam-kato.local"
+          git add src/content/news/
+          if ! git diff-index --quiet HEAD --; then
+            echo "Wykryto nowe wiadomości! Tworzenie commita..."
+            git commit -m "🤖 Automatyczne poranne wydanie Co Tam KATO [skip ci]"
+            git push origin main
+          else
+            echo "Brak nowych wiadomości na dziś."
+          fi

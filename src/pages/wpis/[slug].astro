@@ -1,0 +1,145 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+import { CityBadge } from '../../components/CityBadge';
+import { CategoryBadge } from '../../components/CategoryBadge';
+import { Calendar, MapPin, ExternalLink, ArrowLeft, Bot, AlertTriangle, Sparkles } from 'lucide-react';
+
+export async function getStaticPaths() {
+  const news = await getCollection('news');
+  return news.map((entry) => ({
+    params: { slug: entry.id.replace(/\.(md|mdx)$/, '') },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const formattedDate = new Intl.DateTimeFormat('pl-PL', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+}).format(new Date(entry.data.pubDate));
+
+// Inne wpisy z tego samego miasta
+const allNews = await getCollection('news');
+const relatedNews = allNews
+  .filter((item) => item.id !== entry.id && item.data.city === entry.data.city && item.data.status === 'published')
+  .slice(0, 2);
+---
+
+<BaseLayout
+  title={`${entry.data.title} | Co Tam KATO`}
+  description={entry.data.summary}
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+    <!-- Przycisk powrotu -->
+    <a
+      href="/"
+      class="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-amber-400 mb-8 transition-colors group"
+    >
+      <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+      <span>Wróć do wszystkich wiadomości</span>
+    </a>
+
+    <!-- Artykuł -->
+    <article class="bg-zinc-900/70 border border-zinc-800 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-sm">
+      <!-- Pasek odznak i metadanych -->
+      <div class="flex flex-wrap items-center gap-3 mb-6">
+        <CityBadge city={entry.data.city} />
+        <CategoryBadge category={entry.data.category} />
+        {entry.data.status === 'draft' && (
+          <span class="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold">
+            Status: Szkic (Draft)
+          </span>
+        )}
+        {entry.data.isAlert && (
+          <span class="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40 font-semibold">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            Ważny Alert
+          </span>
+        )}
+      </div>
+
+      <!-- Tytuł wpisu -->
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-zinc-100 tracking-tight leading-tight mb-6">
+        {entry.data.title}
+      </h1>
+
+      <!-- Podsumowanie / Lead -->
+      <div class="p-4 sm:p-5 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 text-zinc-300 text-base leading-relaxed mb-8 font-medium">
+        {entry.data.summary}
+      </div>
+
+      <!-- Metadane: Data, Miejsce, Autor -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4 border-y border-zinc-800/80 mb-8 text-xs text-zinc-400">
+        <div class="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-amber-400 flex-shrink-0" />
+          <span class="capitalize">{formattedDate}</span>
+        </div>
+        {entry.data.location && (
+          <div class="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-amber-400 flex-shrink-0" />
+            <span class="text-zinc-300 font-medium">{entry.data.location}</span>
+          </div>
+        )}
+      </div>
+
+      <!-- Pełna treść (Markdown) -->
+      <div class="prose prose-invert prose-zinc max-w-none prose-headings:text-zinc-100 prose-headings:font-bold prose-h3:text-lg prose-p:text-zinc-300 prose-p:leading-relaxed prose-li:text-zinc-300 prose-strong:text-amber-300 prose-a:text-amber-400 prose-a:no-underline hover:prose-a:underline">
+        <Content />
+      </div>
+
+      <!-- Stopka wpisu z linkiem do źródła lub info o AI -->
+      <div class="mt-10 pt-6 border-t border-zinc-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {entry.data.aiGenerated ? (
+          <div class="inline-flex items-center gap-2 text-xs text-zinc-400 bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800">
+            <Bot className="w-4 h-4 text-amber-400" />
+            <span>Wpis opracowany przez Agenta AI i zweryfikowany przez redakcję.</span>
+          </div>
+        ) : (
+          <span class="text-xs text-zinc-500">Redakcja Co Tam KATO</span>
+        )}
+
+        {entry.data.sourceUrl && (
+          <a
+            href={entry.data.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            class="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 transition-colors shadow-md shadow-amber-400/10"
+          >
+            Przejdź do oficjalnego źródła
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        )}
+      </div>
+    </article>
+
+    <!-- Powiązane wpisy z tego samego miasta -->
+    {relatedNews.length > 0 && (
+      <div class="mt-14">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-400 mb-6 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-amber-400" />
+          Zobacz również z tej samej okolicy
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {relatedNews.map((item) => (
+            <a
+              href={`/wpis/${item.id.replace(/\.(md|mdx)$/, '')}`}
+              class="block p-5 rounded-2xl bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 transition-all group"
+            >
+              <h4 class="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors line-clamp-1 mb-2 text-sm">
+                {item.data.title}
+              </h4>
+              <p class="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                {item.data.summary}
+              </p>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+</BaseLayout>

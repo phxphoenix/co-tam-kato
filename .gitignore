@@ -1,0 +1,24 @@
+# Kompilacja i zależności
+node_modules/
+dist/
+.astro/
+
+# Środowisko
+.env
+.env.production
+.env.local
+.env.*.local
+
+# Narzędzia i system
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Edytory
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/

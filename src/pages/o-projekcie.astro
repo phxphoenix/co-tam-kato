@@ -1,0 +1,93 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { Sparkles, Bot, ShieldCheck, Heart, MapPin, Zap, ExternalLink } from 'lucide-react';
+---
+
+<BaseLayout
+  title="O projekcie Co Tam KATO | Misja i technologia"
+  description="Dowiedz się więcej o projekcie Co Tam KATO - lokalnym portalu z wiadomościami z Katowic i miast ościennych."
+>
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold uppercase tracking-wider mb-4">
+        <Sparkles className="w-3.5 h-3.5" />
+        Lokalny projekt dla mieszkańców
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-zinc-100 tracking-tight mb-4">
+        O projekcie <span class="text-amber-400">Co Tam KATO</span>
+      </h1>
+      <p class="text-base text-zinc-400 max-w-xl mx-auto leading-relaxed">
+        Nowoczesny, niezależny przegląd wydarzeń, kultury, remontów drogowych i życia codziennego w Katowicach oraz ościennych miastach aglomeracji śląskiej.
+      </p>
+    </div>
+
+    <!-- Treść -->
+    <div class="space-y-8">
+      <!-- Karta: Idea -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-zinc-900/70 border border-zinc-800">
+        <h2 class="text-xl font-bold text-zinc-100 mb-3 flex items-center gap-2.5">
+          <MapPin className="w-5 h-5 text-amber-400" />
+          Dlaczego powstało Co Tam KATO?
+        </h2>
+        <p class="text-sm text-zinc-300 leading-relaxed mb-4">
+          Większość tradycyjnych portali regionalnych jest przeładowana reklamami, wyskakującymi banerami i clickbaitowymi nagłówkami. Mieszkańcy Katowic, Chorzowa, Sosnowca czy Siemianowic często potrzebują po prostu szybkiej, zwięzłej odpowiedzi na jedno pytanie: <em>"Co ciekawego dzieje się dzisiaj w mojej okolicy i czy są jakieś utrudnienia na drogach?"</em>.
+        </p>
+        <p class="text-sm text-zinc-300 leading-relaxed">
+          <strong>Co Tam KATO</strong> łączy najważniejsze informacje w czytelne, 1-2 minutowe podsumowania, bez zbędnego szumu.
+        </p>
+      </div>
+
+      <!-- Karta: Agent AI i Human-in-the-loop -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-zinc-900/70 border border-zinc-800">
+        <h2 class="text-xl font-bold text-zinc-100 mb-3 flex items-center gap-2.5">
+          <Bot className="w-5 h-5 text-amber-400" />
+          Jak działa Agent AI o 6:00 rano?
+        </h2>
+        <p class="text-sm text-zinc-300 leading-relaxed mb-4">
+          Każdego poranka zautomatyzowany skrypt (GitHub Actions) sprawdza oficjalne komunikaty miejskie, instytucje kultury (Spodek, NOSPR, Park Śląski, teatry) oraz alerty drogowe. Model sztucznej inteligencji:
+        </p>
+        <ul class="text-sm text-zinc-300 space-y-2 mb-4 list-disc list-inside">
+          <li>Wybiera najważniejsze fakty i odrzuca szum reklamowy.</li>
+          <li>Kategoryzuje wiadomości pod odpowiednie miasta i działy tematyczne.</li>
+          <li>Generuje przejrzyste streszczenie i linkuje do oficjalnych źródeł.</li>
+        </ul>
+        <div class="p-4 rounded-2xl bg-zinc-950/80 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-300/90">
+          <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+          <span>
+            <strong>Zasada Human-in-the-loop:</strong> Treści są weryfikowane przez redakcję. Wpisy mogą trafiać do kolejki moderacji jako szkice (drafts) i są zatwierdzane w panelu Keystatic.
+          </span>
+        </div>
+      </div>
+
+      <!-- Karta: Technologia -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-zinc-900/70 border border-zinc-800">
+        <h2 class="text-xl font-bold text-zinc-100 mb-3 flex items-center gap-2.5">
+          <Zap className="w-5 h-5 text-amber-400" />
+          Technologia (100% Jamstack)
+        </h2>
+        <p class="text-sm text-zinc-300 leading-relaxed mb-4">
+          Serwis został stworzony przy użyciu najnowocześniejszych standardów web developmentu:
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
+            <strong class="text-amber-400 block mb-1">Astro 5</strong>
+            Superszybkie statyczne generowanie stron (SSG) i zerowy narzut JavaScript.
+          </div>
+          <div class="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
+            <strong class="text-amber-400 block mb-1">React 19 (Wyspy)</strong>
+            Błyskawiczne filtrowanie miast i wyszukiwanie na żywo.
+          </div>
+          <div class="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
+            <strong class="text-amber-400 block mb-1">Tailwind CSS v4</strong>
+            Nowoczesny, lekki i responsywny interfejs miejski.
+          </div>
+          <div class="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
+            <strong class="text-amber-400 block mb-1">Keystatic CMS</strong>
+            Wizualny panel redakcyjny zintegrowany z plikami Markdown.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
