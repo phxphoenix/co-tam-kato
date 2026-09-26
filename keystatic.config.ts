@@ -8,6 +8,7 @@ export default config({
     news: collection({
       label: 'Wszystkie artykuły (opublikowane, szkice i usunięte)',
       slugField: 'title',
+      columns: ['title', 'pubDate', 'sourceDate', 'status', 'city', 'aiGenerated'],
       path: 'src/content/news/*',
       format: { contentField: 'content' },
       schema: {
@@ -83,6 +84,7 @@ export default config({
         }),
         content: fields.markdoc({
           label: 'Pełna treść wiadomości',
+          extension: 'md',
         }),
       },
     }),
