@@ -82,7 +82,7 @@ Zwróć wyłącznie tablicę JSON z obiektami o polach: title, city, category, s
 
 Materiały:
 ${JSON.stringify(newsItems.slice(0, 30))}`;
-  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     signal: AbortSignal.timeout(60000),
@@ -91,7 +91,10 @@ ${JSON.stringify(newsItems.slice(0, 30))}`;
       generationConfig: { responseMimeType: 'application/json' },
     }),
   });
-  if (!response.ok) throw new Error(`Gemini API zwróciło HTTP ${response.status}.`);
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Gemini API zwróciło HTTP ${response.status}: ${detail.slice(0, 500)}`);
+  }
   const data = await response.json();
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error('Gemini zwróciło pustą odpowiedź.');
