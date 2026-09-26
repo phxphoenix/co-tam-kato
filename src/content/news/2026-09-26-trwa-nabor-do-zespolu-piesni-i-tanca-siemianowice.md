@@ -3,7 +3,7 @@ title: "Trwa nabór do Zespołu Pieśni i Tańca „Siemianowice”"
 pubDate: 2026-09-26
 city: "siemianowice"
 category: "kultura"
-status: "published"
+status: "deleted"
 summary: "Zespół Pieśni i Tańca „Siemianowice” prowadzi nabór do grup wokalnych i tanecznych. Próby odbywają się w SCK – Bytków."
 location: "Siemianowickie Centrum Kultury – Bytków"
 isAlert: false
