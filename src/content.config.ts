@@ -21,6 +21,7 @@ const news = defineCollection({
       'cala-okolica',
     ]),
     category: z.enum([
+      'dla-dzieci',
       'wydarzenia',
       'drogi-komunikacja',
       'kultura',
@@ -32,6 +33,8 @@ const news = defineCollection({
     summary: z.string(),
     location: z.string().optional(),
     isAlert: z.boolean().default(false),
+    isForKids: z.boolean().default(false),
+    ageRange: z.string().optional(), // np. "4-10 lat", "5-8 lat"
     sourceUrl: z.string().optional(),
     aiGenerated: z.boolean().default(false),
   }),

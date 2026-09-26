@@ -87,6 +87,11 @@ export interface CategoryInfo {
 }
 
 export const CATEGORIES: Record<string, CategoryInfo> = {
+  'dla-dzieci': {
+    name: 'Dla Dzieci (4-10 lat)',
+    iconName: 'Smile',
+    badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+  },
   wydarzenia: {
     name: 'Wydarzenia & Imprezy',
     iconName: 'Sparkles',
@@ -105,7 +110,7 @@ export const CATEGORIES: Record<string, CategoryInfo> = {
   gastro: {
     name: 'Gastro & Miejscówki',
     iconName: 'Utensils',
-    badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+    badgeClass: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
   },
   sport: {
     name: 'Sport & Rekreacja',

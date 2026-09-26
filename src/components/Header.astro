@@ -1,5 +1,5 @@
 ---
-import { Calendar, MapPin, Settings, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, Settings, Smile } from 'lucide-react';
 
 const today = new Intl.DateTimeFormat('pl-PL', {
   weekday: 'long',
@@ -36,31 +36,38 @@ const capitalizedDate = today.charAt(0).toUpperCase() + today.slice(1);
 
     <!-- Data i Nawigacja -->
     <div class="flex items-center gap-3 sm:gap-6">
-      <div class="hidden md:flex items-center gap-1.5 text-xs text-zinc-400 bg-zinc-900/80 px-3 py-1.5 rounded-full border border-zinc-800">
+      <div class="hidden lg:flex items-center gap-1.5 text-xs text-zinc-400 bg-zinc-900/80 px-3 py-1.5 rounded-full border border-zinc-800">
         <Calendar className="w-3.5 h-3.5 text-amber-400" />
         <span>{capitalizedDate}</span>
       </div>
 
-      <nav class="flex items-center gap-2 sm:gap-3 text-xs font-semibold">
+      <nav class="flex items-center gap-1.5 sm:gap-2 text-xs font-semibold">
         <a
           href="/"
-          class="px-3 py-1.5 rounded-lg text-zinc-300 hover:text-white hover:bg-zinc-800/60 transition-colors"
+          class="px-2.5 sm:px-3 py-1.5 rounded-lg text-zinc-300 hover:text-white hover:bg-zinc-800/60 transition-colors"
         >
           Wiadomości
         </a>
         <a
+          href="/dla-dzieci"
+          class="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-colors"
+        >
+          <Smile className="w-3.5 h-3.5" />
+          <span>Dla Dzieci (4-10)</span>
+        </a>
+        <a
           href="/o-projekcie"
-          class="px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-colors"
+          class="px-2.5 sm:px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-colors hidden sm:inline-block"
         >
           O serwisie
         </a>
         <a
           href="/keystatic"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-amber-400 text-amber-400 hover:text-zinc-950 border border-amber-500/30 transition-all shadow-sm"
+          class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-amber-400 text-amber-400 hover:text-zinc-950 border border-amber-500/30 transition-all shadow-sm"
           title="Panel administracyjny Keystatic CMS"
         >
           <Settings className="w-3.5 h-3.5" />
-          <span>Panel Admina</span>
+          <span class="hidden sm:inline">Panel Admina</span>
         </a>
       </nav>
     </div>

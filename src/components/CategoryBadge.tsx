@@ -1,12 +1,13 @@
 import React from 'react';
 import { CATEGORIES } from '../lib/constants';
-import { Sparkles, Car, Palette, Utensils, Activity, AlertTriangle, Tag } from 'lucide-react';
+import { Sparkles, Car, Palette, Utensils, Activity, AlertTriangle, Smile, Tag } from 'lucide-react';
 
 interface CategoryBadgeProps {
   category: string;
 }
 
 const ICONS_MAP: Record<string, React.ReactNode> = {
+  'dla-dzieci': <Smile className="w-3.5 h-3.5" />,
   wydarzenia: <Sparkles className="w-3.5 h-3.5" />,
   'drogi-komunikacja': <Car className="w-3.5 h-3.5" />,
   kultura: <Palette className="w-3.5 h-3.5" />,

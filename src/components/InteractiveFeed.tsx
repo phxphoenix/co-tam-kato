@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, MapPin, Calendar, ExternalLink, Bot, ShieldAlert, Sparkles, Filter, X } from 'lucide-react';
+import { Search, MapPin, Calendar, ExternalLink, Bot, ShieldAlert, Sparkles, Filter, X, Smile } from 'lucide-react';
 import { CITIES, CATEGORIES } from '../lib/constants';
 import { CityBadge } from './CityBadge';
 import { CategoryBadge } from './CategoryBadge';
@@ -15,31 +15,49 @@ export interface FeedItem {
   summary: string;
   location?: string;
   isAlert: boolean;
+  isForKids?: boolean;
+  ageRange?: string;
   sourceUrl?: string;
   aiGenerated: boolean;
 }
 
 interface InteractiveFeedProps {
   initialItems: FeedItem[];
+  defaultCategory?: string;
+  defaultOnlyKids?: boolean;
 }
 
-export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({ initialItems }) => {
+export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
+  initialItems,
+  defaultCategory = 'all',
+  defaultOnlyKids = false,
+}) => {
   const [selectedCity, setSelectedCity] = useState<string>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>(defaultCategory);
+  const [onlyKids, setOnlyKids] = useState<boolean>(defaultOnlyKids);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showDrafts, setShowDrafts] = useState<boolean>(false);
+
+  // Liczba wydarzeń dla dzieci
+  const kidsCount = useMemo(() => {
+    return initialItems.filter(
+      (item) => (item.status === 'published' || showDrafts) && (item.category === 'dla-dzieci' || item.isForKids)
+    ).length;
+  }, [initialItems, showDrafts]);
 
   // Zliczanie wpisów per miasto
   const cityCounts = useMemo(() => {
     const counts: Record<string, number> = { all: 0 };
     initialItems.forEach((item) => {
       if (item.status === 'published' || showDrafts) {
-        counts.all = (counts.all || 0) + 1;
-        counts[item.city] = (counts[item.city] || 0) + 1;
+        if (!onlyKids || item.category === 'dla-dzieci' || item.isForKids) {
+          counts.all = (counts.all || 0) + 1;
+          counts[item.city] = (counts[item.city] || 0) + 1;
+        }
       }
     });
     return counts;
-  }, [initialItems, showDrafts]);
+  }, [initialItems, showDrafts, onlyKids]);
 
   // Liczba szkiców oczekujących na zatwierdzenie
   const draftCount = useMemo(() => {
@@ -54,6 +72,11 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({ initialItems }
         return false;
       }
       if (showDrafts && item.status !== 'draft') {
+        return false;
+      }
+
+      // Filtr sekcji dziecięcej
+      if (onlyKids && item.category !== 'dla-dzieci' && !item.isForKids) {
         return false;
       }
 
@@ -81,7 +104,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({ initialItems }
 
       return true;
     });
-  }, [initialItems, selectedCity, selectedCategory, searchQuery, showDrafts]);
+  }, [initialItems, selectedCity, selectedCategory, searchQuery, showDrafts, onlyKids]);
 
   // Formatowanie daty po polsku
   const formatDate = (dateStr: string) => {
@@ -97,11 +120,12 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({ initialItems }
     }
   };
 
-  const hasActiveFilters = selectedCity !== 'all' || selectedCategory !== 'all' || searchQuery !== '';
+  const hasActiveFilters = selectedCity !== 'all' || selectedCategory !== 'all' || searchQuery !== '' || onlyKids;
 
   const clearFilters = () => {
     setSelectedCity('all');
     setSelectedCategory('all');
+    setOnlyKids(false);
     setSearchQuery('');
   };
 
@@ -148,25 +172,43 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({ initialItems }
 
       {/* Panel filtrów i wyszukiwarki */}
       <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-2xl p-5 md:p-6 shadow-xl backdrop-blur-sm space-y-6">
-        {/* Wyszukiwarka tekstowa na żywo */}
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Szukaj wydarzenia, miejsca, koncertu, utrudnień na drodze..."
-            className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-amber-400 rounded-xl pl-12 pr-10 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-amber-400/50 transition-all"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 p-1"
-              aria-label="Wyczyść szukanie"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+        {/* Wyszukiwarka tekstowa na żywo i Szybki Przełącznik Dziecięcy */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-grow">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Szukaj wydarzenia, teatrzyku, warsztatów, koncertu, klocków..."
+              className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-amber-400 rounded-xl pl-12 pr-10 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-amber-400/50 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 p-1"
+                aria-label="Wyczyść szukanie"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Duży wyróżniony przycisk strefy dziecięcej */}
+          <button
+            onClick={() => setOnlyKids(!onlyKids)}
+            className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all border sm:flex-shrink-0 ${
+              onlyKids
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-zinc-950 border-emerald-400 shadow-lg shadow-emerald-500/20'
+                : 'bg-zinc-950/80 hover:bg-emerald-950/30 text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60'
+            }`}
+          >
+            <Smile className="w-4 h-4" />
+            <span>Strefa Dzieciaka (4-10 lat)</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${onlyKids ? 'bg-zinc-950 text-emerald-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
+              {kidsCount}
+            </span>
+          </button>
         </div>
 
         {/* Pigułki miast */}
@@ -269,6 +311,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({ initialItems }
         <span>
           Znaleziono <strong className="text-zinc-100">{filteredItems.length}</strong>{' '}
           {filteredItems.length === 1 ? 'wiadomość' : 'wiadomości'}
+          {onlyKids && ' (👶 Wyłącznie dla dzieci 4-10 lat)'}
           {selectedCity !== 'all' && ` dla miasta: ${CITIES[selectedCity]?.name}`}
           {showDrafts && ' (Tryb szkiców)'}
         </span>
@@ -284,10 +327,10 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({ initialItems }
             <Search className="w-8 h-8" />
           </div>
           <h3 className="text-lg font-semibold text-zinc-200 mb-1">
-            Brak wiadomości spełniających kryteria
+            Brak wydarzeń spełniających kryteria
           </h3>
           <p className="text-sm text-zinc-500 max-w-md mx-auto mb-6">
-            Nie znaleźliśmy żadnych wpisów dla wybranego miasta, kategorii lub frazy. Spróbuj zresetować filtry.
+            Nie znaleźliśmy żadnych wpisów dla wybranego miasta lub filtru. Spróbuj wyczyścić filtry.
           </p>
           <button
             onClick={clearFilters}
@@ -306,14 +349,24 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({ initialItems }
             className={`group bg-zinc-900/80 hover:bg-zinc-900 border rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 ${
               item.isAlert
                 ? 'border-rose-500/40 hover:border-rose-500/70 bg-gradient-to-b from-rose-950/20 to-zinc-900/80'
+                : item.category === 'dla-dzieci' || item.isForKids
+                ? 'border-emerald-500/40 hover:border-emerald-500/70 bg-gradient-to-b from-emerald-950/15 to-zinc-900/80'
                 : 'border-zinc-800/90 hover:border-zinc-700'
             }`}
           >
             <div>
-              {/* Odznaki: Miasto + Kategoria */}
-              <div className="flex items-center justify-between gap-2 mb-3.5">
-                <CityBadge city={item.city} size="sm" />
-                <CategoryBadge category={item.category} />
+              {/* Odznaki: Miasto + Kategoria + Wiek dziecka jeśli określony */}
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+                <div className="flex items-center gap-1.5">
+                  <CityBadge city={item.city} size="sm" />
+                  <CategoryBadge category={item.category} />
+                </div>
+                {(item.ageRange || item.isForKids) && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                    <Smile className="w-3 h-3" />
+                    {item.ageRange || 'Dzieci 4-10 lat'}
+                  </span>
+                )}
               </div>
 
               {/* Tytuł */}

@@ -37,6 +37,7 @@ export default config({
         category: fields.select({
           label: 'Kategoria',
           options: [
+            { label: 'Dla Dzieci (4-10 lat)', value: 'dla-dzieci' },
             { label: 'Wydarzenia & Imprezy', value: 'wydarzenia' },
             { label: 'Drogi & Komunikacja (ZTM/DTŚ)', value: 'drogi-komunikacja' },
             { label: 'Kultura & Rozrywka', value: 'kultura' },
@@ -45,6 +46,12 @@ export default config({
             { label: 'Ważne Alerty & Ostrzeżenia', value: 'alerty' },
           ],
           defaultValue: 'wydarzenia',
+        }),
+        isForKids: fields.checkbox({
+          label: 'Wydarzenie przyjazne dzieciom (Trafia do sekcji KATO Dzieciaki)',
+        }),
+        ageRange: fields.text({
+          label: 'Przedział wiekowy dzieci (np. 4-10 lat, 5-8 lat)',
         }),
         status: fields.select({
           label: 'Status publikacji',
@@ -59,7 +66,7 @@ export default config({
           multiline: true,
         }),
         location: fields.text({
-          label: 'Dokładna lokalizacja (np. Spodek, Park Śląski, Rynek)',
+          label: 'Dokładna lokalizacja (np. Spodek, Park Śląski, Bajka Pana Kleksa)',
         }),
         isAlert: fields.checkbox({
           label: 'Wyróżnij jako pilny alert (pasek u góry strony)',
