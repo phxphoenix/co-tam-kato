@@ -82,37 +82,49 @@ Zwróć wyłącznie tablicę JSON z obiektami o polach: title, city, category, s
 
 Materiały:
 ${JSON.stringify(newsItems.slice(0, 30))}`;
+  const models = [
+    { id: 'gemini-3.5-flash', attempts: 3 },
+    { id: 'gemini-3.7-flash', attempts: 3 },
+  ];
   let lastError;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        signal: AbortSignal.timeout(60000),
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' },
-        }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) throw new Error('Gemini zwróciło pustą odpowiedź.');
-        const parsed = JSON.parse(text);
-        if (!Array.isArray(parsed)) throw new Error('Odpowiedź Gemini nie jest tablicą JSON.');
-        return parsed;
+  for (const [modelIndex, model] of models.entries()) {
+    for (let attempt = 1; attempt <= model.attempts; attempt++) {
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.id}:generateContent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          signal: AbortSignal.timeout(60000),
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json' },
+          }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!text) throw new Error('Gemini zwróciło pustą odpowiedź.');
+          const parsed = JSON.parse(text);
+          if (!Array.isArray(parsed)) throw new Error('Odpowiedź Gemini nie jest tablicą JSON.');
+          return parsed;
+        }
+        const detail = await response.text();
+        lastError = new Error(`Gemini API zwróciło HTTP ${response.status}: ${detail.slice(0, 500)}`);
+        if (response.status !== 408 && response.status !== 429 && response.status < 500) throw lastError;
+      } catch (error) {
+        lastError = error;
+        if (error.message.startsWith('Gemini API zwróciło HTTP ') && !/HTTP (408|429|5\d\d):/.test(error.message)) throw error;
       }
-      const detail = await response.text();
-      lastError = new Error(`Gemini API zwróciło HTTP ${response.status}: ${detail.slice(0, 500)}`);
-      if (response.status !== 429 && response.status < 500) throw lastError;
-    } catch (error) {
-      lastError = error;
-      if (error.message.startsWith('Gemini API zwróciło HTTP ') && !/HTTP (429|5\d\d):/.test(error.message)) throw error;
-    }
-    if (attempt < 3) {
-      const delayMs = attempt * 5000;
-      console.warn(`  Gemini chwilowo niedostępne; ponawiam za ${delayMs / 1000} s (${attempt}/2).`);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+      const hasAnotherAttempt = attempt < model.attempts || modelIndex < models.length - 1;
+      if (hasAnotherAttempt) {
+        if (attempt === model.attempts) {
+          console.warn(`  Model ${model.id} pozostaje niedostępny; przełączam na ${models[modelIndex + 1].id}.`);
+        } else {
+          const delayMs = Math.min(5000 * (2 ** (attempt - 1)), 30000) + Math.floor(Math.random() * 2000);
+          console.warn(`  Model ${model.id} chwilowo niedostępny; ponawiam za około ${Math.ceil(delayMs / 1000)} s (${attempt}/${model.attempts - 1}).`);
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+      }
     }
   }
   throw lastError;
