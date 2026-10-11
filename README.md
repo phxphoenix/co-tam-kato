@@ -85,6 +85,14 @@ W katalogu `.github/workflows/daily-digest.yml` oraz `scripts/daily-digest.mjs` 
 npm.cmd run digest
 ```
 
+### Baza monitorowanych źródeł:
+- **Serwisy regionalne i miejskie**: MojeKatowice.pl, Metropolia GZM, Śląska Opinia, MojChorzow.pl, MojeTychy.pl, MojBytom.pl, Silesion.PL, Gliwice.eu.
+- **Kluczowe obiekty i instytucje**:
+  - **Park Śląski** (`https://parkslaski.pl/en/news`) – aktualności i wydarzenia w parku,
+  - **Stadion Śląski** (`https://superautostadionslaski.pl/wiadomosci`) – relacje i zapowiedzi imprez na Stadionie Śląskim,
+  - **Katowicki Spodek** (`https://www.spodekkatowice.pl/pl/wydarzenia/61/`) – oficjalny kalendarz koncertów i widowisk w Spodku,
+  - **MCK Katowice** (`https://www.mckkatowice.pl/pl/wydarzenia/61/`) – kalendarz kongresów, targów i imprez w Międzynarodowym Centrum Kongresowym.
+
 ---
 
 ## 📂 Struktura katalogów

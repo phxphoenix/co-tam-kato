@@ -126,12 +126,22 @@ Digest sprawdza zachowane wpisy `deleted` i próbuje nie wygenerować ponownie t
 
 `.github/workflows/daily-digest.yml` uruchamia workflow dwa razy na dobę: o `23:00 UTC` (01:00 czasu polskiego CEST) oraz `11:00 UTC` (13:00 / 1:00 PM czasu polskiego CEST), a także na żądanie przez `workflow_dispatch`. (W czasie zimowym CET godziny te odpowiadają odpowiednio 00:00 i 12:00 czasu polskiego). Job używa Ubuntu, Node 22, `npm ci`, a następnie uruchamia `npm run digest` z sekretem `GEMINI_API_KEY`.
 
-`scripts/daily-digest.mjs` pobiera dwa RSS-y:
+`scripts/daily-digest.mjs` pobiera materiały ze zróżnicowanej bazy źródeł (kanały RSS oraz dedykowane parsery HTML dla czołowych obiektów widowiskowych i instytucji):
 
-1. `https://www.katowice.eu/Strony/rss.aspx` — domyślne miasto `katowice`.
-2. `https://metropoliagzm.pl/feed/` — domyślne miasto `cala-okolica`.
+1. **mojeKatowice.pl** (`https://mojekatowice.pl/rss`) — Katowice (RSS)
+2. **Wydarzenia Metropolia GZM** (`https://metropoliagzm.pl/feed/`) — cała okolica (RSS)
+3. **Śląska Opinia** (`https://slaskaopinia.pl/feed/`) — cała okolica (RSS)
+4. **mojChorzow.pl** (`https://mojchorzow.pl/rss`) — Chorzów (RSS)
+5. **mojeTychy.pl** (`https://mojetychy.pl/rss`) — Tychy (RSS)
+6. **mojBytom.pl** (`https://mojbytom.pl/rss`) — Bytom (RSS)
+7. **Silesion.PL** (`https://silesion.pl/feed/`) — cała okolica (RSS)
+8. **Gliwice.eu** (`https://gliwice.eu/rss.xml`) — Gliwice / cała okolica (RSS)
+9. **Park Śląski** (`https://parkslaski.pl/en/news` z zapasowym `https://parkslaski.pl/aktualnosci`) — Chorzów (dedykowany parser kart aktualności)
+10. **Stadion Śląski** (`https://superautostadionslaski.pl/wiadomosci`) — Chorzów (dedykowany parser wiadomości)
+11. **Katowicki Spodek** (`https://www.spodekkatowice.pl/pl/wydarzenia/61/`) — Katowice (dedykowany parser kalendarza wydarzeń)
+12. **Międzynarodowe Centrum Kongresowe (MCK)** (`https://www.mckkatowice.pl/pl/wydarzenia/61/`) — Katowice (dedykowany parser kalendarza wydarzeń)
 
-Skrypt parsuje podstawowe pola RSS/Atom (tytuł, link, opis/streszczenie/treść, datę), usuwa znaczniki HTML i część encji XML. Przyjmuje materiały z ostatnich 14 dni, nie z przyszłości. Nie wszystkie błędy źródeł przerywają pracę, jeśli drugie dostarczyło materiały; gdy nie ma żadnych materiałów, job kończy się błędem.
+Skrypt parsuje standardowe pola RSS/Atom oraz strukturę HTML serwisów instytucjonalnych (tytuł, link, opis, datę), usuwa znaczniki HTML i encje XML. Przyjmuje aktualności z ostatnich 14 dni oraz nadchodzące wydarzenia z kalendarzy (do 45 dni w przód). Błąd pojedynczego źródła nie przerywa pracy skryptu; dopiero brak jakichkolwiek materiałów z całej bazy źródeł kończy job błędem.
 
 ### Redakcja i zabezpieczenia
 
