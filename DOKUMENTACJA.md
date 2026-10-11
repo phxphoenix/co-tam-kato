@@ -124,7 +124,7 @@ Digest sprawdza zachowane wpisy `deleted` i próbuje nie wygenerować ponownie t
 
 ### Harmonogram i źródła
 
-`.github/workflows/daily-digest.yml` uruchamia workflow codziennie o `04:00 UTC` oraz na żądanie przez `workflow_dispatch`. Komentarz workflow mapuje to na 06:00 czasu polskiego podczas CEST; cron jest stały w UTC, więc zimą odpowiada 05:00 czasu polskiego. Job używa Ubuntu, Node 22, `npm ci`, a następnie uruchamia `npm run digest` z sekretem `GEMINI_API_KEY`.
+`.github/workflows/daily-digest.yml` uruchamia workflow dwa razy na dobę: o `23:00 UTC` (01:00 czasu polskiego CEST) oraz `11:00 UTC` (13:00 / 1:00 PM czasu polskiego CEST), a także na żądanie przez `workflow_dispatch`. (W czasie zimowym CET godziny te odpowiadają odpowiednio 00:00 i 12:00 czasu polskiego). Job używa Ubuntu, Node 22, `npm ci`, a następnie uruchamia `npm run digest` z sekretem `GEMINI_API_KEY`.
 
 `scripts/daily-digest.mjs` pobiera dwa RSS-y:
 
@@ -143,7 +143,7 @@ Przed zapisem skrypt porównuje artykuły z lokalnymi rekordami `deleted`, wedł
 
 ### Zapis i publikacja
 
-Po digest skrypt workflow uruchamia `npm run build`. Następnie GitHub Actions dodaje wyłącznie `src/content/news/`, tworzy commit tylko wtedy, gdy wykryto zmiany, i wypycha go do `main` z komunikatem zawierającym `[skip ci]`. Workflow wdrożeniowy reaguje na push do `main`, więc taki commit nie uruchamia kolejnego CI push triggera; workflow digestu sam wykonał już walidację/build. Jeśli nie ma zmian, commit nie powstaje.
+Po digest skrypt workflow uruchamia `npm run build`. Następnie GitHub Actions dodaje wyłącznie `src/content/news/`, tworzy commit tylko wtedy, gdy wykryto zmiany, i wypycha go do `main`. Po zakończeniu pracy workflowu digestu, workflow wdrożeniowy `deploy.yml` zostaje automatycznie wywołany przez mechanizm `workflow_run`, co powoduje przebudowanie serwisu i odświeżenie strony na GitHub Pages. Jeśli nie ma zmian w artykułach, commit nie powstaje.
 
 Automatyzacja nie oznacza, że każdy dzień zakończy się publikacją: może nie być materiału, API może zawieść albo wszystkie propozycje mogą zostać odrzucone/uznane za duplikaty. Wygenerowany przez AI status może być `published`, więc human-in-the-loop nie jest twardą bramką dla każdego wpisu. Ponadto zestaw źródeł w kodzie ograniczony jest do dwóch RSS-ów.
 
@@ -173,7 +173,7 @@ W stanie przeglądu jest 12 rekordów: 11 ze statusem `published` i jeden rekord
 - Strona jest generowana statycznie; filtry działają wyłącznie na wbudowanym zbiorze danych i nie pobierają świeżych danych podczas wizyty.
 - Status `draft` nie chroni treści w statycznym wdrożeniu: dane są w JS strony, a trasa wpisu może być bezpośrednio dostępna. Nie zapisuj poufnych szkiców w repozytorium publicznym.
 - `/keystatic` jest opisany/nawigowany w aplikacji, ale konfiguracja produkcyjna pomija integrację, chyba że ustawiono `ENABLE_KEYSTATIC_BUILD=true`; lokalne `storage` nie zapewnia hostowanego workflow edycji.
-- Harmonogram `04:00 UTC` jest tylko w czasie CEST równoważny 06:00 w Polsce; bez obsługi zmiany czasu zimą lokalna godzina przesuwa się na 05:00.
+- Harmonogram `23:00 UTC` oraz `11:00 UTC` odpowiada 01:00 i 13:00 w Polsce w czasie letnim CEST (oraz 00:00 i 12:00 zimą CET).
 - Opis strony „O projekcie” i README zawierają stwierdzenia szersze niż aktualny kod (np. katalog oficjalnych źródeł), dlatego przy zmianach automatyzacji należy aktualizować także dokumentację marketingową.
 - Lista miast/kategorii występuje w kilku plikach; jej rozbudowa wymaga synchronizacji walidacji, CMS, skryptu i UI.
 - `npm run digest` zapisuje zmiany w working tree; lokalnie nie publikuje ich samodzielnie. Commit/push wykonuje wyłącznie workflow GitHub Actions.

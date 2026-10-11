@@ -1,9 +1,11 @@
-name: Poranny Agent AI (Co Tam KATO)
+name: Agent AI (Co Tam KATO)
 
 on:
   schedule:
-    # Uruchomienie codziennie o 04:00 UTC (06:00 czasu polskiego CEST)
-    - cron: '0 4 * * *'
+    # Wydanie nocne: 01:00 czasu polskiego (23:00 UTC w czasie letnim CEST / 00:00 UTC w czasie zimowym CET)
+    - cron: '0 23 * * *'
+    # Wydanie popołudniowe: 13:00 (1:00 PM) czasu polskiego (11:00 UTC w czasie letnim CEST / 12:00 UTC w czasie zimowym CET)
+    - cron: '0 11 * * *'
   # Możliwość ręcznego uruchomienia jednym kliknięciem z panelu GitHub Actions
   workflow_dispatch:
 
@@ -41,8 +43,8 @@ jobs:
           git add -- src/content/news/
           if ! git diff-index --quiet HEAD --; then
             echo "Wykryto nowe wiadomości! Tworzenie commita..."
-            git commit -m "🤖 Automatyczne poranne wydanie Co Tam KATO [skip ci]"
+            git commit -m "🤖 Automatyczne wydanie Co Tam KATO"
             git push origin main
           else
-            echo "Brak nowych wiadomości na dziś."
+            echo "Brak nowych wiadomości w tym cyklu."
           fi

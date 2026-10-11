@@ -365,7 +365,7 @@ function writeArticle(article, today) {
 }
 
 async function main() {
-  console.log('Uruchamiam poranny przegląd wiadomości Co Tam KATO.');
+  console.log('Uruchamiam przegląd wiadomości Co Tam KATO.');
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('Brak GEMINI_API_KEY. Bez klucza automatyczna publikacja jest wyłączona.');
   const sourceItems = await collectNews();

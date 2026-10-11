@@ -10,7 +10,7 @@
 - **[React 19](https://react.dev/)** – wykorzystany w architekturze "Wysp" (Astro Islands) do interaktywnego, natychmiastowego filtrowania miast, kategorii i wyszukiwarki na żywo.
 - **[Tailwind CSS v4](https://tailwindcss.com/)** – nowoczesny miejski design system dopasowany do urządzeń mobilnych i komputerów.
 - **[Keystatic CMS](https://keystatic.com/)** – wbudowany wizualny panel administracyjny dostępny pod adresem `/keystatic`.
-- **GitHub Actions & Agent AI** – automatyzacja zbierająca poranne komunikaty o 6:00 rano, redagowana z użyciem Google Gemini AI i publikowana bez opłat serwerowych.
+- **GitHub Actions & Agent AI** – automatyzacja działająca 2x dziennie (1:00 w nocy i 13:00 w ciągu dnia), redagowana z użyciem Google Gemini AI i publikowana bez opłat serwerowych.
 
 ---
 
@@ -69,7 +69,7 @@ Tutaj wpisujesz pełną treść artykułu. Możesz używać pogrubień, list pun
 
 ---
 
-## 🤖 Automatyczny Agent AI (Codziennie o 6:00 rano)
+## 🤖 Automatyczny Agent AI (2x dziennie: 1:00 w nocy i 13:00 w dzień)
 
 W katalogu `.github/workflows/daily-digest.yml` oraz `scripts/daily-digest.mjs` skonfigurowany jest Agent AI.
 
@@ -78,7 +78,7 @@ W katalogu `.github/workflows/daily-digest.yml` oraz `scripts/daily-digest.mjs` 
 2. Przejdź do swojego repozytorium na GitHubie: `https://github.com/phxphoenix/co-tam-kato`.
 3. Wejdź w: **Settings** -> **Secrets and variables** -> **Actions** -> **New repository secret**.
 4. Wpisz nazwę: `GEMINI_API_KEY` i wklej swój klucz.
-5. Gotowe! Od teraz każdego ranka o 6:00 GitHub Actions uruchomi bota, sprawdzi komunikaty ze śląskich źródeł, zredaguje podsumowanie i utworzy nowy wpis w Twoim repozytorium!
+5. Gotowe! Od teraz 2 razy dziennie (o 1:00 w nocy i 13:00 w ciągu dnia czasu polskiego) GitHub Actions uruchomi bota, sprawdzi komunikaty ze śląskich źródeł, zredaguje podsumowanie i zaktualizuje stronę!
 
 *Możesz również przetestować działanie skryptu lokalnie komendą:*
 ```powershell
@@ -90,7 +90,7 @@ npm.cmd run digest
 ## 📂 Struktura katalogów
 
 ```text
-├── .github/workflows/      # Przepisy automatyzacji (Agent AI o 6:00 i Deploy)
+├── .github/workflows/      # Przepisy automatyzacji (Agent AI 1:00 i 13:00 oraz Deploy)
 ├── public/                 # Statyczne pliki publiczne (favicon.svg itp.)
 ├── scripts/
 │   └── daily-digest.mjs    # Skrypt Agenta AI do pobierania i redagowania newsów
