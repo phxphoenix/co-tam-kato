@@ -1,8 +1,22 @@
-import React, { useState, useMemo } from 'react';
-import { Search, MapPin, Calendar, ExternalLink, Bot, ShieldAlert, Sparkles, Filter, X, Smile, ArrowDownWideNarrow } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  Search,
+  MapPin,
+  Calendar,
+  ExternalLink,
+  Bot,
+  ShieldAlert,
+  Sparkles,
+  Filter,
+  X,
+  Smile,
+  ArrowDownWideNarrow,
+  Heart,
+} from 'lucide-react';
 import { CITIES, CATEGORIES } from '../lib/constants';
 import { CityBadge } from './CityBadge';
 import { CategoryBadge } from './CategoryBadge';
+import { useFavorites } from '../lib/favorites';
 
 export interface FeedItem {
   id: string;
@@ -26,24 +40,57 @@ interface InteractiveFeedProps {
   initialItems: FeedItem[];
   defaultCategory?: string;
   defaultOnlyKids?: boolean;
+  defaultOnlyFavorites?: boolean;
 }
 
 export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
   initialItems,
   defaultCategory = 'all',
   defaultOnlyKids = false,
+  defaultOnlyFavorites = false,
 }) => {
   const rawBase = import.meta.env.BASE_URL || '/';
   const baseUrl = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+
+  const { favorites, isFavorite, toggleFavorite, favoritesCount, isLoaded } = useFavorites();
+
   const [selectedCity, setSelectedCity] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>(defaultCategory);
   const [onlyKids, setOnlyKids] = useState<boolean>(defaultOnlyKids);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState<boolean>(defaultOnlyFavorites);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showDrafts, setShowDrafts] = useState<boolean>(false);
   const [datePreset, setDatePreset] = useState<'all' | '7' | '30' | 'custom'>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+
+  // Sprawdź parametr URL ?widok=ulubione po zamontowaniu na kliencie
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('widok') === 'ulubione' || params.get('ulubione') === 'true') {
+      setShowOnlyFavorites(true);
+    }
+  }, []);
+
+  // Synchronizacja parametru w pasku adresu przy przełączaniu
+  const handleToggleFavorites = () => {
+    setShowOnlyFavorites((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        if (next) {
+          url.searchParams.set('widok', 'ulubione');
+        } else {
+          url.searchParams.delete('widok');
+          url.searchParams.delete('ulubione');
+        }
+        window.history.replaceState({}, '', url.toString());
+      }
+      return next;
+    });
+  };
 
   const getItemDate = (item: FeedItem) => (item.sourceDate || item.pubDate).slice(0, 10);
   const setPreset = (preset: 'all' | '7' | '30' | 'custom') => {
@@ -72,19 +119,20 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
     ).length;
   }, [initialItems, showDrafts]);
 
-  // Zliczanie wpisów per miasto
+  // Zliczanie wpisów per miasto z uwzględnieniem trybu ulubionych / dziecięcego
   const cityCounts = useMemo(() => {
     const counts: Record<string, number> = { all: 0 };
     initialItems.forEach((item) => {
       if (item.status === 'published' || showDrafts) {
-        if (!onlyKids || item.category === 'dla-dzieci' || item.isForKids) {
-          counts.all = (counts.all || 0) + 1;
-          counts[item.city] = (counts[item.city] || 0) + 1;
-        }
+        if (onlyKids && item.category !== 'dla-dzieci' && !item.isForKids) return;
+        if (showOnlyFavorites && !favorites.includes(item.slug)) return;
+
+        counts.all = (counts.all || 0) + 1;
+        counts[item.city] = (counts[item.city] || 0) + 1;
       }
     });
     return counts;
-  }, [initialItems, showDrafts, onlyKids]);
+  }, [initialItems, showDrafts, onlyKids, showOnlyFavorites, favorites]);
 
   // Liczba szkiców oczekujących na zatwierdzenie
   const draftCount = useMemo(() => {
@@ -99,6 +147,11 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
         return false;
       }
       if (showDrafts && item.status !== 'draft') {
+        return false;
+      }
+
+      // Filtr sekcji ulubionych
+      if (showOnlyFavorites && !favorites.includes(item.slug)) {
         return false;
       }
 
@@ -117,6 +170,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
         return false;
       }
 
+      // Filtr daty
       const itemDate = getItemDate(item);
       if (dateFrom && itemDate < dateFrom) return false;
       if (dateTo && itemDate > dateTo) return false;
@@ -138,7 +192,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
       const difference = getItemDate(b).localeCompare(getItemDate(a));
       return sortOrder === 'newest' ? difference : -difference;
     });
-  }, [initialItems, selectedCity, selectedCategory, searchQuery, showDrafts, onlyKids, dateFrom, dateTo, sortOrder]);
+  }, [initialItems, selectedCity, selectedCategory, searchQuery, showDrafts, onlyKids, showOnlyFavorites, favorites, dateFrom, dateTo, sortOrder]);
 
   // Formatowanie daty po polsku
   const formatDate = (dateStr: string) => {
@@ -154,14 +208,28 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
     }
   };
 
-  const hasActiveFilters = selectedCity !== 'all' || selectedCategory !== 'all' || searchQuery !== '' || onlyKids || dateFrom !== '' || dateTo !== '';
+  const hasActiveFilters =
+    selectedCity !== 'all' ||
+    selectedCategory !== 'all' ||
+    searchQuery !== '' ||
+    onlyKids ||
+    showOnlyFavorites ||
+    dateFrom !== '' ||
+    dateTo !== '';
 
   const clearFilters = () => {
     setSelectedCity('all');
     setSelectedCategory('all');
     setOnlyKids(false);
+    setShowOnlyFavorites(false);
     setSearchQuery('');
     setPreset('all');
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('widok');
+      url.searchParams.delete('ulubione');
+      window.history.replaceState({}, '', url.toString());
+    }
   };
 
   return (
@@ -246,6 +314,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
           </button>
         </div>
 
+        {/* Sekcja filtrów dat oraz wejście do ulubionych po lewej stronie */}
         <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4 space-y-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div>
@@ -254,11 +323,57 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
               </span>
               <p className="text-xs text-zinc-500 mt-1">Starsze wpisy bez daty źródłowej używają daty dodania do portalu.</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Dedykowany przycisk wejścia do podsekcji ulubionych po lewej stronie filtrów dat */}
+              <button
+                type="button"
+                onClick={handleToggleFavorites}
+                aria-pressed={showOnlyFavorites}
+                title={showOnlyFavorites ? 'Pokaż wszystkie artykuły' : 'Pokaż tylko artykuły z ulubionych'}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all inline-flex items-center gap-1.5 shadow-sm ${
+                  showOnlyFavorites
+                    ? 'bg-rose-500 text-white border-rose-400 shadow-rose-500/20 ring-1 ring-rose-400/50'
+                    : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:border-rose-400/60 hover:text-rose-300 hover:bg-zinc-800'
+                }`}
+              >
+                <Heart
+                  className={`w-3.5 h-3.5 transition-transform ${
+                    showOnlyFavorites ? 'fill-current text-white scale-110' : 'text-rose-400'
+                  }`}
+                />
+                <span>Ulubione</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    showOnlyFavorites
+                      ? 'bg-rose-700 text-white'
+                      : favoritesCount > 0
+                      ? 'bg-rose-500/20 text-rose-300'
+                      : 'bg-zinc-800 text-zinc-400'
+                  }`}
+                >
+                  {isLoaded ? favoritesCount : 0}
+                </span>
+              </button>
+
+              <span className="w-px h-5 bg-zinc-800 mx-1 hidden sm:inline-block" aria-hidden="true" />
+
+              {/* Filtry z datami */}
               {([
-                ['all', 'Dowolna data'], ['7', 'Ostatnie 7 dni'], ['30', 'Ostatnie 30 dni'], ['custom', 'Wybierz zakres'],
+                ['all', 'Dowolna data'],
+                ['7', 'Ostatnie 7 dni'],
+                ['30', 'Ostatnie 30 dni'],
+                ['custom', 'Wybierz zakres'],
               ] as const).map(([preset, label]) => (
-                <button key={preset} onClick={() => setPreset(preset)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${datePreset === preset ? 'bg-amber-400 text-zinc-950 border-amber-400' : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:border-zinc-500'}`}>
+                <button
+                  key={preset}
+                  onClick={() => setPreset(preset)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                    datePreset === preset
+                      ? 'bg-amber-400 text-zinc-950 border-amber-400'
+                      : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:border-zinc-500'
+                  }`}
+                >
                   {label}
                 </button>
               ))}
@@ -268,11 +383,23 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
               <label className="text-xs text-zinc-400 space-y-1.5">
                 <span>Od</span>
-                <input type="date" value={dateFrom} max={dateTo || undefined} onChange={(event) => setDateFrom(event.target.value)} className="block w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-amber-400 focus:outline-none" />
+                <input
+                  type="date"
+                  value={dateFrom}
+                  max={dateTo || undefined}
+                  onChange={(event) => setDateFrom(event.target.value)}
+                  className="block w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-amber-400 focus:outline-none"
+                />
               </label>
               <label className="text-xs text-zinc-400 space-y-1.5">
                 <span>Do</span>
-                <input type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => setDateTo(event.target.value)} className="block w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-amber-400 focus:outline-none" />
+                <input
+                  type="date"
+                  value={dateTo}
+                  min={dateFrom || undefined}
+                  onChange={(event) => setDateTo(event.target.value)}
+                  className="block w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-amber-400 focus:outline-none"
+                />
               </label>
             </div>
           )}
@@ -375,25 +502,84 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
 
       {/* Nagłówek wyników i status */}
       <div className="flex items-center justify-between text-sm text-zinc-400 px-1">
-        <span>
-          Znaleziono <strong className="text-zinc-100">{filteredItems.length}</strong>{' '}
-          {filteredItems.length === 1 ? 'wiadomość' : 'wiadomości'}
-          {onlyKids && ' (👶 Wyłącznie dla dzieci 4-10 lat)'}
-          {selectedCity !== 'all' && ` dla miasta: ${CITIES[selectedCity]?.name}`}
-          {showDrafts && ' (Tryb szkiców)'}
+        <span className="flex items-center flex-wrap gap-1.5">
+          <span>
+            Znaleziono <strong className="text-zinc-100">{filteredItems.length}</strong>{' '}
+            {filteredItems.length === 1 ? 'wiadomość' : 'wiadomości'}
+          </span>
+          {showOnlyFavorites && (
+            <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
+              <Heart className="w-3 h-3 fill-current text-rose-400" />
+              Tylko Ulubione
+            </span>
+          )}
+          {onlyKids && <span className="text-zinc-400">(👶 Dzieci 4-10 lat)</span>}
+          {selectedCity !== 'all' && <span>dla: <span className="text-zinc-200 font-medium">{CITIES[selectedCity]?.name}</span></span>}
+          {showDrafts && <span className="text-amber-300 font-medium">(Tryb szkiców)</span>}
         </span>
         <label className="inline-flex items-center gap-2 text-xs text-zinc-400">
           <ArrowDownWideNarrow className="w-3.5 h-3.5 text-amber-400" />
           <span>Sortuj</span>
-          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as 'newest' | 'oldest')} className="bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:border-amber-400 focus:outline-none">
+          <select
+            value={sortOrder}
+            onChange={(event) => setSortOrder(event.target.value as 'newest' | 'oldest')}
+            className="bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:border-amber-400 focus:outline-none"
+          >
             <option value="newest">Najnowsze najpierw</option>
             <option value="oldest">Najstarsze najpierw</option>
           </select>
         </label>
       </div>
 
-      {/* Brak wyników */}
-      {filteredItems.length === 0 && (
+      {/* Dedykowany pusty stan dla braku ulubionych */}
+      {showOnlyFavorites && favoritesCount === 0 && (
+        <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-rose-500/30 rounded-3xl">
+          <div className="inline-flex p-4 rounded-full bg-rose-500/10 text-rose-400 mb-4 border border-rose-500/20">
+            <Heart className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-100 mb-1">
+            Nie masz jeszcze ulubionych artykułów
+          </h3>
+          <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
+            Kliknij ikonę serduszka (❤️) na dowolnym kafelku lub wewnątrz wybranego artykułu, aby zapisać go w tej sekcji.
+          </p>
+          <button
+            onClick={() => setShowOnlyFavorites(false)}
+            className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-sm transition-colors"
+          >
+            Przeglądaj wszystkie wiadomości
+          </button>
+        </div>
+      )}
+
+      {/* Brak wyników przy aktywnych filtrach w trybie ulubionych */}
+      {showOnlyFavorites && favoritesCount > 0 && filteredItems.length === 0 && (
+        <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
+          <div className="inline-flex p-4 rounded-full bg-zinc-800/80 text-rose-400 mb-4">
+            <Heart className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-200 mb-1">
+            Brak ulubionych wpisów dla wybranych filtrów
+          </h3>
+          <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
+            Masz zapisane {favoritesCount} {favoritesCount === 1 ? 'artykuł' : 'artykuły'} w ulubionych, ale żaden nie pasuje do aktualnych filtrów miasta, kategorii lub daty.
+          </p>
+          <button
+            onClick={() => {
+              setSelectedCity('all');
+              setSelectedCategory('all');
+              setSearchQuery('');
+              setPreset('all');
+            }}
+            className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-semibold text-sm transition-colors shadow-lg shadow-rose-500/20"
+          >
+            Pokaż wszystkie zapisane ulubione
+          </button>
+        </div>
+      )}
+
+      {/* Brak wyników w trybie standardowym */}
+      {!showOnlyFavorites && filteredItems.length === 0 && (
         <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
           <div className="inline-flex p-4 rounded-full bg-zinc-800/80 text-amber-400 mb-4">
             <Search className="w-8 h-8" />
@@ -415,82 +601,114 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
 
       {/* Siatka kart wpisów */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.map((item) => (
-          <article
-            key={item.id}
-            className={`group bg-zinc-900/80 hover:bg-zinc-900 border rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 ${
-              item.isAlert
-                ? 'border-rose-500/40 hover:border-rose-500/70 bg-gradient-to-b from-rose-950/20 to-zinc-900/80'
-                : item.category === 'dla-dzieci' || item.isForKids
-                ? 'border-emerald-500/40 hover:border-emerald-500/70 bg-gradient-to-b from-emerald-950/15 to-zinc-900/80'
-                : 'border-zinc-800/90 hover:border-zinc-700'
-            }`}
-          >
-            <div>
-              {/* Odznaki: Miasto + Kategoria + Wiek dziecka jeśli określony */}
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-3.5">
-                <div className="flex items-center gap-1.5">
-                  <CityBadge city={item.city} size="sm" />
-                  <CategoryBadge category={item.category} />
-                </div>
-                {(item.ageRange || item.isForKids) && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                    <Smile className="w-3 h-3" />
-                    {item.ageRange || 'Dzieci 4-10 lat'}
-                  </span>
-                )}
-              </div>
+        {filteredItems.map((item) => {
+          const itemIsFav = isLoaded && isFavorite(item.slug);
 
-              {/* Tytuł */}
-              <h2 className="text-lg font-bold text-zinc-100 group-hover:text-amber-400 transition-colors line-clamp-2 mb-2 leading-snug">
-                <a href={`${baseUrl}wpis/${item.slug}`} className="hover:underline">
-                  {item.title}
-                </a>
-              </h2>
-
-              {/* Zajawka */}
-              <p className="text-sm text-zinc-400 line-clamp-3 mb-4 leading-relaxed">
-                {item.summary}
-              </p>
-            </div>
-
-            <div>
-              {/* Metadane: Lokalizacja i Data */}
-              <div className="space-y-1.5 text-xs text-zinc-500 border-t border-zinc-800/80 pt-3.5 mb-4">
-                {item.location && (
-                  <div className="flex items-center gap-1.5 text-zinc-400 truncate">
-                    <MapPin className="w-3.5 h-3.5 text-amber-400/80 flex-shrink-0" />
-                    <span className="truncate">{item.location}</span>
+          return (
+            <article
+              key={item.id}
+              className={`group bg-zinc-900/80 hover:bg-zinc-900 border rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 ${
+                item.isAlert
+                  ? 'border-rose-500/40 hover:border-rose-500/70 bg-gradient-to-b from-rose-950/20 to-zinc-900/80'
+                  : item.category === 'dla-dzieci' || item.isForKids
+                  ? 'border-emerald-500/40 hover:border-emerald-500/70 bg-gradient-to-b from-emerald-950/15 to-zinc-900/80'
+                  : itemIsFav
+                  ? 'border-rose-500/30 hover:border-rose-500/50 bg-gradient-to-b from-rose-950/10 to-zinc-900/80'
+                  : 'border-zinc-800/90 hover:border-zinc-700'
+              }`}
+            >
+              <div>
+                {/* Odznaki: Miasto + Kategoria + Wiek dziecka jeśli określony + Ergonomiczne Serduszko */}
+                <div className="flex items-center justify-between gap-2 mb-3.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <CityBadge city={item.city} size="sm" />
+                    <CategoryBadge category={item.category} />
                   </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-zinc-500">
-                    <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span>{formatDate(item.sourceDate || item.pubDate)}</span>
-                  </div>
-                  {item.aiGenerated && (
-                    <span
-                      className="inline-flex items-center gap-1 text-[11px] text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-full"
-                      title="Przygotowane we współpracy z Agentem AI"
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {(item.ageRange || item.isForKids) && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                        <Smile className="w-3 h-3" />
+                        {item.ageRange || 'Dzieci 4-10 lat'}
+                      </span>
+                    )}
+
+                    {/* Ergonomiczna ikona serduszka na kafelku */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleFavorite(item.slug);
+                      }}
+                      aria-label={itemIsFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}
+                      title={itemIsFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}
+                      className={`p-1.5 rounded-full border transition-all duration-200 active:scale-90 focus:outline-none focus:ring-2 focus:ring-rose-400/50 ${
+                        itemIsFav
+                          ? 'bg-rose-500/20 text-rose-500 border-rose-500/40 hover:bg-rose-500/30 shadow-sm shadow-rose-500/10 scale-105'
+                          : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/60 hover:text-rose-400 hover:border-rose-400/50 hover:bg-zinc-800'
+                      }`}
                     >
-                      <Bot className="w-3 h-3 text-amber-400" />
-                      Agent AI
-                    </span>
-                  )}
+                      <Heart
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          itemIsFav ? 'fill-rose-500 text-rose-500 scale-110 drop-shadow' : ''
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
+
+                {/* Tytuł */}
+                <h2 className="text-lg font-bold text-zinc-100 group-hover:text-amber-400 transition-colors line-clamp-2 mb-2 leading-snug">
+                  <a href={`${baseUrl}wpis/${item.slug}`} className="hover:underline">
+                    {item.title}
+                  </a>
+                </h2>
+
+                {/* Zajawka */}
+                <p className="text-sm text-zinc-400 line-clamp-3 mb-4 leading-relaxed">
+                  {item.summary}
+                </p>
               </div>
 
-              {/* Przycisk Przejdź do wpisu */}
-              <a
-                href={`${baseUrl}wpis/${item.slug}`}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-800/70 hover:bg-amber-400 text-zinc-300 hover:text-zinc-950 transition-all group-hover:bg-zinc-800"
-              >
-                Czytaj szczegóły
-                <span className="transition-transform group-hover:translate-x-1">→</span>
-              </a>
-            </div>
-          </article>
-        ))}
+              <div>
+                {/* Metadane: Lokalizacja i Data */}
+                <div className="space-y-1.5 text-xs text-zinc-500 border-t border-zinc-800/80 pt-3.5 mb-4">
+                  {item.location && (
+                    <div className="flex items-center gap-1.5 text-zinc-400 truncate">
+                      <MapPin className="w-3.5 h-3.5 text-amber-400/80 flex-shrink-0" />
+                      <span className="truncate">{item.location}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-zinc-500">
+                      <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>{formatDate(item.sourceDate || item.pubDate)}</span>
+                    </div>
+                    {item.aiGenerated && (
+                      <span
+                        className="inline-flex items-center gap-1 text-[11px] text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-full"
+                        title="Przygotowane we współpracy z Agentem AI"
+                      >
+                        <Bot className="w-3 h-3 text-amber-400" />
+                        Agent AI
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Przycisk Przejdź do wpisu */}
+                <a
+                  href={`${baseUrl}wpis/${item.slug}`}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-800/70 hover:bg-amber-400 text-zinc-300 hover:text-zinc-950 transition-all group-hover:bg-zinc-800"
+                >
+                  Czytaj szczegóły
+                  <span className="transition-transform group-hover:translate-x-1">→</span>
+                </a>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </div>
   );

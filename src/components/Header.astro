@@ -1,5 +1,5 @@
 ---
-import { Calendar, MapPin, Settings, Smile } from 'lucide-react';
+import { Calendar, MapPin, Settings, Smile, Heart } from 'lucide-react';
 
 const today = new Intl.DateTimeFormat('pl-PL', {
   weekday: 'long',
@@ -49,6 +49,14 @@ const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
           class="px-2.5 sm:px-3 py-1.5 rounded-lg text-zinc-300 hover:text-white hover:bg-zinc-800/60 transition-colors"
         >
           Wiadomości
+        </a>
+        <a
+          href={`${base}ulubione`}
+          class="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 transition-colors"
+          title="Twoje ulubione artykuły"
+        >
+          <Heart className="w-3.5 h-3.5 fill-current" />
+          <span class="hidden sm:inline">Ulubione</span>
         </a>
         <a
           href={`${base}dla-dzieci`}
