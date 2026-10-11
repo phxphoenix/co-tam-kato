@@ -9,7 +9,7 @@ const isVercel = process.env.VERCEL === '1' || process.env.DEPLOY_TARGET === 've
 
 // https://astro.build/config
 export default defineConfig({
-  site: isVercel ? undefined : 'https://phxphoenix.github.io',
+  site: isVercel ? 'https://co-tam-kato.vercel.app' : 'https://phxphoenix.github.io',
   base: isVercel || isDev ? '/' : '/co-tam-kato/',
   output: 'static',
   adapter: isVercel ? vercel() : undefined,
