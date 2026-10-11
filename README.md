@@ -6,10 +6,10 @@
 
 ## 🚀 Zastosowane technologie
 
-- **[Astro 5](https://astro.build/)** – ultralekki silnik generujący czysty kod HTML/CSS (Static Site Generation), zapewniający błyskawiczne czasy ładowania i świetne SEO.
+- **[Astro 5](https://astro.build/)** – ultralekki silnik generujący kod HTML/CSS (Static Site Generation / Serverless), zapewniający błyskawiczne czasy ładowania i świetne SEO.
 - **[React 19](https://react.dev/)** – wykorzystany w architekturze "Wysp" (Astro Islands) do interaktywnego, natychmiastowego filtrowania miast, kategorii i wyszukiwarki na żywo.
 - **[Tailwind CSS v4](https://tailwindcss.com/)** – nowoczesny miejski design system dopasowany do urządzeń mobilnych i komputerów.
-- **[Keystatic CMS](https://keystatic.com/)** – wbudowany wizualny panel administracyjny dostępny pod adresem `/keystatic`.
+- **[Keystatic CMS](https://keystatic.com/)** – wizualny panel administracyjny dostępny lokalnie oraz online na platformie Vercel pod adresem `/keystatic` z uwierzytelnianiem GitHub OAuth.
 - **GitHub Actions & Agent AI** – automatyzacja działająca 2x dziennie (1:00 w nocy i 13:00 w ciągu dnia), redagowana z użyciem Google Gemini AI i publikowana bez opłat serwerowych.
 
 ---
@@ -38,14 +38,17 @@ Aby zatrzymać działający serwer, wciśnij w terminalu kombinację klawiszy `C
 
 Masz do wyboru dwie metody edycji i publikacji:
 
-### Sposób A: Wizualny Panel Admina (Zalecany)
-1. Uruchom `npm.cmd run dev` i wejdź na `http://localhost:4321/keystatic`.
-2. Kliknij na kolekcję **"Aktualności i Wydarzenia"**.
-3. Zobaczysz listę wszystkich wpisów. Możesz:
-   - Dodać nowy wpis (przycisk *"Create news"*).
+### Sposób A: Wizualny Panel Admina (Online lub Lokalnie)
+1. **Online (Vercel)**: Wejdź na `https://co-tam-kato.vercel.app/keystatic` (lub kliknij przycisk „Panel Admina” w nagłówku strony) i zaloguj się za pomocą konta GitHub.
+2. **Lokalnie**: Uruchom `npm.cmd run dev` i otwórz `http://localhost:4321/keystatic`.
+3. Kliknij na kolekcję **"Wszystkie artykuły"**.
+4. Zobaczysz listę wszystkich wpisów. Możesz:
+   - Dodać nowy wpis (przycisk *"Create entry"*).
    - Zmienić status ze **Szkic (draft)** na **Opublikowany (published)**.
    - Wycofać niechciany wpis, ustawiając status **Usunięty (deleted)** i zapisując zmianę. Plik pozostaje w repozytorium jako blokada ponownej publikacji tego źródła lub tematu. Nie używaj ikony kosza **Delete entry** — Keystatic usuwa wtedy plik, zamiast oznaczyć go jako usunięty.
-   - Edytować treść w wygodnym edytorze wizualnym.
+   - Edytować treść w wygodnym edytorze wizualnym Markdoc.
+   - Po zapisaniu zmian online w Keystatic zmiany są natychmiast commitowane do gałęzi `main` w Twoim repozytorium GitHub i Vercel automatycznie wdraża nową wersję!
+
 
 ### Sposób B: Zwykłe pliki Markdown
 Wszystkie artykuły znajdują się w katalogu `src/content/news/`. Każdy plik to zwykły tekst z nagłówkiem (frontmatter):

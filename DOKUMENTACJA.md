@@ -8,12 +8,13 @@ Dokument opisuje kod znajdujący się w repozytorium w chwili przeglądu (27 wrz
 
 ## 2. Technologie i sposób uruchamiania
 
-- **Astro 5** generuje HTML stron podczas budowania (SSG).
-- **React 19** obsługuje interaktywne wyspy: filtrowanie listy i pasek alertów.
+- **Astro 5** generuje HTML stron podczas budowania (SSG) oraz obsługuje Serverless na Vercelu (`@astrojs/vercel`).
+- **React 19** obsługuje interaktywne wyspy: filtrowanie listy, ulubione i pasek alertów.
 - **Tailwind CSS 4** wraz z pluginem Vite dostarcza style; dodatkowe reguły są w `src/styles/global.css`.
 - **TypeScript** opisuje konfigurację i komponenty React.
-- **Keystatic** edytuje kolekcję artykułów zapisanych lokalnie jako Markdown.
-- **GitHub Actions** wykonuje poranny digest i buduje/wdraża stronę na GitHub Pages.
+- **Keystatic CMS** edytuje kolekcję artykułów Markdown lokalnie (zapis na dysk) oraz w chmurze na Vercelu (zapis commitów bezpośrednio do repozytorium GitHub via GitHub App OAuth).
+- **Vercel** obsługuje produkcyjne wdrożenie strony oraz dynamiczne trasy API (`/api/keystatic/*`) i panel administracyjny (`/keystatic`).
+- **GitHub Actions** wykonuje automatyczny digest (1:00 i 13:00) oraz wdrożenie na GitHub Pages / Vercel.
 - **Google Gemini API** jest używane przez skrypt digestu; klucz musi być dostępny jako sekret `GEMINI_API_KEY`.
 
 Wymagane skrypty npm z `package.json`:
@@ -25,7 +26,11 @@ Wymagane skrypty npm z `package.json`:
 | `npm run preview` | Serwuje lokalnie zbudowaną witrynę. |
 | `npm run digest` | Uruchamia `scripts/daily-digest.mjs`; wymaga klucza Gemini i dostępu do źródeł/API. |
 
-Keystatic jest dołączany domyślnie w trybie developerskim. W produkcyjnym buildzie jest pomijany, chyba że ustawiono `ENABLE_KEYSTATIC_BUILD=true`. Konfiguracja Astro ustawia `site` na `https://phxphoenix.github.io`; dla produkcji ustawia prefiks ścieżek `/co-tam-kato/`, a w dev używa `/`. Witryna Pages jest więc budowana dla ścieżki repozytorium.
+Keystatic działa dwutorowo:
+1. **Lokalnie**: `storage: { kind: 'local' }` zapisuje pliki w `src/content/news/`.
+2. **Na Vercelu (`NODE_ENV=production`)**: `storage: { kind: 'github' }` wykorzystuje autoryzację GitHub App i tworzy commity bezpośrednio w repozytorium `phxphoenix/co-tam-kato`.
+Trasa API `src/pages/api/keystatic/[...params].ts` automatycznie mapuje zapytania proxy Vercela na publiczną domenę `co-tam-kato.vercel.app`, zapewniając prawidłowy OAuth handshake.
+
 
 ## 3. Struktura kodu
 
