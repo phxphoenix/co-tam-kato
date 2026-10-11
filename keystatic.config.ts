@@ -1,9 +1,17 @@
 import { config, fields, collection } from '@keystatic/core';
 
+const isProd = process.env.NODE_ENV === 'production';
+
 export default config({
-  storage: {
-    kind: 'local',
-  },
+  storage: isProd
+    ? {
+        kind: 'github',
+        repo: 'phxphoenix/co-tam-kato',
+      }
+    : {
+        kind: 'local',
+      },
+
   collections: {
     news: collection({
       label: 'Wszystkie artykuły (opublikowane, szkice i usunięte)',
