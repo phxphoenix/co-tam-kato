@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic';
 import { parseString } from 'set-cookie-parser';
-import config from '../../../../keystatic.config';
+import config from '../../keystatic.config';
 
 export const prerender = false;
 
@@ -76,8 +76,8 @@ export const ALL: APIRoute = async (context) => {
     }
   }
 
-  return new Response(body, {
+  return new Response(body as any, {
     status,
-    headers: [...headersInADifferentStructure.entries()].flatMap(([key, val]) => val.map((x) => [key, x])),
+    headers: [...headersInADifferentStructure.entries()].flatMap(([key, val]) => val.map((x) => [key, x] as [string, string])),
   });
 };
