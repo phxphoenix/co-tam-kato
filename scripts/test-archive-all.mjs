@@ -8,6 +8,7 @@ const testSuites = [
   { name: 'US 2: Manualna archiwizacja i przywracanie z kafelka', script: 'scripts/test-archive-us2.mjs' },
   { name: 'US 3: Nocny worker automatycznej archiwizacji', script: 'scripts/test-archive-us3.mjs' },
   { name: 'US 4: Konfiguracja okresu archiwizacji i panel zarządzania', script: 'scripts/test-archive-us4.mjs' },
+  { name: 'Synchronizacja archiwum klienta i odporność API', script: 'scripts/test-archive-client-sync.mjs' },
 ];
 
 console.log('\n========================================================================');

@@ -192,6 +192,14 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
     return initialItems.filter((i) => i.status === 'draft').length;
   }, [initialItems]);
 
+  // Całkowita liczba zarchiwizowanych wpisów
+  const archivedTotalCount = useMemo(() => {
+    return initialItems.filter((item) => {
+      if (!showDrafts && item.status === 'draft') return false;
+      return getStatus(item.slug, Boolean(item.archived));
+    }).length;
+  }, [initialItems, showDrafts, getStatus]);
+
   // Filtrowanie wpisów
   const filteredItems = useMemo(() => {
     return initialItems.filter((item) => {
@@ -699,7 +707,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
       )}
 
       {/* Dedykowany pusty stan dla całkowitego braku artykułów w archiwum (AC 6) */}
-      {isArchiveView && initialItems.length === 0 && (
+      {(isArchiveView && initialItems.length === 0 || (isArchiveView && archivedTotalCount === 0)) && (
         <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
           <div className="inline-flex p-4 rounded-full bg-amber-500/10 text-amber-400 mb-4 border border-amber-500/20">
             <Archive className="w-8 h-8" />
@@ -720,7 +728,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
       )}
 
       {/* Pusty stan dla archiwum gdy wpisy są w archiwum, ale żaden nie pasuje do wybranych filtrów */}
-      {isArchiveView && initialItems.length > 0 && filteredItems.length === 0 && (
+      {isArchiveView && initialItems.length > 0 && archivedTotalCount > 0 && filteredItems.length === 0 && (
         <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
           <div className="inline-flex p-4 rounded-full bg-zinc-800/80 text-amber-400 mb-4">
             <Archive className="w-8 h-8" />
@@ -729,8 +737,8 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
             Brak zarchiwizowanych artykułów dla wybranych filtrów
           </h3>
           <p className="text-sm text-zinc-500 max-w-md mx-auto mb-6">
-            W archiwum znajduje się {initialItems.length}{' '}
-            {initialItems.length === 1 ? 'wpis' : 'wpisów'}, ale żaden nie pasuje do aktualnych filtrów miasta, kategorii lub daty.
+            W archiwum znajduje się {archivedTotalCount}{' '}
+            {archivedTotalCount === 1 ? 'wpis' : (archivedTotalCount % 10 >= 2 && archivedTotalCount % 10 <= 4 && (archivedTotalCount % 100 < 10 || archivedTotalCount % 100 >= 20)) ? 'wpisy' : 'wpisów'}, ale żaden nie pasuje do aktualnych filtrów miasta, kategorii lub daty.
           </p>
           <button
             onClick={clearFilters}

@@ -64,9 +64,22 @@ export function updateArticleArchive(
     }
 
     const updatedContent = `---\n${frontmatter.trim()}\n---${body}`;
-    fs.writeFileSync(targetFile, updatedContent, 'utf8');
 
-    return { success: true, filePath: targetFile };
+    try {
+      fs.writeFileSync(targetFile, updatedContent, 'utf8');
+      return { success: true, filePath: targetFile };
+    } catch (writeErr: any) {
+      if (writeErr?.code === 'EROFS' || String(writeErr?.message).includes('read-only')) {
+        return {
+          success: true,
+          readOnly: true,
+          filePath: targetFile,
+          content: updatedContent,
+          fileName: path.basename(targetFile),
+        };
+      }
+      throw writeErr;
+    }
   } catch (err: any) {
     return { success: false, error: err?.message || String(err) };
   }

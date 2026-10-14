@@ -53,12 +53,22 @@ export function updateArchiveSettings(rawVal: unknown): { success: boolean; erro
       archiveAfterDays: validation.value,
     };
 
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(newSettings, null, 2) + '\n', 'utf8');
-
-    return {
-      success: true,
-      settings: newSettings,
-    };
+    try {
+      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(newSettings, null, 2) + '\n', 'utf8');
+      return {
+        success: true,
+        settings: newSettings,
+      };
+    } catch (writeErr: any) {
+      if (writeErr?.code === 'EROFS' || String(writeErr?.message).includes('read-only')) {
+        return {
+          success: true,
+          readOnly: true,
+          settings: newSettings,
+        };
+      }
+      throw writeErr;
+    }
   } catch (err: any) {
     return {
       success: false,

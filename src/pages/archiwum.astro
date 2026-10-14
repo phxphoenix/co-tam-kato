@@ -4,9 +4,9 @@ import { InteractiveFeed } from '../components/InteractiveFeed';
 import { getCollection } from 'astro:content';
 import { Archive, Sparkles, Calendar, History, FolderClock, Layers } from 'lucide-react';
 
-// Pobranie tylko zarchiwizowanych wpisów (Archived = true oraz status !== 'deleted')
+// Pobranie wpisów z kolekcji (status !== 'deleted', uwzględniając stan item.data.archived w InteractiveFeed)
 const allNews = (await getCollection('news')).filter(
-  (item) => item.data.status !== 'deleted' && Boolean(item.data.archived)
+  (item) => item.data.status !== 'deleted'
 );
 
 // Domyślne sortowanie od najnowszych według daty publikacji

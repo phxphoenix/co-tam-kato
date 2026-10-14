@@ -234,11 +234,12 @@ Schemat artykułów w `src/content.config.ts` oraz `keystatic.config.ts` został
 
 1. **Pozycja w menu**: W górnym pasku nawigacyjnym (`src/components/Header.astro`) znajduje się odnośnik **„Archiwum”**, usytuowany ściśle pomiędzy pozycjami **„Dla Dzieci (4-10)”** a **„O serwisie”**. Dodatkowy link umieszczono w stopce serwisu.
 2. **Podstrona `/archiwum`** (`src/pages/archiwum.astro`):
-   - Prezentuje wyłącznie artykuły z flagą `archived: true` (oraz statusem różnym od `deleted`).
+   - Komponent `InteractiveFeed` otrzymuje zbiór wszystkich nieusuniętych artykułów i dynamicznie ewaluuje ich stan archiwizacji (`isArchiveView={true}`).
+   - W widoku domyślnym prezentowane są wyłącznie artykuły z flagą `archived: true` (z bazy danych lub zaktualizowane ręcznie przez użytkownika w bieżącej sesji).
    - Układ siatki kafelków, responsywność i stylistyka są w 100% spójne ze stroną główną i sekcją Ulubione.
    - Wpisy z `archived: true` są automatycznie odfiltrowywane ze strony głównej (`/`) oraz sekcji dziecięcej (`/dla-dzieci`).
 3. **Relacja z sekcją Ulubione**: Zarchiwizowanie wpisu nie wpływa na stan polubienia. Artykuł oznaczony jako ulubiony i zarchiwizowany jest równocześnie dostępny w sekcji „Ulubione” oraz „Archiwum”.
-4. **Stan pusty (Empty State)**: W przypadku braku zarchiwizowanych treści wyświetla się dedykowany komunikat informacyjny („Brak zarchiwizowanych artykułów”).
+4. **Stan pusty (Empty State)**: W przypadku braku zarchiwizowanych treści wyświetla się dedykowany komunikat informacyjny („Brak zarchiwizowanych artykułów”). Jeśli w archiwum są artykuły, lecz żaden nie pasuje do filtrów (np. miasto/kategoria), wyświetlany jest dedykowany komunikat o braku wyników z przyciskiem resetu.
 5. **Sortowanie i paginacja**: Domyślne sortowanie od najnowszych publikacji z obsługą infinite scroll i stronicowania (`pageSize: 12`).
 
 ### 13.3. Manualna archiwizacja i przywracanie z kafelka (US 2)
@@ -247,8 +248,10 @@ Schemat artykułów w `src/content.config.ts` oraz `keystatic.config.ts` został
    - Umieszczony bezpośrednio obok ikony serduszka („Ulubione”) na każdym kafelku artykułu (oraz w nagłówku i stopce widoku szczegółowego wpisu `/wpis/[slug]`).
    - Posiada estetyczną ikonę pudełka ze stylizowaną literą „A” oraz tooltipy: *„Przenieś do archiwum”* lub *„Przywróć z archiwum”*.
    - W widoku Archiwum oraz dla zarchiwizowanych artykułów w Ulubionych ikona przyjmuje wyróżniony stan aktywny (indygo/bursztyn).
-2. **Optymistyczna synchronizacja UI**: Kliknięcie przycisku błyskawicznie aktualizuje stan kafelka w przeglądarce (`localStorage` klucz `kato_manual_archives_v1`, zdarzenia `kato:archive-changed`), po czym wysyła asynchroniczne żądanie POST do `/api/archive`.
-3. **Aktualizacja plików Markdown (`src/server/archive-service.ts`)**: Endpoint `/api/archive` bezpośrednio modyfikuje frontmatter w `src/content/news/[slug].md`, ustawiając `archived: true/false`.
+2. **Optymistyczna synchronizacja UI**: Kliknięcie przycisku błyskawicznie aktualizuje stan kafelka w przeglądarce (`localStorage` klucz `kato_manual_archives_v1`, zdarzenia `kato:archive-changed`). Artykuł natychmiast znika ze strony głównej i pojawia się w widoku `/archiwum`.
+3. **Aktualizacja plików i odporność API (`src/server/archive-service.ts` & `src/server/archive-api.ts`)**:
+   - Lokalnie: endpoint `/api/archive` bezpośrednio modyfikuje frontmatter w `src/content/news/[slug].md`, ustawiając `archived: true/false`.
+   - Na platformie chmurowej (np. Vercel Serverless, gdzie system plików jest w trybie read-only): serwis bezpiecznie obsługuje błędy zapisu na dysku i w przypadku dostępności tokena (`GITHUB_TOKEN` lub sesja Keystatic) tworzy commit przez GitHub REST API. W przypadku braku tokena backend potwierdza pomyślne utrwalenie w sesji klienta (HTTP 200), zapobiegając błędom 500 EROFS.
 4. **Ochrona ManualOverride**: Gdy użytkownik ręcznie przywraca z archiwum artykuł starszy niż skonfigurowana liczba dni retencji, wpis otrzymuje flagę `manualOverride: true`, co blokuje jego ponowną archiwizację przez nocny proces.
 5. **Feedback w UI**: Toast/snackbar z informacją o przeniesieniu/przywróceniu wraz z przyciskiem **„Cofnij”** (Undo).
 

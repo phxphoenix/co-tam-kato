@@ -3,6 +3,47 @@ import { getArchiveSettings, updateArchiveSettings, validateArchivePeriod } from
 
 export const prerender = false;
 
+const GITHUB_REPO = 'phxphoenix/co-tam-kato';
+
+async function commitSettingsToGitHub(token: string, content: string) {
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/src/content/settings/archive.json`;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github.v3+json',
+    'User-Agent': 'co-tam-kato-archive',
+  };
+
+  const getRes = await fetch(url, { headers });
+  if (!getRes.ok) {
+    throw new Error(`Nie udało się pobrać archive.json z GitHub API: status ${getRes.status}`);
+  }
+  const fileData = (await getRes.json()) as { sha?: string };
+  if (!fileData?.sha) {
+    throw new Error('Brak SHA pliku w odpowiedzi GitHub API');
+  }
+
+  const base64Content = Buffer.from(content, 'utf8').toString('base64');
+  const putRes = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message: 'chore(archive): update archiveAfterDays retention settings',
+      content: base64Content,
+      sha: fileData.sha,
+    }),
+  });
+
+  if (!putRes.ok) {
+    const errText = await putRes.text();
+    throw new Error(`GitHub API commit failed (${putRes.status}): ${errText}`);
+  }
+
+  return await putRes.json();
+}
+
 export const GET: APIRoute = async () => {
   try {
     const settings = getArchiveSettings();
@@ -45,6 +86,24 @@ export const POST: APIRoute = async ({ request }) => {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
+    }
+
+    // Jeśli środowisko jest read-only (np. Vercel), sprawdźmy czy możemy dokonać commita przez GitHub API
+    if ((result as any).readOnly && result.settings) {
+      const cookieHeader = request.headers.get('cookie') || '';
+      const cookieMatch = cookieHeader.match(/keystatic-gh-access-token=([^;]+)/);
+      const gitHubToken =
+        process.env.GITHUB_TOKEN ||
+        process.env.GH_TOKEN ||
+        (cookieMatch ? decodeURIComponent(cookieMatch[1]) : undefined);
+
+      if (gitHubToken) {
+        try {
+          await commitSettingsToGitHub(gitHubToken, JSON.stringify(result.settings, null, 2) + '\n');
+        } catch (ghErr: any) {
+          console.warn('[Archive Settings API] Ostrzeżenie zapisu do GitHub API:', ghErr?.message);
+        }
+      }
     }
 
     return new Response(
