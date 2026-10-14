@@ -209,3 +209,95 @@ W stanie przeglądu jest 12 rekordów: 11 ze statusem `published` i jeden rekord
 - `.github/workflows/daily-digest.yml` — codzienny job redakcyjny.
 - `.github/workflows/deploy.yml` — kompilacja i GitHub Pages.
 - `src/lib/constants.ts` — nazwy i style miast oraz kategorii.
+- `src/content/settings/archive.json` — plik konfiguracyjny okresu archiwizacji (domyślnie 10 dni).
+- `scripts/archive-worker.mjs` — nocny worker automatycznej archiwizacji (02:00 Europe/Warsaw).
+- `.github/workflows/archive-worker.yml` — harmonogram GitHub Actions dla workera.
+- `src/pages/archiwum.astro` — podstrona publiczna sekcji „Archiwum”.
+- `src/pages/admin/archive.astro` — dedykowany panel administracyjny sekcji „Archive”.
+- `src/components/ArchiveButton.tsx` — przycisk z ikoną „A” do manualnej archiwizacji na kafelkach wpisów.
+- `src/components/admin/ArchiveAdminDashboard.tsx` — interaktywny dashboard administracyjny.
+- `src/server/archive-api.ts` & `src/server/archive-service.ts` — endpoint i serwis aktualizacji flagi w Markdown.
+- `src/server/archive-settings-api.ts` & `src/server/archive-run-api.ts` — endpointy konfiguracji i wyzwalania workera.
+- `scripts/test-archive-all.mjs` — nadrzędny skrypt weryfikujący wszystkie kryteria akceptacji modułu archiwizacji.
+
+## 13. Moduł Archiwizacji (Archive Module)
+
+Moduł archiwizacji odpowiada za zarządzanie cyklem życia treści w serwisie Co Tam KATO, umożliwiając automatyczne lub ręczne ukrywanie nieaktualnych wpisów z widoku głównego serwisu i przenoszenie ich do dedykowanej sekcji „Archiwum”.
+
+### 13.1. Model danych i rozszerzenie schematu (Frontmatter)
+
+Schemat artykułów w `src/content.config.ts` oraz `keystatic.config.ts` został rozszerzony o dwa pola logiczne:
+- `archived` (`z.boolean().default(false)`): flaga oznaczająca, czy artykuł znajduje się obecnie w archiwum (`true`), czy w bieżącym obiegu na stronie głównej (`false`).
+- `manualOverride` (`z.boolean().default(false)`): flaga chroniąca artykuł przed automatyczną archiwizacją przez nocnego workera w przypadku, gdy moderator ręcznie przywrócił starszy artykuł na stronę główną.
+
+### 13.2. Widok i nawigacja sekcji „Archiwum” (US 1)
+
+1. **Pozycja w menu**: W górnym pasku nawigacyjnym (`src/components/Header.astro`) znajduje się odnośnik **„Archiwum”**, usytuowany ściśle pomiędzy pozycjami **„Dla Dzieci (4-10)”** a **„O serwisie”**. Dodatkowy link umieszczono w stopce serwisu.
+2. **Podstrona `/archiwum`** (`src/pages/archiwum.astro`):
+   - Prezentuje wyłącznie artykuły z flagą `archived: true` (oraz statusem różnym od `deleted`).
+   - Układ siatki kafelków, responsywność i stylistyka są w 100% spójne ze stroną główną i sekcją Ulubione.
+   - Wpisy z `archived: true` są automatycznie odfiltrowywane ze strony głównej (`/`) oraz sekcji dziecięcej (`/dla-dzieci`).
+3. **Relacja z sekcją Ulubione**: Zarchiwizowanie wpisu nie wpływa na stan polubienia. Artykuł oznaczony jako ulubiony i zarchiwizowany jest równocześnie dostępny w sekcji „Ulubione” oraz „Archiwum”.
+4. **Stan pusty (Empty State)**: W przypadku braku zarchiwizowanych treści wyświetla się dedykowany komunikat informacyjny („Brak zarchiwizowanych artykułów”).
+5. **Sortowanie i paginacja**: Domyślne sortowanie od najnowszych publikacji z obsługą infinite scroll i stronicowania (`pageSize: 12`).
+
+### 13.3. Manualna archiwizacja i przywracanie z kafelka (US 2)
+
+1. **Przycisk z ikoną „A” (`ArchiveButton.tsx`)**:
+   - Umieszczony bezpośrednio obok ikony serduszka („Ulubione”) na każdym kafelku artykułu (oraz w nagłówku i stopce widoku szczegółowego wpisu `/wpis/[slug]`).
+   - Posiada estetyczną ikonę pudełka ze stylizowaną literą „A” oraz tooltipy: *„Przenieś do archiwum”* lub *„Przywróć z archiwum”*.
+   - W widoku Archiwum oraz dla zarchiwizowanych artykułów w Ulubionych ikona przyjmuje wyróżniony stan aktywny (indygo/bursztyn).
+2. **Optymistyczna synchronizacja UI**: Kliknięcie przycisku błyskawicznie aktualizuje stan kafelka w przeglądarce (`localStorage` klucz `kato_manual_archives_v1`, zdarzenia `kato:archive-changed`), po czym wysyła asynchroniczne żądanie POST do `/api/archive`.
+3. **Aktualizacja plików Markdown (`src/server/archive-service.ts`)**: Endpoint `/api/archive` bezpośrednio modyfikuje frontmatter w `src/content/news/[slug].md`, ustawiając `archived: true/false`.
+4. **Ochrona ManualOverride**: Gdy użytkownik ręcznie przywraca z archiwum artykuł starszy niż skonfigurowana liczba dni retencji, wpis otrzymuje flagę `manualOverride: true`, co blokuje jego ponowną archiwizację przez nocny proces.
+5. **Feedback w UI**: Toast/snackbar z informacją o przeniesieniu/przywróceniu wraz z przyciskiem **„Cofnij”** (Undo).
+
+### 13.4. Nocny worker automatycznej archiwizacji (US 3)
+
+1. **Skrypt wykonawczy (`scripts/archive-worker.mjs`)**:
+   - Sprawdza lokalną godzinę w strefie czasowej `Europe/Warsaw` za pomocą `Intl.DateTimeFormat`.
+   - Zapewnia pełną zgodność ze zmianami czasu w Polsce (czas letni CEST oraz czas zimowy CET), startując o 02:00 czasu lokalnego.
+   - Pobiera liczbę dni retencji z pliku `src/content/settings/archive.json` (fallback ze zmiennej `ARCHIVE_AFTER_DAYS` lub domyślnie 10 dni).
+2. **Kryteria kwalifikacji do archiwum**:
+   - `archived === false`
+   - `manualOverride === false`
+   - `status !== 'deleted'`
+   - Wiek artykułu liczony od daty publikacji (`sourceDate` lub `pubDate`) jest ściśle większy niż zadany okres (`diffDays > archiveAfterDays`).
+3. **Automatyzacja GitHub Actions (`.github/workflows/archive-worker.yml`)**:
+   - Harmonogram cron: `00:00 UTC` oraz `01:00 UTC`, co gwarantuje precyzyjne trafienie w godzinę 02:00 czasu polskiego zarówno latem (UTC+2), jak i zimą (UTC+1).
+   - Opcja ręcznego uruchomienia przez `workflow_dispatch`.
+   - Automatyczny commit zmian do gałęzi `main` w przypadku zarchiwizowania wpisów.
+4. **Logowanie i idempotentność**:
+   - Wszystkie zdarzenia i podsumowania są zapisywane w pliku `logs/archive-worker.log`.
+   - Ponowne uruchomienie workera tego samego dnia nie modyfikuje niepotrzebnie plików ani danych (operacja w pełni idempotentna).
+
+### 13.5. Konfiguracja retencji i panel zarządzania „Archive” (US 4)
+
+1. **Sekcja w Keystatic CMS (`keystatic.config.ts`)**:
+   - Zdefiniowany singleton `archive` z etykietą **`Archive`**.
+   - Pole `archiveAfterDays` typu integer z etykietą *„Okres archiwizacji (w dniach)”*, wartością domyślną 10 oraz walidacją `{ min: 1, max: 365 }`.
+   - Kolumna `archived` w tabeli listy kolekcji artykułów (`columns: [..., 'archived', ...]`), informująca jednoznacznie o statusie wpisu.
+2. **Dedykowany panel administracyjny `/admin/archive` (`src/pages/admin/archive.astro`)**:
+   - Komponent `ArchiveAdminDashboard.tsx` z nowoczesnym interfejsem graficznym.
+   - **Formularz konfiguracji retencji**: Pole numeryczne z natychmiastową walidacją (blokada zera, liczb ujemnych, ułamków, tekstu, wartości > 365 dni i pustych pól). Zapis do `src/content/settings/archive.json` via POST `/api/archive-settings`.
+   - **Przycisk „Uruchom teraz (Przelicz archiwum)”**: Wyzwala worker archiwizacji na żądanie via POST `/api/archive-run` i natychmiast renderuje kartę raportu (liczba przeskanowanych, nowo zarchiwizowanych wpisów, wpisów chronionych przez override oraz czas operacji).
+   - **Tabela artykułów z flagą `Archived (True / False)`**: Pełne zestawienie wpisów z wyszukiwarką, filtrami (Wszystkie, Główna, Archiwum, Override), czytelnymi badge'ami statusu oraz przyciskiem do natychmiastowej zmiany flagi każdego artykułu.
+3. **Plik konfiguracyjny**: `src/content/settings/archive.json`:
+   ```json
+   {
+     "archiveAfterDays": 10
+   }
+   ```
+
+### 13.6. Testy i weryfikacja automatyczna
+
+Dla całego modułu archiwizacji przygotowano zestaw skryptów testowych weryfikujących 100% kryteriów akceptacji:
+- `node scripts/test-archive-us1.mjs` — testy widoku `/archiwum`, menu, pustych stanów, filtrowania i paginacji (US 1).
+- `node scripts/test-archive-us2.mjs` — testy przycisku „A”, aktualizacji w plikach, odwracalności i flagi `manualOverride` (US 2).
+- `node scripts/test-archive-us3.mjs` — testy nocnego workera, stref czasowych, idempotentności i logów (US 3).
+- `node scripts/test-archive-us4.mjs` — testy sekcji Keystatic Archive, walidacji 1..365, panelu `/admin/archive` i wyzwalania na żądanie (US 4).
+- `node scripts/test-archive-all.mjs` — zbiorczy runner wykonujący pełen zestaw testów:
+  ```bash
+  node scripts/test-archive-all.mjs
+  ```
+

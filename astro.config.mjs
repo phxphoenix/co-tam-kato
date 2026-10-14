@@ -48,6 +48,21 @@ function keystaticCustomIntegration() {
           pattern: '/api/keystatic/[...params]',
           prerender: false,
         });
+        injectRoute({
+          entrypoint: fileURLToPath(new URL('./src/server/archive-api.ts', import.meta.url)),
+          pattern: '/api/archive',
+          prerender: false,
+        });
+        injectRoute({
+          entrypoint: fileURLToPath(new URL('./src/server/archive-settings-api.ts', import.meta.url)),
+          pattern: '/api/archive-settings',
+          prerender: false,
+        });
+        injectRoute({
+          entrypoint: fileURLToPath(new URL('./src/server/archive-run-api.ts', import.meta.url)),
+          pattern: '/api/archive-run',
+          prerender: false,
+        });
       },
     },
   };

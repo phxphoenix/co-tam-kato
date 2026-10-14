@@ -1,0 +1,47 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArchiveAdminDashboard from '../../components/admin/ArchiveAdminDashboard';
+import { getCollection } from 'astro:content';
+import { getArchiveSettings } from '../../server/archive-settings-service';
+
+const rawBase = import.meta.env.BASE_URL || '/';
+const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+
+// Pobranie bieżących ustawień
+const settings = getArchiveSettings();
+const initialDays = settings.archiveAfterDays || 10;
+
+// Pobranie wszystkich artykułów z kolekcji news (opublikowane, szkice, archiwa)
+const allNews = await getCollection('news');
+
+// Domyślne sortowanie od najnowszych
+const sortedNews = allNews.sort(
+  (a, b) => (b.data.sourceDate ?? b.data.pubDate).getTime() - (a.data.sourceDate ?? a.data.pubDate).getTime()
+);
+
+const articles = sortedNews.map((item) => ({
+  slug: item.id.replace(/\.(md|mdx)$/, ''),
+  title: item.data.title,
+  pubDate: item.data.pubDate.toISOString(),
+  sourceDate: (item.data.sourceDate ?? item.data.pubDate).toISOString(),
+  status: item.data.status,
+  archived: Boolean(item.data.archived),
+  manualOverride: Boolean(item.data.manualOverride),
+  city: item.data.city,
+  category: item.data.category,
+}));
+---
+
+<BaseLayout
+  title="Sekcja Archive (Panel Zarządzania Retencją) | Co Tam KATO"
+  description="Dedykowany panel administracyjny do konfiguracji czasu retencji archiwizacji, natychmiastowego wyzwalania workera na żądanie oraz podglądu statusu artykułów (Archived: True / False)."
+>
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+    <ArchiveAdminDashboard
+      client:load
+      initialDays={initialDays}
+      initialArticles={articles}
+      baseUrl={base}
+    />
+  </main>
+</BaseLayout>

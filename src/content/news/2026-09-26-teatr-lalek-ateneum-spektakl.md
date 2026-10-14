@@ -17,6 +17,7 @@ location: Śląski Teatr Lalki i Aktora Ateneum, ul. św. Jana 10, Katowice
 isAlert: false
 sourceUrl: https://ateneumteatr.pl
 aiGenerated: false
+archived: true
 ---
 Katowicki **Teatr Ateneum** przy ulicy św. Jana to jedno z najstarszych i najbardziej urokliwych miejsc kultury dziecięcej na Śląsku. Kameralna sala gwarantuje doskonałą widoczność z każdego rzędu nawet dla 4-latków.
 

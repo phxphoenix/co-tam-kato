@@ -8,7 +8,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "digest": "node scripts/daily-digest.mjs"
+    "digest": "node scripts/daily-digest.mjs",
+    "archive:worker": "node scripts/archive-worker.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",

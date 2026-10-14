@@ -13,6 +13,7 @@ location: Teatr Zagłębia, ul. Teatralna 4, Sosnowiec
 isAlert: false
 sourceUrl: https://teatrzaglebia.pl
 aiGenerated: false
+archived: true
 ---
 Po wakacyjnej przerwie **Teatr Zagłębia w Sosnowcu** powraca z mocnym repertuarem. Na deskach teatru zobaczymy nową premierę, a w foyer zaprezentowana zostanie wystawa archiwalnych plakatów teatralnych z lat 70. i 80.
 

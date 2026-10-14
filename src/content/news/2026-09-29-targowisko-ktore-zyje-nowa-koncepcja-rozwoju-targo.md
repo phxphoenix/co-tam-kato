@@ -10,6 +10,7 @@ location: "Górnośląsko-Zagłębiowska Metropolia"
 isAlert: false
 sourceUrl: "https://metropoliagzm.pl/2026/09/22/targowisko-ktore-zyje-model-zarzadzania-targowiskami-miejskimi/"
 aiGenerated: true
+archived: true
 ---
 
 W ramach kolejnej edycji **Szkoły Prototypowania GZM** powstało opracowanie **„Targowisko, które żyje”**. Jest to model zarządzania targowiskami miejskimi oparty na założeniach placemakingu. Publikacja ta wskazuje, jak świadomie kształtować przestrzeń i relacje handlowe, aby lokalne targowiska lepiej wspierały mikroprzedsiębiorczość, integrację mieszkańców oraz aktywność społeczną w regionie.

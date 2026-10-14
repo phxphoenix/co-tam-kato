@@ -38,6 +38,8 @@ const news = defineCollection({
     ageRange: z.string().optional(), // np. "4-10 lat", "5-8 lat"
     sourceUrl: z.string().optional(),
     aiGenerated: z.boolean().default(false),
+    archived: z.boolean().default(false),
+    manualOverride: z.boolean().default(false),
   }),
 });
 

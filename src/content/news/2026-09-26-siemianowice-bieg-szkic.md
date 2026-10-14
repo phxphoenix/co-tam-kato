@@ -12,6 +12,7 @@ summary: >-
 location: Park Miejski przy Pałacu, Siemianowice Śląskie
 isAlert: false
 aiGenerated: true
+archived: true
 ---
 Trwają przygotowania do jubileuszowej edycji Biegu Hutnika w Siemianowicach Śląskich. Trasa przebiega malowniczymi alejami Parku Miejskiego oraz wokół zabytkowego kompleksu pałacowego.
 

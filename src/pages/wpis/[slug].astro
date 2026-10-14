@@ -4,7 +4,8 @@ import { getCollection, render } from 'astro:content';
 import { CityBadge } from '../../components/CityBadge';
 import { CategoryBadge } from '../../components/CategoryBadge';
 import { FavoriteButton } from '../../components/FavoriteButton';
-import { Calendar, MapPin, ExternalLink, ArrowLeft, Bot, AlertTriangle, Sparkles, Smile } from 'lucide-react';
+import { ArchiveButton } from '../../components/ArchiveButton';
+import { Calendar, MapPin, ExternalLink, ArrowLeft, Bot, AlertTriangle, Sparkles, Smile, Archive } from 'lucide-react';
 
 export async function getStaticPaths() {
   const news = await getCollection('news', ({ data }) => data.status !== 'deleted');
@@ -74,10 +75,29 @@ const relatedNews = allNews
               Ważny Alert
             </span>
           )}
+          {entry.data.archived && (
+            <span class="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold">
+              <Archive className="w-3.5 h-3.5" />
+              Wpis zarchiwizowany
+            </span>
+          )}
         </div>
 
-        {/* Ergonomiczny przycisk Ulubione u góry artykułu */}
-        <FavoriteButton client:load slug={slug} title={entry.data.title} showLabel={true} size="md" />
+        {/* Przyciski Archiwum oraz Ulubione u góry artykułu */}
+        <div class="flex items-center gap-2.5">
+          <ArchiveButton
+            client:load
+            slug={slug}
+            title={entry.data.title}
+            pubDate={entry.data.pubDate.toISOString()}
+            sourceDate={(entry.data.sourceDate ?? entry.data.pubDate).toISOString()}
+            defaultArchived={Boolean(entry.data.archived)}
+            defaultManualOverride={Boolean(entry.data.manualOverride)}
+            showLabel={true}
+            size="md"
+          />
+          <FavoriteButton client:load slug={slug} title={entry.data.title} showLabel={true} size="md" />
+        </div>
       </div>
 
       <!-- Tytuł wpisu -->
@@ -121,6 +141,17 @@ const relatedNews = allNews
         )}
 
         <div class="flex items-center gap-3 flex-wrap">
+          <ArchiveButton
+            client:load
+            slug={slug}
+            title={entry.data.title}
+            pubDate={entry.data.pubDate.toISOString()}
+            sourceDate={(entry.data.sourceDate ?? entry.data.pubDate).toISOString()}
+            defaultArchived={Boolean(entry.data.archived)}
+            defaultManualOverride={Boolean(entry.data.manualOverride)}
+            showLabel={true}
+            size="sm"
+          />
           <FavoriteButton client:load slug={slug} title={entry.data.title} showLabel={true} size="sm" />
           {entry.data.sourceUrl && (
             <a

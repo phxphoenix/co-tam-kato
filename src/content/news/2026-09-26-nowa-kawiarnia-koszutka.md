@@ -10,6 +10,7 @@ location: "ul. Sokolska 24, Katowice (Koszutka)"
 isAlert: false
 sourceUrl: ""
 aiGenerated: false
+archived: true
 ---
 
 Kolejny punkt na gastronomicznej mapie Katowic! W zrewitalizowanym lokalu modernistycznej kamienicy na Koszutce otwiera się **"Kromka & Ziarno"**.

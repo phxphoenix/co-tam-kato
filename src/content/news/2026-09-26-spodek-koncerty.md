@@ -14,6 +14,7 @@ location: Spodek, al. Wojciecha Korfantego 35, Katowice
 isAlert: false
 sourceUrl: https://spodekkatowice.pl
 aiGenerated: false
+archived: true
 ---
 Przed nami jeden z najbardziej wyczekiwanych muzycznych weekendów tej jesieni w Katowicach! W legendarnej hali **Spodek** zainstalowano potężny system nagłośnieniowy i przestrzenną scenę 360 stopni.
 

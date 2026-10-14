@@ -5,7 +5,7 @@ on:
     branches: [ main ]
   workflow_dispatch:
   workflow_run:
-    workflows: ["Agent AI (Co Tam KATO)"]
+    workflows: ["Agent AI (Co Tam KATO)", "Auto-Archiwizacja (Co Tam KATO)"]
     branches: [ main ]
     types:
       - completed

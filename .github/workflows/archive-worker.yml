@@ -1,0 +1,59 @@
+name: Auto-Archiwizacja (Co Tam KATO)
+
+on:
+  schedule:
+    # 00:00 UTC = 02:00 czasu polskiego w czasie letnim (CEST, UTC+2)
+    - cron: '0 0 * * *'
+    # 01:00 UTC = 02:00 czasu polskiego w czasie zimowym (CET, UTC+1)
+    - cron: '0 1 * * *'
+  # Możliwość ręcznego uruchomienia na żądanie z panelu GitHub Actions
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Wymuś uruchomienie niezależnie od bieżącej godziny (force)'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  archive-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobranie kodu repozytorium
+        uses: actions/checkout@v4
+
+      - name: Konfiguracja Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Instalacja zależności
+        run: npm ci
+
+      - name: Uruchomienie workera archiwizacji (02:00 Europe/Warsaw)
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.force }}" = "true" ]; then
+            npm run archive:worker -- --force
+          else
+            npm run archive:worker -- --scheduled
+          fi
+
+      - name: Walidacja i budowanie Astro
+        run: npm run build
+
+      - name: Zapisanie i publikacja zarchiwizowanych wpisów w repozytorium
+        run: |
+          git config --global user.name "Co Tam KATO Bot"
+          git config --global user.email "bot@co-tam-kato.local"
+          git add -- src/content/news/ logs/
+          if ! git diff-index --quiet HEAD --; then
+            echo "Wykryto zarchiwizowane wpisy! Tworzenie commita..."
+            git commit -m "📦 Automatyczna nocna archiwizacja artykułów (Co Tam KATO)"
+            git push origin main
+          else
+            echo "Brak nowych artykułów do archiwizacji w tym cyklu."
+          fi

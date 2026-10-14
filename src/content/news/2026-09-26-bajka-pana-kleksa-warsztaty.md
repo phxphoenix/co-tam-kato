@@ -12,6 +12,7 @@ location: "Bajka Pana Kleksa, ul. Porcelanowa 23, Katowice"
 isAlert: false
 sourceUrl: "https://bajkapanakleksa.pl"
 aiGenerated: false
+archived: true
 ---
 
 **Bajka Pana Kleksa** w katowickiej Fabryce Porcelany to jedno z najbardziej uwielbianych przez dzieci miejsc w całej metropolii. W nadchodzący weekend organizatorzy przygotowali specjalny program dedykowany dzieciom w wieku **od 4 do 10 lat**.

@@ -14,5 +14,6 @@ isAlert: false
 sourceUrl: >-
   https://metropoliagzm.pl/2026/09/18/trwa-nabor-do-zespolu-piesni-i-tanca-siemianowice/
 aiGenerated: true
+archived: true
 ---
 Trwa nabór chętnych do grup wokalnych oraz tanecznych jednego z najstarszych zespołów ludowych w Polsce – Zespołu Pieśni i Tańca „Siemianowice”. Próby dla kandydatów odbywają się w każdy poniedziałek i środę w Siemianowickim Centrum Kultury – Bytków.

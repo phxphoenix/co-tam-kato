@@ -10,6 +10,7 @@ location: "Park Śląski, al. Różana 2, Chorzów"
 isAlert: false
 sourceUrl: "https://parkslaski.pl"
 aiGenerated: false
+archived: true
 ---
 
 Jeden z największych parków miejskich w Europie przygotował wyjątkową atrakcję na nadchodzące wieczory. Wokół Rosarium oraz Kręgów Tanecznych rozbłysły tysiące energooszczędnych lampionów i instalacji świetlnych inspirowanych fauną i florą.

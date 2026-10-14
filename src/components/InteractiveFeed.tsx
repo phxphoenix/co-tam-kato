@@ -12,11 +12,14 @@ import {
   Smile,
   ArrowDownWideNarrow,
   Heart,
+  Archive,
 } from 'lucide-react';
 import { CITIES, CATEGORIES } from '../lib/constants';
 import { CityBadge } from './CityBadge';
 import { CategoryBadge } from './CategoryBadge';
 import { useFavorites } from '../lib/favorites';
+import { ArchiveButton, ArchiveAIcon } from './ArchiveButton';
+import { useArchive, type ArchiveState } from '../lib/archive';
 
 export interface FeedItem {
   id: string;
@@ -34,6 +37,8 @@ export interface FeedItem {
   ageRange?: string;
   sourceUrl?: string;
   aiGenerated: boolean;
+  archived?: boolean;
+  manualOverride?: boolean;
 }
 
 interface InteractiveFeedProps {
@@ -41,18 +46,31 @@ interface InteractiveFeedProps {
   defaultCategory?: string;
   defaultOnlyKids?: boolean;
   defaultOnlyFavorites?: boolean;
+  isArchiveView?: boolean;
 }
+
+const PAGE_SIZE = 12;
 
 export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
   initialItems,
   defaultCategory = 'all',
   defaultOnlyKids = false,
   defaultOnlyFavorites = false,
+  isArchiveView = false,
 }) => {
   const rawBase = import.meta.env.BASE_URL || '/';
   const baseUrl = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 
   const { favorites, isFavorite, toggleFavorite, favoritesCount, isLoaded } = useFavorites();
+  const { getStatus, setArchiveState, isLoaded: isArchiveLoaded } = useArchive();
+
+  const [toast, setToast] = useState<{
+    message: string;
+    slug: string;
+    previousState: ArchiveState;
+    newState: ArchiveState;
+    title: string;
+  } | null>(null);
 
   const [selectedCity, setSelectedCity] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>(defaultCategory);
@@ -64,6 +82,34 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
+  const sentinelRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Auto-zamykanie powiadomienia Toast po 5 sekundach (AC 5)
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => {
+      setToast(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const handleArchiveToggle = (item: FeedItem, newState: ArchiveState, oldState: ArchiveState) => {
+    const actionText = newState.archived ? 'Przeniesiono do archiwum' : 'Przywrócono z archiwum';
+    setToast({
+      message: `${actionText}: „${item.title.length > 35 ? item.title.slice(0, 35) + '…' : item.title}”`,
+      slug: item.slug,
+      previousState: oldState,
+      newState,
+      title: item.title,
+    });
+  };
+
+  const handleUndoToast = () => {
+    if (!toast) return;
+    setArchiveState(toast.slug, toast.previousState);
+    setToast(null);
+  };
 
   // Sprawdź parametr URL ?widok=ulubione po zamontowaniu na kliencie
   useEffect(() => {
@@ -114,16 +160,23 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
 
   // Liczba wydarzeń dla dzieci
   const kidsCount = useMemo(() => {
-    return initialItems.filter(
-      (item) => (item.status === 'published' || showDrafts) && (item.category === 'dla-dzieci' || item.isForKids)
-    ).length;
-  }, [initialItems, showDrafts]);
+    return initialItems.filter((item) => {
+      const itemIsArchived = getStatus(item.slug, Boolean(item.archived));
+      if (isArchiveView && !itemIsArchived) return false;
+      if (!isArchiveView && !showOnlyFavorites && itemIsArchived) return false;
+      return (item.status === 'published' || showDrafts) && (item.category === 'dla-dzieci' || item.isForKids);
+    }).length;
+  }, [initialItems, showDrafts, isArchiveView, showOnlyFavorites, getStatus]);
 
-  // Zliczanie wpisów per miasto z uwzględnieniem trybu ulubionych / dziecięcego
+  // Zliczanie wpisów per miasto z uwzględnieniem trybu ulubionych / archiwum / dziecięcego
   const cityCounts = useMemo(() => {
     const counts: Record<string, number> = { all: 0 };
     initialItems.forEach((item) => {
       if (item.status === 'published' || showDrafts) {
+        const itemIsArchived = getStatus(item.slug, Boolean(item.archived));
+        if (isArchiveView && !itemIsArchived) return;
+        if (!isArchiveView && !showOnlyFavorites && itemIsArchived) return;
+
         if (onlyKids && item.category !== 'dla-dzieci' && !item.isForKids) return;
         if (showOnlyFavorites && !favorites.includes(item.slug)) return;
 
@@ -132,7 +185,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
       }
     });
     return counts;
-  }, [initialItems, showDrafts, onlyKids, showOnlyFavorites, favorites]);
+  }, [initialItems, showDrafts, onlyKids, showOnlyFavorites, favorites, isArchiveView, getStatus]);
 
   // Liczba szkiców oczekujących na zatwierdzenie
   const draftCount = useMemo(() => {
@@ -148,6 +201,14 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
       }
       if (showDrafts && item.status !== 'draft') {
         return false;
+      }
+
+      // Filtr sekcji Archiwum vs Widok główny/kategorie (AC 2, AC 3, AC 4)
+      const itemIsArchived = getStatus(item.slug, Boolean(item.archived));
+      if (isArchiveView) {
+        if (!itemIsArchived) return false;
+      } else if (!showOnlyFavorites) {
+        if (itemIsArchived) return false;
       }
 
       // Filtr sekcji ulubionych
@@ -192,7 +253,54 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
       const difference = getItemDate(b).localeCompare(getItemDate(a));
       return sortOrder === 'newest' ? difference : -difference;
     });
-  }, [initialItems, selectedCity, selectedCategory, searchQuery, showDrafts, onlyKids, showOnlyFavorites, favorites, dateFrom, dateTo, sortOrder]);
+  }, [initialItems, selectedCity, selectedCategory, searchQuery, showDrafts, onlyKids, showOnlyFavorites, favorites, dateFrom, dateTo, sortOrder, isArchiveView, getStatus]);
+
+  // Reset widocznych elementów przy zmianie filtrów lub sortowania
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [
+    selectedCity,
+    selectedCategory,
+    searchQuery,
+    showDrafts,
+    onlyKids,
+    showOnlyFavorites,
+    dateFrom,
+    dateTo,
+    sortOrder,
+  ]);
+
+  // Wpisy do wyświetlenia (paginacja / dynamiczne doładowywanie)
+  const displayedItems = useMemo(() => {
+    return filteredItems.slice(0, visibleCount);
+  }, [filteredItems, visibleCount]);
+
+  // Obsługa automatycznego doładowywania kolejnych wpisów przy scrollu (infinite scroll)
+  useEffect(() => {
+    if (visibleCount >= filteredItems.length) return;
+    const target = sentinelRef.current;
+    if (!target || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredItems.length));
+        }
+      },
+      { rootMargin: '300px' }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [visibleCount, filteredItems.length]);
+
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredItems.length));
+  };
+
+  const handleLoadAll = () => {
+    setVisibleCount(filteredItems.length);
+  };
 
   // Formatowanie daty po polsku
   const formatDate = (dateStr: string) => {
@@ -505,8 +613,20 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
         <span className="flex items-center flex-wrap gap-1.5">
           <span>
             Znaleziono <strong className="text-zinc-100">{filteredItems.length}</strong>{' '}
-            {filteredItems.length === 1 ? 'wiadomość' : 'wiadomości'}
+            {isArchiveView
+              ? filteredItems.length === 1
+                ? 'zarchiwizowany artykuł'
+                : 'zarchiwizowanych artykułów'
+              : filteredItems.length === 1
+              ? 'wiadomość'
+              : 'wiadomości'}
           </span>
+          {isArchiveView && (
+            <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              <Archive className="w-3 h-3 text-amber-400" />
+              Sekcja Archiwum
+            </span>
+          )}
           {showOnlyFavorites && (
             <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
               <Heart className="w-3 h-3 fill-current text-rose-400" />
@@ -578,8 +698,51 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
         </div>
       )}
 
+      {/* Dedykowany pusty stan dla całkowitego braku artykułów w archiwum (AC 6) */}
+      {isArchiveView && initialItems.length === 0 && (
+        <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
+          <div className="inline-flex p-4 rounded-full bg-amber-500/10 text-amber-400 mb-4 border border-amber-500/20">
+            <Archive className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-100 mb-1">
+            Brak zarchiwizowanych artykułów
+          </h3>
+          <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
+            Aktualnie żadne artykuły nie zostały jeszcze przeniesione do archiwum.
+          </p>
+          <a
+            href={baseUrl}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-sm transition-colors"
+          >
+            Przejdź do aktualności
+          </a>
+        </div>
+      )}
+
+      {/* Pusty stan dla archiwum gdy wpisy są w archiwum, ale żaden nie pasuje do wybranych filtrów */}
+      {isArchiveView && initialItems.length > 0 && filteredItems.length === 0 && (
+        <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
+          <div className="inline-flex p-4 rounded-full bg-zinc-800/80 text-amber-400 mb-4">
+            <Archive className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-200 mb-1">
+            Brak zarchiwizowanych artykułów dla wybranych filtrów
+          </h3>
+          <p className="text-sm text-zinc-500 max-w-md mx-auto mb-6">
+            W archiwum znajduje się {initialItems.length}{' '}
+            {initialItems.length === 1 ? 'wpis' : 'wpisów'}, ale żaden nie pasuje do aktualnych filtrów miasta, kategorii lub daty.
+          </p>
+          <button
+            onClick={clearFilters}
+            className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-sm transition-colors"
+          >
+            Resetuj filtry
+          </button>
+        </div>
+      )}
+
       {/* Brak wyników w trybie standardowym */}
-      {!showOnlyFavorites && filteredItems.length === 0 && (
+      {!isArchiveView && !showOnlyFavorites && filteredItems.length === 0 && (
         <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
           <div className="inline-flex p-4 rounded-full bg-zinc-800/80 text-amber-400 mb-4">
             <Search className="w-8 h-8" />
@@ -601,8 +764,9 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
 
       {/* Siatka kart wpisów */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.map((item) => {
+        {displayedItems.map((item) => {
           const itemIsFav = isLoaded && isFavorite(item.slug);
+          const itemIsArchived = isArchiveLoaded ? getStatus(item.slug, Boolean(item.archived)) : Boolean(item.archived);
 
           return (
             <article
@@ -618,20 +782,38 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
               }`}
             >
               <div>
-                {/* Odznaki: Miasto + Kategoria + Wiek dziecka jeśli określony + Ergonomiczne Serduszko */}
+                {/* Odznaki: Miasto + Kategoria + Wiek dziecka jeśli określony + Przyciski Archiwum & Serduszko */}
                 <div className="flex items-center justify-between gap-2 mb-3.5">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <CityBadge city={item.city} size="sm" />
                     <CategoryBadge category={item.category} />
+                    {itemIsArchived && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                        <Archive className="w-3 h-3 text-amber-400" />
+                        Archiwum
+                      </span>
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
                     {(item.ageRange || item.isForKids) && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                         <Smile className="w-3 h-3" />
                         {item.ageRange || 'Dzieci 4-10 lat'}
                       </span>
                     )}
+
+                    {/* Dedykowany przycisk archiwizacji z literą „A” (AC 1, AC 3, AC 5) */}
+                    <ArchiveButton
+                      slug={item.slug}
+                      title={item.title}
+                      pubDate={item.pubDate}
+                      sourceDate={item.sourceDate}
+                      defaultArchived={Boolean(item.archived)}
+                      defaultManualOverride={Boolean(item.manualOverride)}
+                      size="sm"
+                      onToggle={(newState, oldState) => handleArchiveToggle(item, newState, oldState)}
+                    />
 
                     {/* Ergonomiczna ikona serduszka na kafelku */}
                     <button
@@ -643,7 +825,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
                       }}
                       aria-label={itemIsFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}
                       title={itemIsFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}
-                      className={`p-1.5 rounded-full border transition-all duration-200 active:scale-90 focus:outline-none focus:ring-2 focus:ring-rose-400/50 ${
+                      className={`p-1.5 rounded-full border transition-all duration-200 active:scale-90 focus:outline-none focus:ring-2 focus:ring-rose-400/50 cursor-pointer ${
                         itemIsFav
                           ? 'bg-rose-500/20 text-rose-500 border-rose-500/40 hover:bg-rose-500/30 shadow-sm shadow-rose-500/10 scale-105'
                           : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/60 hover:text-rose-400 hover:border-rose-400/50 hover:bg-zinc-800'
@@ -710,6 +892,78 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
           );
         })}
       </div>
+
+      {/* Element sentinel do infinite scroll */}
+      {visibleCount < filteredItems.length && (
+        <div ref={sentinelRef} className="h-6 w-full" aria-hidden="true" />
+      )}
+
+      {/* Paginacja / Załaduj więcej */}
+      {filteredItems.length > PAGE_SIZE && (
+        <div className="flex flex-col items-center justify-center gap-3 pt-6 pb-2 border-t border-zinc-800/60">
+          <div className="text-xs text-zinc-400">
+            Wyświetlono <strong className="text-zinc-100">{displayedItems.length}</strong> z{' '}
+            <strong className="text-zinc-100">{filteredItems.length}</strong> artykułów
+          </div>
+          <div className="w-full max-w-xs bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+            <div
+              className="bg-amber-400 h-full rounded-full transition-all duration-300"
+              style={{ width: `${Math.min(100, (displayedItems.length / filteredItems.length) * 100)}%` }}
+            />
+          </div>
+          {visibleCount < filteredItems.length && (
+            <div className="flex items-center gap-2 mt-1">
+              <button
+                type="button"
+                onClick={handleLoadMore}
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-xs transition-colors shadow-md shadow-amber-400/10 inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Załaduj więcej wpisów (+{Math.min(PAGE_SIZE, filteredItems.length - visibleCount)})</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleLoadAll}
+                className="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white font-semibold text-xs border border-zinc-700 transition-colors cursor-pointer"
+              >
+                Pokaż wszystkie ({filteredItems.length})
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Toast Feedback z przyciskiem Cofnij (AC 5) */}
+      {toast && (
+        <aside
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 right-6 z-50 max-w-md bg-zinc-900 border border-zinc-700/80 text-zinc-100 px-4 py-3 rounded-2xl shadow-2xl shadow-black/80 flex items-center gap-3 backdrop-blur-md"
+        >
+          <span className="p-2 bg-amber-500/20 text-amber-400 rounded-xl flex-shrink-0">
+            <ArchiveAIcon className="w-4 h-4" />
+          </span>
+          <div className="flex-grow min-w-0">
+            <p className="text-xs font-medium text-zinc-200 truncate">
+              {toast.message}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleUndoToast}
+            className="text-xs font-bold text-amber-400 hover:text-amber-300 px-2.5 py-1 rounded-lg hover:bg-amber-500/10 transition-colors flex-shrink-0 underline underline-offset-2 cursor-pointer"
+          >
+            Cofnij
+          </button>
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            className="text-zinc-400 hover:text-zinc-200 p-1 flex-shrink-0 cursor-pointer"
+            aria-label="Zamknij powiadomienie"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </aside>
+      )}
     </div>
   );
 };

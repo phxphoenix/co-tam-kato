@@ -1,4 +1,4 @@
-import { config, fields, collection } from '@keystatic/core';
+import { config, fields, collection, singleton } from '@keystatic/core';
 
 const isProduction =
   import.meta.env.PROD ||
@@ -21,7 +21,7 @@ export default config({
     news: collection({
       label: 'Wszystkie artykuły (opublikowane, szkice i usunięte)',
       slugField: 'title',
-      columns: ['title', 'pubDate', 'sourceDate', 'status', 'city', 'aiGenerated'],
+      columns: ['title', 'pubDate', 'sourceDate', 'status', 'archived', 'manualOverride', 'city', 'aiGenerated'],
       path: 'src/content/news/*',
       format: { contentField: 'content' },
       schema: {
@@ -80,6 +80,14 @@ export default config({
           ],
           defaultValue: 'published',
         }),
+        archived: fields.checkbox({
+          label: 'Zarchiwizowany artykuł (przenosi wpis z widoku głównego do sekcji Archiwum)',
+          defaultValue: false,
+        }),
+        manualOverride: fields.checkbox({
+          label: 'Manualne przywrócenie (Manual Override - chroni przed auto-archiwizacją)',
+          defaultValue: false,
+        }),
         summary: fields.text({
           label: 'Krótka zajawka (1-2 zdania)',
           multiline: true,
@@ -99,6 +107,21 @@ export default config({
         content: fields.markdoc({
           label: 'Pełna treść wiadomości',
           extension: 'md',
+        }),
+      },
+    }),
+  },
+  singletons: {
+    archive: singleton({
+      label: 'Archive',
+      path: 'src/content/settings/archive',
+      format: 'json',
+      schema: {
+        archiveAfterDays: fields.integer({
+          label: 'Okres archiwizacji (w dniach)',
+          description: 'Liczba dni, po których artykuł jest automatycznie przenoszony do Archiwum przez nocnego workera o 02:00 (domyślnie 10). Dedykowany panel z natychmiastowym wyzwalaniem: /admin/archive',
+          defaultValue: 10,
+          validation: { min: 1, max: 365 },
         }),
       },
     }),

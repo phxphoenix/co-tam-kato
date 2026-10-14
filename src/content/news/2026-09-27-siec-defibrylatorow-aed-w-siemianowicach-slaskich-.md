@@ -10,6 +10,7 @@ location: "Siemianowice Śląskie"
 isAlert: false
 sourceUrl: "https://metropoliagzm.pl/2026/09/18/siec-aed-w-siemianowicach-slaskich-rosnie-juz-41-punktow-na-terenie-miasta/"
 aiGenerated: true
+archived: true
 ---
 
 W Siemianowicach Śląskich zainstalowano kolejne defibrylatory AED, zwiększając łączną liczbę tych ratujących życie urządzeń do 41. Nowy sprzęt trafił do sześciu lokalnych szkół i przedszkoli za pośrednictwem Wydziału Zarządzania Kryzysowego. Zakup został sfinansowany w ramach Programu Ochrony Ludności i Obrony Cywilnej, dzięki dotacji udzielonej gminie przez Wojewodę Śląskiego.

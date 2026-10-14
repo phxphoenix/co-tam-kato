@@ -10,6 +10,7 @@ location: "DTŚ km 14+200 (odcinek Katowice - Chorzów)"
 isAlert: true
 sourceUrl: "https://katowice.eu"
 aiGenerated: false
+archived: true
 ---
 
 Miejski Zarząd Ulic i Mostów informuje o zaplanowanych pracach konserwacyjnych dylatacji wiaduktu na DTŚ. Prace będą prowadzone w godzinach nocnych, aby zminimalizować utrudnienia w porannym i popołudniowym szczycie.

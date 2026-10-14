@@ -5,6 +5,8 @@ export interface CityInfo {
   badgeClass: string;
 }
 
+export const AUTO_ARCHIVE_DAYS = 14;
+
 export const CITIES: Record<string, CityInfo> = {
   katowice: {
     name: 'Katowice',

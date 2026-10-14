@@ -4,8 +4,10 @@ import { InteractiveFeed } from '../components/InteractiveFeed';
 import { getCollection } from 'astro:content';
 import { Sparkles, Clock, MapPin, Compass } from 'lucide-react';
 
-// Pobranie wszystkich wpisów z kolekcji
-const allNews = (await getCollection('news')).filter((item) => item.data.status !== 'deleted');
+// Pobranie wszystkich aktywnych wpisów z kolekcji (wykluczamy usunięte oraz zarchiwizowane)
+const allNews = (await getCollection('news')).filter(
+  (item) => item.data.status !== 'deleted' && !item.data.archived
+);
 
 // Sortowanie od najnowszej publikacji źródłowej; wpisy bez niej używają daty dodania
 const sortedNews = allNews.sort(
@@ -36,6 +38,8 @@ const serializedItems = sortedNews.map((item) => ({
   summary: item.data.summary,
   location: item.data.location,
   isAlert: item.data.isAlert,
+  archived: Boolean(item.data.archived),
+  manualOverride: Boolean(item.data.manualOverride),
   sourceUrl: item.data.sourceUrl,
   aiGenerated: item.data.aiGenerated,
 }));

@@ -12,6 +12,7 @@ location: "Planetarium – Śląski Park Nauki, al. Planetarium 4, Chorzów"
 isAlert: false
 sourceUrl: "https://planetarium.edu.pl"
 aiGenerated: false
+archived: true
 ---
 
 Zmodernizowane **Planetarium – Śląski Park Nauki** w Chorzowie to światowej klasy atrakcja, która zachwyca zarówno dzieci, jak i dorosłych. W weekendy uruchamiane są dedykowane bloki edukacyjno-rozrywkowe dla dzieci w wieku **5–10 lat**.

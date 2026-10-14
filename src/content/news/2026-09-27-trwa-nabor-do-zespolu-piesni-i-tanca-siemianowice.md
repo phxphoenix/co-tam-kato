@@ -10,6 +10,7 @@ location: "Siemianowickie Centrum Kultury – Bytków"
 isAlert: false
 sourceUrl: "https://metropoliagzm.pl/2026/09/18/trwa-nabor-do-zespolu-piesni-i-tanca-siemianowice/"
 aiGenerated: true
+archived: true
 ---
 
 Trwa nabór chętnych do sekcji wokalnych oraz tanecznych Zespołu Pieśni i Tańca „Siemianowice”. Próby odbywają się w każdy poniedziałek i środę w Siemianowickim Centrum Kultury – Bytków. To okazja do rozwijania swoich talentów w jednej z najstarszych grup folklorystycznych w kraju.

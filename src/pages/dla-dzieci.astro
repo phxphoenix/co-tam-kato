@@ -4,7 +4,9 @@ import { InteractiveFeed } from '../components/InteractiveFeed';
 import { getCollection } from 'astro:content';
 import { Smile, Sparkles, MapPin, Heart, Compass, Star } from 'lucide-react';
 
-const allNews = (await getCollection('news')).filter((item) => item.data.status !== 'deleted');
+const allNews = (await getCollection('news')).filter(
+  (item) => item.data.status !== 'deleted' && !item.data.archived
+);
 
 // Sortowanie od najnowszych
 const sortedNews = allNews.sort(
@@ -23,6 +25,8 @@ const serializedItems = sortedNews.map((item) => ({
   summary: item.data.summary,
   location: item.data.location,
   isAlert: item.data.isAlert,
+  archived: Boolean(item.data.archived),
+  manualOverride: Boolean(item.data.manualOverride),
   isForKids: item.data.isForKids || item.data.category === 'dla-dzieci',
   ageRange: item.data.ageRange,
   sourceUrl: item.data.sourceUrl,

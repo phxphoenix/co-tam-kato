@@ -508,7 +508,7 @@ function writeArticle(article, today) {
     `location: ${JSON.stringify(article.location)}`, `isAlert: ${article.isAlert}`,
     ...(article.isForKids ? ['isForKids: true'] : []),
     ...(article.ageRange ? [`ageRange: ${JSON.stringify(article.ageRange)}`] : []),
-    `sourceUrl: ${JSON.stringify(article.sourceUrl)}`, 'aiGenerated: true', '---', '',
+    `sourceUrl: ${JSON.stringify(article.sourceUrl)}`, 'aiGenerated: true', 'archived: false', '---', '',
     article.content, '',
   ].join('\n');
   fs.writeFileSync(filePath, frontmatter, 'utf8');

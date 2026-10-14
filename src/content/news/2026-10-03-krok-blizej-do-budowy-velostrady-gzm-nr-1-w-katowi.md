@@ -10,6 +10,7 @@ location: "Katowice"
 isAlert: false
 sourceUrl: "https://metropoliagzm.pl/2026/10/02/krok-blizej-do-budowy-velostrady-gzm-nr-1-w-katowicach/"
 aiGenerated: true
+archived: true
 ---
 
 Górnośląsko-Zagłębiowska Metropolia odebrała od wykonawcy koncepcję techniczną planowanej **Metropolitalnej Drogi Rowerowej nr 1 Katowice-Sosnowiec** w granicach Katowic. 
