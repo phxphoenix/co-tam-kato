@@ -10,6 +10,8 @@ location: "Katowice, Podlesie"
 isAlert: true
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/filia-nr-28-mbp-w-katowicach-czasowo-nieczynna-znamy-termin"
 aiGenerated: true
+archived: true
+manualOverride: false
 ---
 
 Czytelnicy korzystający z księgozbioru w katowickim Podlesiu muszą zaplanować wizyty z wyprzedzeniem. Filia nr 28 Miejskiej Biblioteki Publicznej w Katowicach będzie nieczynna w dniach **od 19 października do 2 listopada 2026 roku**.
