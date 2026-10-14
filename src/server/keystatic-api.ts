@@ -5,31 +5,37 @@ import config from '../../keystatic.config';
 
 export const prerender = false;
 
-const handler = makeGenericAPIRouteHandler(
-  {
-    config,
-    clientId: process.env.KEYSTATIC_GITHUB_CLIENT_ID || import.meta.env.KEYSTATIC_GITHUB_CLIENT_ID,
-    clientSecret: process.env.KEYSTATIC_GITHUB_CLIENT_SECRET || import.meta.env.KEYSTATIC_GITHUB_CLIENT_SECRET,
-    secret: process.env.KEYSTATIC_SECRET || import.meta.env.KEYSTATIC_SECRET,
-  },
-  {
-    slugEnvName: 'PUBLIC_KEYSTATIC_GITHUB_APP_SLUG',
-  }
-);
+const getHandler = () => {
+  return makeGenericAPIRouteHandler(
+    {
+      config,
+      clientId: process.env.KEYSTATIC_GITHUB_CLIENT_ID || (import.meta as any).env?.KEYSTATIC_GITHUB_CLIENT_ID,
+      clientSecret: process.env.KEYSTATIC_GITHUB_CLIENT_SECRET || (import.meta as any).env?.KEYSTATIC_GITHUB_CLIENT_SECRET,
+      secret: process.env.KEYSTATIC_SECRET || (import.meta as any).env?.KEYSTATIC_SECRET,
+    },
+    {
+      slugEnvName: 'PUBLIC_KEYSTATIC_GITHUB_APP_SLUG',
+    }
+  );
+};
 
 export const ALL: APIRoute = async (context) => {
   const reqUrl = new URL(context.request.url);
+  const isProd = import.meta.env.PROD || process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
 
-  // If request arrives as localhost (due to Vercel internal proxy), rewrite to public production host
-  if (reqUrl.hostname === 'localhost' || reqUrl.hostname === '127.0.0.1') {
-    const forwardedHost = context.request.headers.get('x-forwarded-host') || 'co-tam-kato.vercel.app';
+  let proxiedUrl = reqUrl.toString();
+  // On Vercel / production serverless runtime, requests arrive with host=localhost:xxx.
+  // Rewrite to public production domain so that GitHub OAuth redirect_uri uses the public URL.
+  if (isProd && (reqUrl.hostname === 'localhost' || reqUrl.hostname === '127.0.0.1')) {
+    const forwardedHost = context.request.headers.get('x-forwarded-host') || context.request.headers.get('host') || 'co-tam-kato.vercel.app';
     const forwardedProto = context.request.headers.get('x-forwarded-proto') || 'https';
-    reqUrl.hostname = forwardedHost.split(':')[0];
-    reqUrl.protocol = `${forwardedProto}:`;
-    reqUrl.port = '';
+    const cleanHost = forwardedHost.split(':')[0];
+    const targetUrl = new URL(reqUrl.pathname + reqUrl.search, `${forwardedProto}://${cleanHost}`);
+    proxiedUrl = targetUrl.toString();
   }
 
-  const proxiedRequest = new Request(reqUrl.toString(), context.request);
+  const handler = getHandler();
+  const proxiedRequest = new Request(proxiedUrl, context.request);
   const { body, headers, status } = await handler(proxiedRequest);
 
   const headersInADifferentStructure = new Map<string, string[]>();

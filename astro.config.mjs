@@ -1,25 +1,57 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
-import keystatic from '@keystatic/astro';
 import vercel from '@astrojs/vercel';
 import { fileURLToPath } from 'node:url';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 const isDev = process.env.NODE_ENV !== 'production';
 const isVercel = process.env.VERCEL === '1' || process.env.DEPLOY_TARGET === 'vercel';
 
-const vercelKeystaticApiIntegration = {
-  name: 'vercel-keystatic-api',
-  hooks: {
-    'astro:config:setup': ({ injectRoute }) => {
-      injectRoute({
-        pattern: '/api/keystatic/[...params]',
-        entrypoint: fileURLToPath(new URL('./src/server/keystatic-api.ts', import.meta.url)),
-        prerender: false,
-      });
+function keystaticCustomIntegration() {
+  return {
+    name: 'keystatic',
+    hooks: {
+      'astro:config:setup': ({ injectRoute, updateConfig, config }) => {
+        updateConfig({
+          server: config.server?.host ? {} : {
+            host: '127.0.0.1',
+          },
+          vite: {
+            plugins: [{
+              name: 'keystatic',
+              resolveId(id) {
+                if (id === 'virtual:keystatic-config') {
+                  return this.resolve('./keystatic.config', './a');
+                }
+                return null;
+              },
+            }],
+            optimizeDeps: {
+              entries: ['keystatic.config.*', '.astro/keystatic-imports.js'],
+            },
+          },
+        });
+        const dotAstroDir = new URL('./.astro/', config.root);
+        mkdirSync(dotAstroDir, { recursive: true });
+        writeFileSync(
+          new URL('keystatic-imports.js', dotAstroDir),
+          'import "@keystatic/astro/ui";\nimport "@keystatic/astro/api";\nimport "@keystatic/core/ui";\n'
+        );
+        injectRoute({
+          entrypoint: '@keystatic/astro/internal/keystatic-astro-page.astro',
+          pattern: '/keystatic/[...params]',
+          prerender: false,
+        });
+        injectRoute({
+          entrypoint: fileURLToPath(new URL('./src/server/keystatic-api.ts', import.meta.url)),
+          pattern: '/api/keystatic/[...params]',
+          prerender: false,
+        });
+      },
     },
-  },
-};
+  };
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -33,7 +65,7 @@ export default defineConfig({
   integrations: [
     react(),
     // Keystatic CMS - aktywny lokalnie w dev lub na Vercelu
-    ...(isDev || isVercel || process.env.ENABLE_KEYSTATIC_BUILD === 'true' ? [keystatic()] : []),
-    ...(isVercel ? [vercelKeystaticApiIntegration] : []),
+    ...(isDev || isVercel || process.env.ENABLE_KEYSTATIC_BUILD === 'true' ? [keystaticCustomIntegration()] : []),
   ],
 });
+
