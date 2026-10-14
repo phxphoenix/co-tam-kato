@@ -1,9 +1,13 @@
 import { config, fields, collection } from '@keystatic/core';
 
-const isVercel = process.env.VERCEL === '1' || process.env.DEPLOY_TARGET === 'vercel';
+const isProduction =
+  import.meta.env.PROD ||
+  process.env.NODE_ENV === 'production' ||
+  process.env.VERCEL === '1' ||
+  process.env.DEPLOY_TARGET === 'vercel';
 
 export default config({
-  storage: isVercel
+  storage: isProduction
     ? {
         kind: 'github',
         repo: 'phxphoenix/co-tam-kato',
@@ -11,6 +15,7 @@ export default config({
     : {
         kind: 'local',
       },
+
 
   collections: {
     news: collection({
