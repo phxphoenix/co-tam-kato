@@ -119,13 +119,18 @@ npm.cmd run digest
 │   │   └── BaseLayout.astro # Główny szkielet strony i SEO
 │   ├── lib/
 │   │   └── constants.ts    # Baza miast, kolorów i kategorii
-│   ├── pages/              # Routing podstron Astro
+│   ├── pages/              # Routing podstron Astro (czyste SSG)
 │   │   ├── index.astro     # Strona główna
+│   │   ├── dla-dzieci.astro # Podstrona z wydarzeniami dla dzieci
 │   │   ├── o-projekcie.astro # Podstrona informacyjna
+│   │   ├── ulubione.astro  # Zapisane ulubione artykuły
 │   │   └── wpis/[slug].astro # Szablon pojedynczego artykułu
-│   └── styles/
-│       └── global.css      # Style Tailwind CSS v4
-├── astro.config.mjs        # Konfiguracja Astro
+│   ├── server/             # Handlery SSR (proxy OAuth Keystatic dla Vercel)
+│   │   └── keystatic-api.ts
+│   ├── styles/
+│   │   └── global.css      # Style Tailwind CSS v4
+│   └── env.d.ts            # Deklaracje typów dla Astro i środowiska
+├── astro.config.mjs        # Konfiguracja Astro (dualizm SSG / Vercel Serverless)
 ├── keystatic.config.ts     # Konfiguracja panelu admina Keystatic
 └── package.json            # Zależności i skrypty npm
 ```

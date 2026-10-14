@@ -28,8 +28,8 @@ Wymagane skrypty npm z `package.json`:
 
 Keystatic działa dwutorowo:
 1. **Lokalnie**: `storage: { kind: 'local' }` zapisuje pliki w `src/content/news/`.
-2. **Na Vercelu (`NODE_ENV=production`)**: `storage: { kind: 'github' }` wykorzystuje autoryzację GitHub App i tworzy commity bezpośrednio w repozytorium `phxphoenix/co-tam-kato`.
-Trasa API `src/pages/api/keystatic/[...params].ts` automatycznie mapuje zapytania proxy Vercela na publiczną domenę `co-tam-kato.vercel.app`, zapewniając prawidłowy OAuth handshake.
+2. **Na Vercelu (`isVercel` / `VERCEL=1`)**: `storage: { kind: 'github' }` wykorzystuje autoryzację GitHub App i tworzy commity bezpośrednio w repozytorium `phxphoenix/co-tam-kato`.
+Trasa API Keystatica znajduje się w dedykowanym module serwerowym `src/server/keystatic-api.ts` (poza katalogiem `src/pages/`). Jest ona dynamicznie wstrzykiwana do Astro (`injectRoute` w `astro.config.mjs`) wyłącznie na Vercelu, gdzie adapter `@astrojs/vercel` obsługuje SSR. W kompilacjach statycznych SSG (GitHub Pages, GitHub Actions CI) trasa ta nie jest rejestrowana, co zapobiega błędowi `[NoAdapterInstalled]`. Handler ten automatycznie mapuje zapytania proxy Vercela na publiczną domenę `co-tam-kato.vercel.app`, zapewniając prawidłowy OAuth handshake.
 
 
 ## 3. Struktura kodu
@@ -46,8 +46,10 @@ Trasa API `src/pages/api/keystatic/[...params].ts` automatycznie mapuje zapytani
 │   ├── layouts/BaseLayout.astro
 │   ├── lib/constants.ts       # etykiety, kolory miast i kategorii
 │   ├── pages/                 # strony Astro i trasa artykułu
+│   ├── server/                # handlery SSR (np. proxy OAuth Keystatic dla Vercel)
 │   ├── styles/global.css
-│   └── content.config.ts      # loader i walidacja schematu news
+│   ├── content.config.ts      # loader i walidacja schematu news
+│   └── env.d.ts               # deklaracje typów dla Astro i środowiska
 ├── astro.config.mjs
 ├── keystatic.config.ts
 ├── package.json
@@ -187,7 +189,7 @@ W stanie przeglądu jest 12 rekordów: 11 ze statusem `published` i jeden rekord
 
 - Strona jest generowana statycznie; filtry działają wyłącznie na wbudowanym zbiorze danych i nie pobierają świeżych danych podczas wizyty.
 - Status `draft` nie chroni treści w statycznym wdrożeniu: dane są w JS strony, a trasa wpisu może być bezpośrednio dostępna. Nie zapisuj poufnych szkiców w repozytorium publicznym.
-- `/keystatic` jest opisany/nawigowany w aplikacji, ale konfiguracja produkcyjna pomija integrację, chyba że ustawiono `ENABLE_KEYSTATIC_BUILD=true`; lokalne `storage` nie zapewnia hostowanego workflow edycji.
+- **Dualizm architektoniczny (SSG vs Vercel SSR)**: Serwis obsługuje dwa tryby budowy kontrolowane zmienną `isVercel` (`process.env.VERCEL === '1'` lub `DEPLOY_TARGET === 'vercel'`). Na Vercelu aktywny jest adapter `@astrojs/vercel` oraz dynamicznie wstrzykiwana trasa `/api/keystatic/*` (`src/server/keystatic-api.ts`), co pozwala na działanie chmurowego panelu Keystatic z autoryzacją GitHub OAuth. W czystym buildzie statycznym (lokalnym, w GitHub Actions CI dla walidacji digestu oraz wdrożeniu GitHub Pages) adapter jest pomijany (`undefined`), a żadne trasy SSR nie znajdują się w katalogu `src/pages/`, co chroni proces przed błędem `[NoAdapterInstalled]`.
 - Harmonogram `23:00 UTC` oraz `11:00 UTC` odpowiada 01:00 i 13:00 w Polsce w czasie letnim CEST (oraz 00:00 i 12:00 zimą CET).
 - Opis strony „O projekcie” i README zawierają stwierdzenia szersze niż aktualny kod (np. katalog oficjalnych źródeł), dlatego przy zmianach automatyzacji należy aktualizować także dokumentację marketingową.
 - Lista miast/kategorii występuje w kilku plikach; jej rozbudowa wymaga synchronizacji walidacji, CMS, skryptu i UI.
@@ -195,9 +197,11 @@ W stanie przeglądu jest 12 rekordów: 11 ze statusem `published` i jeden rekord
 
 ## 12. Najważniejsze pliki
 
-- `astro.config.mjs` — integracje i konfiguracja bazy witryny.
+- `astro.config.mjs` — integracje, konfiguracja bazy witryny oraz warunkowe wstrzykiwanie adaptera Vercel i trasy API Keystatica.
+- `keystatic.config.ts` — pola edytora treści oraz warunkowy tryb magazynu (`github` na Vercelu, `local` w dev/CI).
+- `src/server/keystatic-api.ts` — dedykowany handler proxy OAuth dla Keystatic na Vercelu (wstrzykiwany przez `injectRoute`).
+- `src/env.d.ts` — deklaracje typów TypeScript dla bibliotek zewnętrznych i zmiennych procesowych.
 - `src/content.config.ts` — loader i typowany schemat wpisu.
-- `keystatic.config.ts` — pola edytora treści.
 - `src/pages/index.astro` — agregacja i serializacja wiadomości.
 - `src/components/InteractiveFeed.tsx` — wyszukiwarka i filtry.
 - `src/pages/wpis/[slug].astro` — generowanie pojedynczych artykułów.
