@@ -10,7 +10,8 @@ location: "ul. Bolesława Chrobrego, Chorzów"
 isAlert: false
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/remont-ul-chrobrego-w-chorzowie-kierowcow-czekaja-zmiany-az-do-grudnia"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Kierowcy poruszający się po centrum Chorzowa muszą przygotować się na utrudnienia. W środę, 14 października 2026 roku, ruszył remont nawierzchni ul. Bolesława Chrobrego.
