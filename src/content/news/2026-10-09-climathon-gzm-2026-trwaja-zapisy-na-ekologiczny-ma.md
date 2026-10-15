@@ -10,6 +10,8 @@ location: "Górnośląsko-Zagłębiowska Metropolia"
 isAlert: false
 sourceUrl: "https://metropoliagzm.pl/2026/10/09/zapraszamy-do-udzialu-w-climathon-gzm-2026-zmierz-sie-z-tematem-ekozywnosci/"
 aiGenerated: true
+archived: true
+manualOverride: false
 ---
 
 Ruszyła rejestracja do tegorocznej edycji **Climathon GZM 2026**, który odbędzie się w dniach **26–27 października 2026 roku**.
