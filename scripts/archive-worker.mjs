@@ -87,6 +87,19 @@ function appendLog(entry) {
 }
 
 /**
+ * Zwraca przesunięcie strefy Europe/Warsaw względem UTC w godzinach (np. 2 dla CEST, 1 dla CET)
+ */
+export function getWarsawOffsetHours(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Warsaw',
+    timeZoneName: 'shortOffset',
+  }).formatToParts(date);
+  const tz = parts.find((p) => p.type === 'timeZoneName')?.value;
+  const match = tz?.match(/GMT([+-]\d+)/);
+  return match ? parseInt(match[1], 10) : 2;
+}
+
+/**
  * Główna funkcja wykonawcza workera archiwizacji
  */
 export async function runArchiveWorker(options = {}) {
@@ -94,6 +107,7 @@ export async function runArchiveWorker(options = {}) {
     force = false,
     checkScheduledHour = true,
     targetHour = 2,
+    cronSchedule = null,
     customDays,
     referenceDate = new Date(),
   } = options;
@@ -106,9 +120,25 @@ export async function runArchiveWorker(options = {}) {
   console.log(`⏰ Czas uruchomienia: ${timestamp}`);
   console.log(`======================================================`);
 
-  // Kryterium: Sprawdzenie godziny 02:00 czasu polskiego przy uruchomieniu z crona
+  // Kryterium: Sprawdzenie harmonogramu (lub godziny 02:00 czasu polskiego) przy uruchomieniu z crona
   if (checkScheduledHour && !force) {
-    if (warsaw.hour !== targetHour) {
+    if (cronSchedule) {
+      const offset = getWarsawOffsetHours(referenceDate);
+      const targetUtcHour = (targetHour - offset + 24) % 24;
+      const expectedCron = `0 ${targetUtcHour} * * *`;
+      if (cronSchedule.trim() !== expectedCron) {
+        const msg = `Pominięto wykonanie dla cron '${cronSchedule}': w strefie Europe/Warsaw (UTC+${offset}) harmonogram ${String(targetHour).padStart(2, '0')}:00 czasu lokalnego to '${expectedCron}'.`;
+        console.log(`ℹ️ ${msg}`);
+        appendLog({ timestamp, level: 'INFO', message: msg });
+        return {
+          executed: false,
+          reason: 'outside_scheduled_cron',
+          cronSchedule,
+          expectedCron,
+          offset,
+        };
+      }
+    } else if (warsaw.hour !== targetHour) {
       const msg = `Pominięto wykonanie: w strefie Europe/Warsaw jest godzina ${warsaw.hour}:${String(warsaw.minute).padStart(2, '0')}. Worker jest zaplanowany na godzinę ${String(targetHour).padStart(2, '0')}:00 czasu lokalnego.`;
       console.log(`ℹ️ ${msg}`);
       appendLog({ timestamp, level: 'INFO', message: msg });
@@ -246,10 +276,13 @@ export async function runArchiveWorker(options = {}) {
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename || '')) {
   const isScheduled = process.argv.includes('--scheduled');
   const force = process.argv.includes('--force') || !isScheduled;
+  const cronArg = process.argv.find((a) => a.startsWith('--cron='));
+  const cronSchedule = process.env.CRON_SCHEDULE || (cronArg ? cronArg.slice('--cron='.length).replace(/^["']|["']$/g, '') : null);
 
   runArchiveWorker({
     force,
     checkScheduledHour: isScheduled,
+    cronSchedule,
   })
     .then((result) => {
       if (result.errorsCount && result.errorsCount > 0) {

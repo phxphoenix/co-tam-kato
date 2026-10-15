@@ -35,9 +35,13 @@ jobs:
         run: npm ci
 
       - name: Uruchomienie workera archiwizacji (02:00 Europe/Warsaw)
+        env:
+          CRON_SCHEDULE: ${{ github.event.schedule }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.force }}" = "true" ]; then
             npm run archive:worker -- --force
+          elif [ -n "${{ github.event.schedule }}" ]; then
+            npm run archive:worker -- --scheduled "--cron=${{ github.event.schedule }}"
           else
             npm run archive:worker -- --scheduled
           fi
@@ -49,7 +53,7 @@ jobs:
         run: |
           git config --global user.name "Co Tam KATO Bot"
           git config --global user.email "bot@co-tam-kato.local"
-          git add -- src/content/news/ logs/
+          git add -- src/content/news/
           if ! git diff-index --quiet HEAD --; then
             echo "Wykryto zarchiwizowane wpisy! Tworzenie commita..."
             git commit -m "📦 Automatyczna nocna archiwizacja artykułów (Co Tam KATO)"
