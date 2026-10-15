@@ -10,7 +10,8 @@ location: "Katowice, Dzienne Domy Pomocy Społecznej"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/seniorady-w-rytmie-miasta-katowice-zapraszaja-seniorow-na-wspolne-spotkania"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Katowice organizują cykl integracyjnych spotkań pod hasłem **„Seniorady w rytmie miasta”**, których zadaniem jest aktywizacja osób starszych i przeciwdziałanie samotności.
