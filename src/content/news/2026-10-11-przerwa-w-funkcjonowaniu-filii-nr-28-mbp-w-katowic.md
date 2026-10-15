@@ -10,7 +10,7 @@ location: "Katowice, Podlesie"
 isAlert: true
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/filia-nr-28-mbp-w-katowicach-czasowo-nieczynna-znamy-termin"
 aiGenerated: true
-archived: false
+archived: true
 manualOverride: false
 ---
 
