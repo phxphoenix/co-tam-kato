@@ -10,7 +10,7 @@
 - **[React 19](https://react.dev/)** – wykorzystany w architekturze "Wysp" (Astro Islands) do interaktywnego, natychmiastowego filtrowania miast, kategorii i wyszukiwarki na żywo.
 - **[Tailwind CSS v4](https://tailwindcss.com/)** – nowoczesny miejski design system dopasowany do urządzeń mobilnych i komputerów.
 - **[Keystatic CMS](https://keystatic.com/)** – wizualny panel administracyjny dostępny lokalnie oraz online na platformie Vercel pod adresem `/keystatic` z uwierzytelnianiem GitHub OAuth.
-- **GitHub Actions & Agent AI** – automatyzacja działająca 2x dziennie (1:00 w nocy i 13:00 w ciągu dnia), redagowana z użyciem Google Gemini AI i publikowana bez opłat serwerowych.
+- **GitHub Actions & Agent AI** – automatyzacja działająca 4x dziennie (01:00, 07:00, 13:00, 19:00 czasu polskiego), redagowana z użyciem Google Gemini AI i publikowana bez opłat serwerowych.
 
 ---
 
@@ -72,7 +72,7 @@ Tutaj wpisujesz pełną treść artykułu. Możesz używać pogrubień, list pun
 
 ---
 
-## 🤖 Automatyczny Agent AI (2x dziennie: 1:00 w nocy i 13:00 w dzień)
+## 🤖 Automatyczny Agent AI (4x na dobę: 01:00, 07:00, 13:00, 19:00)
 
 W katalogu `.github/workflows/daily-digest.yml` oraz `scripts/daily-digest.mjs` skonfigurowany jest Agent AI.
 
@@ -81,27 +81,22 @@ W katalogu `.github/workflows/daily-digest.yml` oraz `scripts/daily-digest.mjs` 
 2. Przejdź do swojego repozytorium na GitHubie: `https://github.com/phxphoenix/co-tam-kato`.
 3. Wejdź w: **Settings** -> **Secrets and variables** -> **Actions** -> **New repository secret**.
 4. Wpisz nazwę: `GEMINI_API_KEY` i wklej swój klucz.
-5. Gotowe! Od teraz 2 razy dziennie (o 1:00 w nocy i 13:00 w ciągu dnia czasu polskiego) GitHub Actions uruchomi bota, sprawdzi komunikaty ze śląskich źródeł, zredaguje podsumowanie i zaktualizuje stronę!
+5. Gotowe! Od teraz 4 razy na dobę (o 01:00, 07:00, 13:00 i 19:00 czasu polskiego) GitHub Actions uruchomi bota, sprawdzi komunikaty ze śląskich źródeł, zredaguje podsumowanie i zaktualizuje stronę!
 
 *Możesz również przetestować działanie skryptu lokalnie komendą:*
 ```powershell
 npm.cmd run digest
 ```
 
-### Baza monitorowanych źródeł:
-- **Serwisy regionalne i miejskie**: MojeKatowice.pl, Metropolia GZM, Śląska Opinia, MojChorzow.pl, MojeTychy.pl, MojBytom.pl, Silesion.PL, Gliwice.eu.
-- **Kluczowe obiekty i instytucje**:
-  - **Park Śląski** (`https://parkslaski.pl/en/news`) – aktualności i wydarzenia w parku,
-  - **Stadion Śląski** (`https://superautostadionslaski.pl/wiadomosci`) – relacje i zapowiedzi imprez na Stadionie Śląskim,
-  - **Katowicki Spodek** (`https://www.spodekkatowice.pl/pl/wydarzenia/61/`) – oficjalny kalendarz koncertów i widowisk w Spodku,
-  - **MCK Katowice** (`https://www.mckkatowice.pl/pl/wydarzenia/61/`) – kalendarz kongresów, targów i imprez w Międzynarodowym Centrum Kongresowym.
+### Baza monitorowanych źródeł (Single Source of Truth):
+Wszystkie monitorowane źródła (kanały RSS, strony instytucjonalne i portale miejskie) są zdefiniowane i zarządzane centralnie w pliku [`config/sources.md`](config/sources.md). Skrypt Agenta AI dynamicznie odczytuje tę tabelę, filtruje źródła ze statusem `ACTIVE` i stosuje odpowiedni routing (`RSS`, `WEB`, `DYNAMIC_WEB`) oraz dedykowane wskazówki parsowania.
 
 ---
 
 ## 📂 Struktura katalogów
 
 ```text
-├── .github/workflows/      # Przepisy automatyzacji (Agent AI 1:00 i 13:00 oraz Deploy)
+├── .github/workflows/      # Przepisy automatyzacji (Agent AI 01:00, 07:00, 13:00, 19:00 oraz Deploy)
 ├── public/                 # Statyczne pliki publiczne (favicon.svg itp.)
 ├── scripts/
 │   └── daily-digest.mjs    # Skrypt Agenta AI do pobierania i redagowania newsów

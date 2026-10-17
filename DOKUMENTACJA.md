@@ -14,7 +14,7 @@ Dokument opisuje kod znajdujący się w repozytorium w chwili przeglądu (27 wrz
 - **TypeScript** opisuje konfigurację i komponenty React.
 - **Keystatic CMS** edytuje kolekcję artykułów Markdown lokalnie (zapis na dysk) oraz w chmurze na Vercelu (zapis commitów bezpośrednio do repozytorium GitHub via GitHub App OAuth).
 - **Vercel** obsługuje produkcyjne wdrożenie strony oraz dynamiczne trasy API (`/api/keystatic/*`) i panel administracyjny (`/keystatic`).
-- **GitHub Actions** wykonuje automatyczny digest (1:00 i 13:00) oraz wdrożenie na GitHub Pages / Vercel.
+- **GitHub Actions** wykonuje automatyczny digest 4 razy na dobę (01:00, 07:00, 13:00, 19:00 czasu polskiego) oraz wdrożenie na GitHub Pages / Vercel.
 - **Google Gemini API** jest używane przez skrypt digestu; klucz musi być dostępny jako sekret `GEMINI_API_KEY`.
 
 Wymagane skrypty npm z `package.json`:
@@ -131,24 +131,14 @@ Digest sprawdza zachowane wpisy `deleted` i próbuje nie wygenerować ponownie t
 
 ### Harmonogram i źródła
 
-`.github/workflows/daily-digest.yml` uruchamia workflow dwa razy na dobę: o `23:00 UTC` (01:00 czasu polskiego CEST) oraz `11:00 UTC` (13:00 / 1:00 PM czasu polskiego CEST), a także na żądanie przez `workflow_dispatch`. (W czasie zimowym CET godziny te odpowiadają odpowiednio 00:00 i 12:00 czasu polskiego). Job używa Ubuntu, Node 22, `npm ci`, a następnie uruchamia `npm run digest` z sekretem `GEMINI_API_KEY`.
+`.github/workflows/daily-digest.yml` uruchamia workflow 4 razy na dobę w równych 6-godzinnych odstępach: o `23:00 UTC` (01:00 CEST), `05:00 UTC` (07:00 CEST), `11:00 UTC` (13:00 CEST) oraz `17:00 UTC` (19:00 CEST), a także na żądanie przez `workflow_dispatch`. (W czasie zimowym CET godziny te odpowiadają odpowiednio 00:00, 06:00, 12:00 i 18:00 czasu polskiego). Job używa Ubuntu, Node 22, `npm ci`, a następnie uruchamia `npm run digest` z sekretem `GEMINI_API_KEY`.
 
-`scripts/daily-digest.mjs` pobiera materiały ze zróżnicowanej bazy źródeł (kanały RSS oraz dedykowane parsery HTML dla czołowych obiektów widowiskowych i instytucji):
+`scripts/daily-digest.mjs` pobiera materiały ze zróżnicowanej bazy źródeł zdefiniowanej w `config/sources.md` (Single Source of Truth), filtrując wpisy ze statusem `ACTIVE`. Dla każdego źródła stosowany jest routing na podstawie kolumny `Typ`:
+- `RSS`: strumienie XML/Atom pobierane i parsowane ze szczególnym uwzględnieniem tego, że data wydarzenia znajduje się w treści/tytule wpisu, a nie w polu `pubDate`.
+- `WEB`: dedykowane parsery obiektów widowiskowych (Spodek, MCK, Park Śląski, Stadion Śląski) oraz ogólny mechanizm czyszczenia HTML do Markdownu z ekstrakcją linków i obsługą alternatywnych adresów ze wskazówek.
+- `DYNAMIC_WEB`: renderowanie stron opartych na JS (np. GoingApp) za pośrednictwem Jina Reader (`https://r.jina.ai/${url}`).
 
-1. **mojeKatowice.pl** (`https://mojekatowice.pl/rss`) — Katowice (RSS)
-2. **Wydarzenia Metropolia GZM** (`https://metropoliagzm.pl/feed/`) — cała okolica (RSS)
-3. **Śląska Opinia** (`https://slaskaopinia.pl/feed/`) — cała okolica (RSS)
-4. **mojChorzow.pl** (`https://mojchorzow.pl/rss`) — Chorzów (RSS)
-5. **mojeTychy.pl** (`https://mojetychy.pl/rss`) — Tychy (RSS)
-6. **mojBytom.pl** (`https://mojbytom.pl/rss`) — Bytom (RSS)
-7. **Silesion.PL** (`https://silesion.pl/feed/`) — cała okolica (RSS)
-8. **Gliwice.eu** (`https://gliwice.eu/rss.xml`) — Gliwice / cała okolica (RSS)
-9. **Park Śląski** (`https://parkslaski.pl/en/news` z zapasowym `https://parkslaski.pl/aktualnosci`) — Chorzów (dedykowany parser kart aktualności)
-10. **Stadion Śląski** (`https://superautostadionslaski.pl/wiadomosci`) — Chorzów (dedykowany parser wiadomości)
-11. **Katowicki Spodek** (`https://www.spodekkatowice.pl/pl/wydarzenia/61/`) — Katowice (dedykowany parser kalendarza wydarzeń)
-12. **Międzynarodowe Centrum Kongresowe (MCK)** (`https://www.mckkatowice.pl/pl/wydarzenia/61/`) — Katowice (dedykowany parser kalendarza wydarzeń)
-
-Skrypt parsuje standardowe pola RSS/Atom oraz strukturę HTML serwisów instytucjonalnych (tytuł, link, opis, datę), usuwa znaczniki HTML i encje XML. Przyjmuje aktualności z ostatnich 14 dni oraz nadchodzące wydarzenia z kalendarzy (do 45 dni w przód). Błąd pojedynczego źródła nie przerywa pracy skryptu; dopiero brak jakichkolwiek materiałów z całej bazy źródeł kończy job błędem.
+Błąd pojedynczego źródła jest izolowany blokiem try/catch i nie przerywa pracy skryptu dla pozostałych źródeł; dopiero brak jakichkolwiek materiałów ze wszystkich źródeł kończy proces błędem.
 
 ### Redakcja i zabezpieczenia
 
@@ -190,7 +180,7 @@ W stanie przeglądu jest 12 rekordów: 11 ze statusem `published` i jeden rekord
 - Strona jest generowana statycznie; filtry działają wyłącznie na wbudowanym zbiorze danych i nie pobierają świeżych danych podczas wizyty.
 - Status `draft` nie chroni treści w statycznym wdrożeniu: dane są w JS strony, a trasa wpisu może być bezpośrednio dostępna. Nie zapisuj poufnych szkiców w repozytorium publicznym.
 - **Dualizm architektoniczny (SSG vs Vercel SSR)**: Serwis obsługuje dwa tryby budowy kontrolowane zmienną `isVercel` (`process.env.VERCEL === '1'` lub `DEPLOY_TARGET === 'vercel'`). Na Vercelu aktywny jest adapter `@astrojs/vercel` oraz dynamicznie wstrzykiwana trasa `/api/keystatic/*` (`src/server/keystatic-api.ts`), co pozwala na działanie chmurowego panelu Keystatic z autoryzacją GitHub OAuth. W czystym buildzie statycznym (lokalnym, w GitHub Actions CI dla walidacji digestu oraz wdrożeniu GitHub Pages) adapter jest pomijany (`undefined`), a żadne trasy SSR nie znajdują się w katalogu `src/pages/`, co chroni proces przed błędem `[NoAdapterInstalled]`.
-- Harmonogram `23:00 UTC` oraz `11:00 UTC` odpowiada 01:00 i 13:00 w Polsce w czasie letnim CEST (oraz 00:00 i 12:00 zimą CET).
+- Harmonogram w UTC (`23:00`, `05:00`, `11:00`, `17:00`) odpowiada godzinom 01:00, 07:00, 13:00 i 19:00 w Polsce w czasie letnim CEST (oraz 00:00, 06:00, 12:00, 18:00 zimą CET).
 - Opis strony „O projekcie” i README zawierają stwierdzenia szersze niż aktualny kod (np. katalog oficjalnych źródeł), dlatego przy zmianach automatyzacji należy aktualizować także dokumentację marketingową.
 - Lista miast/kategorii występuje w kilku plikach; jej rozbudowa wymaga synchronizacji walidacji, CMS, skryptu i UI.
 - `npm run digest` zapisuje zmiany w working tree; lokalnie nie publikuje ich samodzielnie. Commit/push wykonuje wyłącznie workflow GitHub Actions.

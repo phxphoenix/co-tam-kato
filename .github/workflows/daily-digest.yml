@@ -2,10 +2,34 @@ name: Agent AI (Co Tam KATO)
 
 on:
   schedule:
-    # Wydanie nocne: 01:00 czasu polskiego (23:00 UTC w czasie letnim CEST / 00:00 UTC w czasie zimowym CET)
+    # Harmonogram: 4 razy na dobę w równych 6-godzinnych odstępach, zaczynając od godziny 01:00 czasu polskiego.
+    # W strefie czasowej Europe/Warsaw odpowiada to godzinom: 01:00, 07:00, 13:00 oraz 19:00.
+    # Wyrażenie cron w czasie lokalnym Europe/Warsaw: '0 1,7,13,19 * * *'.
+    #
+    # UWAGA: GitHub Actions (on.schedule) działa wyłącznie w czasie UTC i NIE obsługuje parametru 'timezone'.
+    # Przeliczenie godzin dla strefy Europe/Warsaw na czas UTC:
+    # - Czas letni (CEST, UTC+2):
+    #   * 01:00 Europe/Warsaw -> 23:00 UTC (dnia poprzedniego)
+    #   * 07:00 Europe/Warsaw -> 05:00 UTC
+    #   * 13:00 Europe/Warsaw -> 11:00 UTC
+    #   * 19:00 Europe/Warsaw -> 17:00 UTC
+    #   Odpowiada to wyrażeniu cron UTC (CEST): '0 5,11,17,23 * * *' (lub 23, 5, 11, 17)
+    # - Czas zimowy (CET, UTC+1):
+    #   * 01:00 Europe/Warsaw -> 00:00 UTC
+    #   * 07:00 Europe/Warsaw -> 06:00 UTC
+    #   * 13:00 Europe/Warsaw -> 12:00 UTC
+    #   * 19:00 Europe/Warsaw -> 18:00 UTC
+    #   Odpowiada to wyrażeniu cron UTC (CET): '0 0,6,12,18 * * *'
+    #
+    # Poszczególne wydania (przeliczone na czas UTC dla czasu letniego CEST / domyślnego UTC+2):
+    # Wydanie nocne: 01:00 czasu polskiego (23:00 UTC CEST / 00:00 UTC CET)
     - cron: '0 23 * * *'
-    # Wydanie popołudniowe: 13:00 (1:00 PM) czasu polskiego (11:00 UTC w czasie letnim CEST / 12:00 UTC w czasie zimowym CET)
+    # Wydanie poranne: 07:00 czasu polskiego (05:00 UTC CEST / 06:00 UTC CET)
+    - cron: '0 5 * * *'
+    # Wydanie popołudniowe: 13:00 czasu polskiego (11:00 UTC CEST / 12:00 UTC CET)
     - cron: '0 11 * * *'
+    # Wydanie wieczorne: 19:00 czasu polskiego (17:00 UTC CEST / 18:00 UTC CET)
+    - cron: '0 17 * * *'
   # Możliwość ręcznego uruchomienia jednym kliknięciem z panelu GitHub Actions
   workflow_dispatch:
 

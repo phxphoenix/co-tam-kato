@@ -63,6 +63,11 @@ function keystaticCustomIntegration() {
           pattern: '/api/archive-run',
           prerender: false,
         });
+        injectRoute({
+          entrypoint: fileURLToPath(new URL('./src/server/sources-api.ts', import.meta.url)),
+          pattern: '/api/sources',
+          prerender: false,
+        });
       },
     },
   };

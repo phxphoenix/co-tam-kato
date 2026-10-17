@@ -15,6 +15,7 @@ import {
   Check,
 } from 'lucide-react';
 import { validateArchivePeriod } from '../../lib/archive-validation';
+import AdminHeaderNav from './AdminHeaderNav';
 
 export interface AdminArticleItem {
   slug: string;
@@ -230,6 +231,9 @@ export default function ArchiveAdminDashboard({
 
   return (
     <div className="space-y-8">
+      {/* Pasek nawigacyjny modułów Admina */}
+      <AdminHeaderNav currentTab="archive" baseUrl={baseUrl} />
+
       {/* Pasek nawigacyjny i nagłówek panelu */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
         <div>
