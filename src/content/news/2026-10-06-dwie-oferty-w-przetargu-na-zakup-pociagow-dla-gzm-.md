@@ -10,6 +10,7 @@ location: "Górnośląsko-Zagłębiowska Metropolia"
 isAlert: false
 sourceUrl: "https://metropoliagzm.pl/2026/10/06/dwie-oferty-w-przetargu-na-zakup-pociagow-dla-gzm-i-wojewodztwa-slaskiego/"
 aiGenerated: true
+archived: true
 ---
 
 Pesa Bydgoszcz oraz Newag złożyły swoje oferty w przetargu na dostawę 32 nowych elektrycznych zespołów trakcyjnych (EZT) dla Górnośląsko-Zagłębiowskiej Metropolii i Województwa Śląskiego.
