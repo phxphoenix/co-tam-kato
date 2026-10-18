@@ -19,7 +19,7 @@ import { CityBadge } from './CityBadge';
 import { CategoryBadge } from './CategoryBadge';
 import { useFavorites } from '../lib/favorites';
 import { ArchiveButton, ArchiveAIcon } from './ArchiveButton';
-import { useArchive, type ArchiveState } from '../lib/archive';
+import { useArchive, SYNC_RESULT_EVENT, type ArchiveState, type ArchiveSyncResult } from '../lib/archive';
 
 export interface FeedItem {
   id: string;
@@ -70,6 +70,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
     previousState: ArchiveState;
     newState: ArchiveState;
     title: string;
+    persisted?: 'fs' | 'github' | 'client';
   } | null>(null);
 
   const [selectedCity, setSelectedCity] = useState<string>('all');
@@ -88,11 +89,27 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
   // Auto-zamykanie powiadomienia Toast po 5 sekundach (AC 5)
   useEffect(() => {
     if (!toast) return;
+    const duration = toast.persisted === 'client' ? 8000 : 5000;
     const timer = setTimeout(() => {
       setToast(null);
-    }, 5000);
+    }, duration);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  // Nasłuchiwanie na wynik synchronizacji z backendem (/api/archive)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleSyncResult = (e: Event) => {
+      const custom = e as CustomEvent<ArchiveSyncResult>;
+      if (!custom.detail) return;
+      setToast((prev) => {
+        if (!prev || prev.slug !== custom.detail.slug) return prev;
+        return { ...prev, persisted: custom.detail.persisted };
+      });
+    };
+    window.addEventListener(SYNC_RESULT_EVENT, handleSyncResult);
+    return () => window.removeEventListener(SYNC_RESULT_EVENT, handleSyncResult);
+  }, []);
 
   const handleArchiveToggle = (item: FeedItem, newState: ArchiveState, oldState: ArchiveState) => {
     const actionText = newState.archived ? 'Przeniesiono do archiwum' : 'Przywrócono z archiwum';
@@ -950,10 +967,27 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
           <span className="p-2 bg-amber-500/20 text-amber-400 rounded-xl flex-shrink-0">
             <ArchiveAIcon className="w-4 h-4" />
           </span>
-          <div className="flex-grow min-w-0">
+          <div className="flex-grow min-w-0 space-y-0.5">
             <p className="text-xs font-medium text-zinc-200 truncate">
               {toast.message}
             </p>
+            {toast.persisted === 'client' && (
+              <p className="text-[11px] text-amber-300/90 leading-snug">
+                Zapisano tylko lokalnie na tym urządzeniu.{' '}
+                <a
+                  href={`${baseUrl}keystatic`}
+                  className="underline font-semibold hover:text-amber-200"
+                >
+                  Zaloguj się w Panelu Admina
+                </a>
+                , aby zsynchronizować w chmurze.
+              </p>
+            )}
+            {(toast.persisted === 'github' || toast.persisted === 'fs') && (
+              <p className="text-[11px] text-emerald-400/90 leading-snug">
+                Zapisano na serwerze (zsynchronizowano między urządzeniami)
+              </p>
+            )}
           </div>
           <button
             type="button"

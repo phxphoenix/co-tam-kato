@@ -4,16 +4,35 @@ import { AUTO_ARCHIVE_DAYS } from './constants.ts';
 export interface ArchiveState {
   archived: boolean;
   manualOverride?: boolean;
+  persisted?: 'fs' | 'github' | 'client';
+  updatedAt?: number;
+}
+
+export interface ArchiveSyncResult {
+  slug: string;
+  archived: boolean;
+  persisted: 'fs' | 'github' | 'client';
 }
 
 const STORAGE_KEY = 'kato_manual_archives_v1';
 const UPDATE_EVENT = 'kato_archive_changed';
+export const SYNC_RESULT_EVENT = 'kato_archive_sync_result';
+
+let serverStatesCache: Record<string, ArchiveState> = {};
+let lastServerFetchAt = 0;
+let inFlightServerFetch: Promise<Record<string, ArchiveState>> | null = null;
+
+function getApiUrl(): string {
+  const rawBase = (typeof import.meta !== 'undefined' && (import.meta as any).env?.BASE_URL) || '/';
+  const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+  return `${base}api/archive`;
+}
 
 /**
  * Pobiera z localStorage mapę manualnych zmian archiwizacji
  */
 export function getStoredArchiveOverrides(): Record<string, ArchiveState> {
-  if (typeof window === 'undefined') return {};
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return {};
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
@@ -29,22 +48,114 @@ export function getStoredArchiveOverrides(): Record<string, ArchiveState> {
  * Zapisuje do localStorage i powiadamia wszystkie komponenty oraz karty
  */
 export function saveArchiveOverrides(overrides: Record<string, ArchiveState>): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
-    window.dispatchEvent(new CustomEvent(UPDATE_EVENT, { detail: overrides }));
+    if (typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent(UPDATE_EVENT, { detail: overrides }));
+    }
   } catch (error) {
     console.warn('Nie udało się zapisać stanu archiwum w localStorage:', error);
   }
 }
 
 /**
- * Sprawdza czy artykuł jest zarchiwizowany (biorąc pod uwagę stan bazowy i ewentualny override w przeglądarce)
+ * Synchronizuje stan lokalny z aktualnym stanem na serwerze (/api/archive GET).
+ * Dzięki temu zmiany wykonane na telefonie są od razu widoczne na komputerze
+ * (nawet przed zakończeniem pełnego przebudowania statycznego HTML na Vercelu).
+ */
+export async function fetchServerArchiveStates(force = false): Promise<Record<string, ArchiveState>> {
+  if (typeof window === 'undefined' || typeof window.location === 'undefined' || typeof fetch === 'undefined') {
+    return serverStatesCache;
+  }
+
+  const now = Date.now();
+  if (!force && inFlightServerFetch) {
+    return inFlightServerFetch;
+  }
+  if (!force && now - lastServerFetchAt < 3000) {
+    return serverStatesCache;
+  }
+
+  inFlightServerFetch = (async () => {
+    try {
+      const response = await fetch(getApiUrl(), {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        return serverStatesCache;
+      }
+
+      const data = await response.json();
+      if (data && data.success && data.states && typeof data.states === 'object') {
+        const remoteStates = data.states as Record<string, ArchiveState>;
+        serverStatesCache = remoteStates;
+        lastServerFetchAt = Date.now();
+
+        const localOverrides = getStoredArchiveOverrides();
+        let changed = false;
+        const mergedOverrides: Record<string, ArchiveState> = { ...localOverrides };
+
+        for (const [slug, remoteState] of Object.entries(remoteStates)) {
+          const local = mergedOverrides[slug];
+          const remoteTime = remoteState.updatedAt || 0;
+          const localTime = local?.updatedAt || 0;
+
+          // Jeśli na tym urządzeniu nie było lokalnego wpisu, albo wpis na serwerze jest nowszy,
+          // albo lokalny wpis był już wcześniej zsynchronizowany z serwerem — przyjmujemy stan z serwera
+          if (
+            !local ||
+            (remoteTime > 0 && remoteTime >= localTime) ||
+            local.persisted === 'github' ||
+            local.persisted === 'fs'
+          ) {
+            if (
+              !local ||
+              local.archived !== remoteState.archived ||
+              local.manualOverride !== remoteState.manualOverride
+            ) {
+              mergedOverrides[slug] = {
+                archived: Boolean(remoteState.archived),
+                manualOverride: remoteState.manualOverride,
+                persisted: 'github',
+                updatedAt: remoteTime || Date.now(),
+              };
+              changed = true;
+            }
+          }
+        }
+
+        if (changed) {
+          saveArchiveOverrides(mergedOverrides);
+        } else if (typeof window.dispatchEvent === 'function') {
+          window.dispatchEvent(new CustomEvent(UPDATE_EVENT, { detail: mergedOverrides }));
+        }
+      }
+      return serverStatesCache;
+    } catch {
+      return serverStatesCache;
+    } finally {
+      inFlightServerFetch = null;
+    }
+  })();
+
+  return inFlightServerFetch;
+}
+
+/**
+ * Sprawdza czy artykuł jest zarchiwizowany (biorąc pod uwagę stan bazowy, serwer i ewentualny override w przeglądarce)
  */
 export function isItemArchived(slug: string, defaultArchived = false): boolean {
   const overrides = getStoredArchiveOverrides();
   if (slug in overrides) {
     return Boolean(overrides[slug].archived);
+  }
+  if (slug in serverStatesCache) {
+    return Boolean(serverStatesCache[slug].archived);
   }
   return Boolean(defaultArchived);
 }
@@ -52,15 +163,16 @@ export function isItemArchived(slug: string, defaultArchived = false): boolean {
 /**
  * Wykonuje asynchroniczne żądanie do backendu /api/archive w celu zaktualizowania pliku w bazie
  */
-async function syncToBackend(slug: string, archived: boolean, manualOverride?: boolean): Promise<boolean> {
-  if (typeof window === 'undefined' || typeof window.location === 'undefined') return false;
+async function syncToBackend(
+  slug: string,
+  archived: boolean,
+  manualOverride?: boolean
+): Promise<'fs' | 'github' | 'client'> {
+  if (typeof window === 'undefined' || typeof window.location === 'undefined') return 'client';
   try {
-    const rawBase = (typeof import.meta !== 'undefined' && (import.meta as any).env?.BASE_URL) || '/';
-    const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
-    const apiUrl = `${base}api/archive`;
-
-    const response = await fetch(apiUrl, {
+    const response = await fetch(getApiUrl(), {
       method: 'POST',
+      credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -69,13 +181,58 @@ async function syncToBackend(slug: string, archived: boolean, manualOverride?: b
 
     if (!response.ok) {
       console.warn(`Backend /api/archive zwrócił status ${response.status}`);
-      return false;
+      if (typeof window.dispatchEvent === 'function') {
+        window.dispatchEvent(
+          new CustomEvent<ArchiveSyncResult>(SYNC_RESULT_EVENT, {
+            detail: { slug, archived, persisted: 'client' },
+          })
+        );
+      }
+      return 'client';
     }
-    return true;
+
+    const data = await response.json().catch(() => ({}));
+    const persisted: 'fs' | 'github' | 'client' =
+      data?.persisted === 'github' || data?.persisted === 'fs' ? data.persisted : 'client';
+
+    // Zaktualizuj status utrwalenia w localStorage
+    const currentOverrides = getStoredArchiveOverrides();
+    if (slug in currentOverrides) {
+      currentOverrides[slug] = {
+        ...currentOverrides[slug],
+        persisted,
+        updatedAt: Date.now(),
+      };
+      saveArchiveOverrides(currentOverrides);
+    }
+
+    serverStatesCache[slug] = {
+      archived,
+      manualOverride,
+      persisted,
+      updatedAt: Date.now(),
+    };
+
+    if (typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(
+        new CustomEvent<ArchiveSyncResult>(SYNC_RESULT_EVENT, {
+          detail: { slug, archived, persisted },
+        })
+      );
+    }
+
+    return persisted;
   } catch (err) {
     // W środowisku statycznym bez serwera fetch może zgłosić błąd połączenia - to normalne
     console.info('Backend /api/archive niedostępny w bieżącym środowisku runtime (zmiana zapisana lokalnie):', err);
-    return false;
+    if (typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(
+        new CustomEvent<ArchiveSyncResult>(SYNC_RESULT_EVENT, {
+          detail: { slug, archived, persisted: 'client' },
+        })
+      );
+    }
+    return 'client';
   }
 }
 
@@ -93,9 +250,12 @@ export function toggleItemArchive(options: {
   const { slug, defaultArchived = false, defaultManualOverride = false, pubDate, sourceDate } = options;
   const currentOverrides = getStoredArchiveOverrides();
 
-  const isCurrentlyArchived = slug in currentOverrides
-    ? currentOverrides[slug].archived
-    : Boolean(defaultArchived);
+  const isCurrentlyArchived =
+    slug in currentOverrides
+      ? currentOverrides[slug].archived
+      : slug in serverStatesCache
+      ? serverStatesCache[slug].archived
+      : Boolean(defaultArchived);
 
   const nextArchived = !isCurrentlyArchived;
   let nextManualOverride = defaultManualOverride;
@@ -119,6 +279,7 @@ export function toggleItemArchive(options: {
   const newState: ArchiveState = {
     archived: nextArchived,
     manualOverride: nextManualOverride,
+    updatedAt: Date.now(),
   };
 
   const nextOverrides = {
@@ -141,7 +302,10 @@ export function setItemArchiveState(slug: string, state: ArchiveState): void {
   const currentOverrides = getStoredArchiveOverrides();
   const nextOverrides = {
     ...currentOverrides,
-    [slug]: state,
+    [slug]: {
+      ...state,
+      updatedAt: Date.now(),
+    },
   };
   saveArchiveOverrides(nextOverrides);
   syncToBackend(slug, state.archived, state.manualOverride).catch(() => {});
@@ -152,14 +316,22 @@ export function setItemArchiveState(slug: string, state: ArchiveState): void {
  */
 export function useArchive() {
   const [overrides, setOverrides] = useState<Record<string, ArchiveState>>({});
+  const [serverStates, setServerStates] = useState<Record<string, ArchiveState>>(serverStatesCache);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     setOverrides(getStoredArchiveOverrides());
     setIsLoaded(true);
 
+    // Pobierz świeży stan z serwera (/api/archive GET), aby zsynchronizować zmiany między urządzeniami
+    fetchServerArchiveStates().then((remote) => {
+      setServerStates({ ...remote });
+      setOverrides(getStoredArchiveOverrides());
+    });
+
     const handleUpdate = (event: Event) => {
       const customEvent = event as CustomEvent<Record<string, ArchiveState>>;
+      setServerStates({ ...serverStatesCache });
       if (customEvent.detail) {
         setOverrides(customEvent.detail);
       } else {
@@ -173,12 +345,21 @@ export function useArchive() {
       }
     };
 
+    const handleFocus = () => {
+      fetchServerArchiveStates().then((remote) => {
+        setServerStates({ ...remote });
+        setOverrides(getStoredArchiveOverrides());
+      });
+    };
+
     window.addEventListener(UPDATE_EVENT, handleUpdate);
     window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', handleFocus);
 
     return () => {
       window.removeEventListener(UPDATE_EVENT, handleUpdate);
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', handleFocus);
     };
   }, []);
 
@@ -187,9 +368,12 @@ export function useArchive() {
       if (slug in overrides) {
         return overrides[slug].archived;
       }
+      if (slug in serverStates) {
+        return serverStates[slug].archived;
+      }
       return Boolean(defaultArchived);
     },
-    [overrides]
+    [overrides, serverStates]
   );
 
   return {

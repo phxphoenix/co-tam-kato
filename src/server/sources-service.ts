@@ -304,12 +304,11 @@ export function writeSourcesToFile(content: string): {
   error?: string;
 } {
   try {
-    const dir = path.dirname(SOURCES_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
     try {
+      const dir = path.dirname(SOURCES_FILE);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
       fs.writeFileSync(SOURCES_FILE, content, 'utf8');
       return { success: true, filePath: SOURCES_FILE, content };
     } catch (writeErr: any) {

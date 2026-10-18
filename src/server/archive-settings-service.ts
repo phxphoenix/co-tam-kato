@@ -45,15 +45,14 @@ export function updateArchiveSettings(rawVal: unknown): { success: boolean; erro
   }
 
   try {
-    if (!fs.existsSync(SETTINGS_DIR)) {
-      fs.mkdirSync(SETTINGS_DIR, { recursive: true });
-    }
-
     const newSettings: ArchiveSettings = {
       archiveAfterDays: validation.value,
     };
 
     try {
+      if (!fs.existsSync(SETTINGS_DIR)) {
+        fs.mkdirSync(SETTINGS_DIR, { recursive: true });
+      }
       fs.writeFileSync(SETTINGS_FILE, JSON.stringify(newSettings, null, 2) + '\n', 'utf8');
       return {
         success: true,

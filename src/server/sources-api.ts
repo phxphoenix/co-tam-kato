@@ -57,14 +57,10 @@ async function commitToGitHub(options: {
   return await putRes.json();
 }
 
-function getGitHubToken(request: Request): string | undefined {
-  const cookieHeader = request.headers.get('cookie') || '';
-  const cookieMatch = cookieHeader.match(/keystatic-gh-access-token=([^;]+)/);
-  return (
-    process.env.GITHUB_TOKEN ||
-    process.env.GH_TOKEN ||
-    (cookieMatch ? decodeURIComponent(cookieMatch[1]) : undefined)
-  );
+async function getGitHubToken(request: Request): Promise<string | undefined> {
+  const { resolveGitHubAuth } = await import('./github-auth.ts');
+  const auth = await resolveGitHubAuth(request);
+  return auth.token;
 }
 
 export const GET: APIRoute = async () => {
@@ -111,7 +107,7 @@ export const POST: APIRoute = async ({ request }) => {
     let persisted = 'fs';
 
     if (result.readOnly && result.content) {
-      const token = getGitHubToken(request);
+      const token = await getGitHubToken(request);
       if (token) {
         try {
           await commitToGitHub({
@@ -180,7 +176,7 @@ export const PATCH: APIRoute = async ({ request }) => {
     let persisted = 'fs';
 
     if (result.readOnly && result.content) {
-      const token = getGitHubToken(request);
+      const token = await getGitHubToken(request);
       if (token) {
         try {
           await commitToGitHub({

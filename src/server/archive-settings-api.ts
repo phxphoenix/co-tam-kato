@@ -90,16 +90,12 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Jeśli środowisko jest read-only (np. Vercel), sprawdźmy czy możemy dokonać commita przez GitHub API
     if ((result as any).readOnly && result.settings) {
-      const cookieHeader = request.headers.get('cookie') || '';
-      const cookieMatch = cookieHeader.match(/keystatic-gh-access-token=([^;]+)/);
-      const gitHubToken =
-        process.env.GITHUB_TOKEN ||
-        process.env.GH_TOKEN ||
-        (cookieMatch ? decodeURIComponent(cookieMatch[1]) : undefined);
+      const { resolveGitHubAuth } = await import('./github-auth.ts');
+      const auth = await resolveGitHubAuth(request);
 
-      if (gitHubToken) {
+      if (auth.token) {
         try {
-          await commitSettingsToGitHub(gitHubToken, JSON.stringify(result.settings, null, 2) + '\n');
+          await commitSettingsToGitHub(auth.token, JSON.stringify(result.settings, null, 2) + '\n');
         } catch (ghErr: any) {
           console.warn('[Archive Settings API] Ostrzeżenie zapisu do GitHub API:', ghErr?.message);
         }

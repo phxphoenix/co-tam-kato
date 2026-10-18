@@ -78,7 +78,11 @@ export default defineConfig({
   site: isVercel ? 'https://co-tam-kato.vercel.app' : 'https://phxphoenix.github.io',
   base: isVercel || isDev ? '/' : '/co-tam-kato/',
   output: 'static',
-  adapter: isVercel ? vercel() : undefined,
+  adapter: isVercel
+    ? vercel({
+        includeFiles: ['./src/content/news/**', './src/content/settings/**', './config/**'],
+      })
+    : undefined,
   vite: {
     plugins: [tailwindcss()],
   },
