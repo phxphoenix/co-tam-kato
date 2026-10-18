@@ -3,10 +3,15 @@ import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import vercel from '@astrojs/vercel';
 import { fileURLToPath } from 'node:url';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 
 const isDev = process.env.NODE_ENV !== 'production';
 const isVercel = process.env.VERCEL === '1' || process.env.DEPLOY_TARGET === 'vercel';
+const newsFiles = existsSync('./src/content/news')
+  ? readdirSync('./src/content/news')
+      .filter((f) => f.endsWith('.md') || f.endsWith('.mdx'))
+      .map((f) => `./src/content/news/${f}`)
+  : [];
 
 function keystaticCustomIntegration() {
   return {
@@ -80,7 +85,11 @@ export default defineConfig({
   output: 'static',
   adapter: isVercel
     ? vercel({
-        includeFiles: ['./src/content/news/**', './src/content/settings/**', './config/**'],
+        includeFiles: [
+          './src/content/settings/archive.json',
+          './config/sources.md',
+          ...newsFiles,
+        ],
       })
     : undefined,
   vite: {
