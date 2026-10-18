@@ -131,7 +131,10 @@ Digest sprawdza zachowane wpisy `deleted` i próbuje nie wygenerować ponownie t
 
 ### Harmonogram i źródła
 
-`.github/workflows/daily-digest.yml` uruchamia workflow 4 razy na dobę w równych 6-godzinnych odstępach: o `23:00 UTC` (01:00 CEST), `05:00 UTC` (07:00 CEST), `11:00 UTC` (13:00 CEST) oraz `17:00 UTC` (19:00 CEST), a także na żądanie przez `workflow_dispatch`. (W czasie zimowym CET godziny te odpowiadają odpowiednio 00:00, 06:00, 12:00 i 18:00 czasu polskiego). Job używa Ubuntu, Node 22, `npm ci`, a następnie uruchamia `npm run digest` z sekretem `GEMINI_API_KEY`.
+`.github/workflows/daily-digest.yml` uruchamia workflow 4 razy na dobę (o 01:00, 07:00, 13:00 oraz 19:00 czasu polskiego Europe/Warsaw), a także na żądanie przez `workflow_dispatch`. Harmonogram zdefiniowany jest jako dwa zwarte wyrażenia cron z automatycznym wykrywaniem pory roku (czas letni CEST vs zimowy CET):
+- Czas letni (CEST, UTC+2): `0 5,11,17,23 * * *` (odpowiada 07:00, 13:00, 19:00 oraz 01:00 czasu polskiego).
+- Czas zimowy (CET, UTC+1): `0 0,6,12,18 * * *` (odpowiada 01:00, 07:00, 13:00 oraz 19:00 czasu polskiego).
+Skrypt `scripts/daily-digest.mjs` weryfikuje aktualne przesunięcie strefy (`Europe/Warsaw`) przy uruchomieniu z parametrem `--scheduled` i pomija wywołanie nieodpowiedniego crona dla bieżącego sezonu, zapewniając dokładnie 4 wywołania na dobę przez cały rok bez konieczności ręcznych zmian. Zastosowanie wielogodzinnych wyrażeń cron w jednym wpisie sprawia również, że GitHub Actions UI poprawnie prezentuje w interfejsie wszystkie godziny wywołań. Job używa Ubuntu, Node 22, `npm ci`, a następnie uruchamia `npm run digest` z sekretem `GEMINI_API_KEY`.
 
 `scripts/daily-digest.mjs` pobiera materiały ze zróżnicowanej bazy źródeł zdefiniowanej w `config/sources.md` (Single Source of Truth), filtrując wpisy ze statusem `ACTIVE`. Dla każdego źródła stosowany jest routing na podstawie kolumny `Typ`:
 - `RSS`: strumienie XML/Atom pobierane i parsowane ze szczególnym uwzględnieniem tego, że data wydarzenia znajduje się w treści/tytule wpisu, a nie w polu `pubDate`.

@@ -835,8 +835,52 @@ function writeArticle(article, today) {
   return true;
 }
 
+/**
+ * Zwraca przesunięcie strefy Europe/Warsaw względem UTC w godzinach (2 dla CEST, 1 dla CET)
+ */
+export function getWarsawOffsetHours(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Warsaw',
+    timeZoneName: 'shortOffset',
+  }).formatToParts(date);
+  const tz = parts.find((p) => p.type === 'timeZoneName')?.value;
+  const match = tz?.match(/GMT([+-]\d+)/);
+  return match ? parseInt(match[1], 10) : 2;
+}
+
+/**
+ * Sprawdza, czy bieżący cron jest zgodny z aktualną strefą czasową (czas letni CEST vs zimowy CET)
+ */
+export function shouldRunForSchedule(cronArg, referenceDate = new Date()) {
+  if (!cronArg) return true;
+  const offset = getWarsawOffsetHours(referenceDate);
+  const isSummer = offset === 2; // CEST (UTC+2)
+  const isWinter = offset === 1; // CET (UTC+1)
+
+  // Wywołanie z harmonogramu zimowego (0,6,12,18 UTC), podczas gdy w Polsce obowiązuje czas letni CEST (UTC+2)
+  if (isSummer && (cronArg.includes('0,6,12,18') || /^\d+\s+(0|6|12|18)\s+/.test(cronArg.trim()))) {
+    console.log(`ℹ️ Pominięto uruchomienie dla cron '${cronArg}': w strefie Europe/Warsaw (UTC+2) obowiązuje czas letni CEST ('0 5,11,17,23 * * *').`);
+    return false;
+  }
+
+  // Wywołanie z harmonogramu letniego (5,11,17,23 UTC), podczas gdy w Polsce obowiązuje czas zimowy CET (UTC+1)
+  if (isWinter && (cronArg.includes('5,11,17,23') || /^\d+\s+(5|11|17|23)\s+/.test(cronArg.trim()))) {
+    console.log(`ℹ️ Pominięto uruchomienie dla cron '${cronArg}': w strefie Europe/Warsaw (UTC+1) obowiązuje czas zimowy CET ('0 0,6,12,18 * * *').`);
+    return false;
+  }
+
+  return true;
+}
+
 async function main() {
   const isDryRun = process.argv.includes('--dry-run');
+  const cronArg = process.argv.find((arg) => arg.startsWith('--cron='))?.split('=')[1] || process.env.CRON_SCHEDULE;
+  const isScheduled = process.argv.includes('--scheduled') || Boolean(process.env.CRON_SCHEDULE);
+
+  if (isScheduled && !shouldRunForSchedule(cronArg)) {
+    return;
+  }
+
   console.log(`Uruchamiam przegląd wiadomości Co Tam KATO.${isDryRun ? ' (Tryb DRY-RUN)' : ''}`);
 
   const apiKey = process.env.GEMINI_API_KEY;
@@ -880,7 +924,9 @@ async function main() {
   console.log(`Zakończono: ${saved} wpisów zapisanych; ${acceptedArticles.filter((item) => item.status === 'published').length} opublikowanych.`);
 }
 
-main().catch((error) => {
-  console.error(`Digest przerwany: ${error.message}`);
-  process.exitCode = 1;
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename || '')) {
+  main().catch((error) => {
+    console.error(`Digest przerwany: ${error.message}`);
+    process.exitCode = 1;
+  });
+}

@@ -118,6 +118,8 @@ export function escapeMarkdownCell(val) {
 export function serializeSourcesMarkdown(sources, originalContent = '') {
   let preamble = '';
 
+  const lineEnding = (originalContent && originalContent.includes('\r\n')) ? '\r\n' : '\n';
+
   if (originalContent) {
     const lines = originalContent.split(/\r?\n/);
     let sepIdx = -1;
@@ -132,7 +134,7 @@ export function serializeSourcesMarkdown(sources, originalContent = '') {
       }
     }
     if (sepIdx !== -1) {
-      preamble = lines.slice(0, sepIdx + 1).join('\n') + '\n';
+      preamble = lines.slice(0, sepIdx + 1).join(lineEnding) + lineEnding;
     }
   }
 
@@ -157,7 +159,7 @@ export function serializeSourcesMarkdown(sources, originalContent = '') {
       '| ID | Nazwa | Typ | URL | Kategoria | Status | Wskazówki dla agenta (Scraping Hints) |',
       '|---|---|---|---|---|---|---|',
       '',
-    ].join('\n');
+    ].join(lineEnding);
   }
 
   const rows = sources.map((s) => {
@@ -171,6 +173,6 @@ export function serializeSourcesMarkdown(sources, originalContent = '') {
     return `| ${id} | ${name} | ${type} | ${url} | ${category} | ${status} | ${hints} |`;
   });
 
-  return preamble + rows.join('\n') + '\n';
+  return preamble + rows.join(lineEnding) + lineEnding;
 }
 
