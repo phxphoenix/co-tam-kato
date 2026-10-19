@@ -10,6 +10,7 @@ location: "Wybrane przystanki Transportu GZM"
 isAlert: false
 sourceUrl: "https://metropoliagzm.pl/2026/10/08/e-papier-na-przystankach-gzm-rozpoczyna-pilotaz-nowych-tablic-informacji-pasazerskiej/"
 aiGenerated: true
+archived: true
 ---
 
 W pierwszym tygodniu października Górnośląsko-Zagłębiowska Metropolia rozpoczęła pilotaż tablic informacji pasażerskiej wykonanych w technologii e-papieru. 
