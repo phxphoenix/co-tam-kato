@@ -12,7 +12,8 @@ isForKids: true
 ageRange: "7-15 lat"
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/szachy-na-giszu-2026-bezplatny-turniej-dla-uczniow-katowickich-szkol"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Uczniowie katowickich szkół podstawowych mogą wziąć udział w II Turnieju Szachowym „Szachy na Giszu 2026”. Zawody odbędą się w MDK Giszowiec w dniach 24–25 października. Udział w rywalizacji jest całkowicie bezpłatny, a zgłoszenia przyjmowane są do 19 października 2026 roku.
