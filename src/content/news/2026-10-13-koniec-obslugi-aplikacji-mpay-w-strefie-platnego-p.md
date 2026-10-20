@@ -10,6 +10,8 @@ location: "Strefa Płatnego Parkowania, Katowice"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/zmiany-w-parkowaniu-w-katowicach-mpay-przestanie-dzialac-w-strefie-platnego-parkowania"
 aiGenerated: true
+archived: true
+manualOverride: false
 ---
 
 Kierowcy korzystający z aplikacji mPay do regulowania należności za parkowanie w Katowicach muszą przygotować się na zmiany. Miejski Zarząd Ulic i Mostów w Katowicach poinformował o zakończeniu współpracy z operatorem platformy.
