@@ -12,6 +12,8 @@ isForKids: true
 ageRange: "dla całych rodzin"
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/krajowy-trening-rodzinny-w-bytomiu-naucz-sie-reagowac-w-sytuacji-zagrozenia"
 aiGenerated: true
+archived: true
+manualOverride: false
 ---
 
 W sobotę, 17 października, w godzinach od 10:00 do 14:00 na placu Jana III Sobieskiego w Bytomiu (przy Zespole Szkół Mechaniczno-Elektronicznych) odbędzie się Krajowy Trening Rodzinny.
