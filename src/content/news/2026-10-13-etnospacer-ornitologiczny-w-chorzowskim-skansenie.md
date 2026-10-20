@@ -11,6 +11,8 @@ isAlert: false
 isForKids: true
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/etnospacer-ornitologiczny-w-chorzowie-w-niedziele-rusza-dwie-grupy"
 aiGenerated: true
+archived: true
+manualOverride: false
 ---
 
 W niedzielę, 18 października, Muzeum „Górnośląski Park Etnograficzny w Chorzowie” zaprasza na kolejną edycję ETNOspaceru ornitologicznego. Uczestnicy będą uczyć się rozpoznawania ptaków zamieszkujących teren skansenu po ich wyglądzie oraz wydawanych odgłosach.
