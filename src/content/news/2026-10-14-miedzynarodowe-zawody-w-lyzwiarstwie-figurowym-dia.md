@@ -10,6 +10,8 @@ location: "Lodowisko Jantor, Katowice"
 isAlert: false
 sourceUrl: "https://silesion.pl/diamond-spin-2026-w-katowicach-swiatowa-elita-lyzwiarstwa-figurowego-na-jantorze/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=diamond-spin-2026-w-katowicach-swiatowa-elita-lyzwiarstwa-figurowego-na-jantorze"
 aiGenerated: true
+archived: true
+manualOverride: false
 ---
 
 Na lodowisku Jantor w Katowicach odbędą się Międzynarodowe Zawody w łyżwiarstwie figurowym „Diamond Spin 2026”.
