@@ -10,6 +10,7 @@ location: "Chorzów, Chorzowskie Centrum Kultury"
 isAlert: false
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/xii-festiwal-jazzliteratura-2026-rozpoczal-sie-w-chorzowie-sprawdz-program"
 aiGenerated: true
+archived: true
 ---
 
 W Chorzowie trwa XII edycja Festiwalu Jazz&Literatura, którego inauguracja odbyła się w Chorzowskim Centrum Kultury. 
