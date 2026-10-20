@@ -10,7 +10,8 @@ location: "Tychy"
 isAlert: true
 sourceUrl: "https://mojetychy.pl/artykuly/artykul/w-tych-czesciach-tychow-zabraknie-pradu-sprawdz-aktualny-harmonogram"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Mieszkańcy wybranych rejonów Tychów muszą przygotować się na przerwy w dostawie energii elektrycznej. Planowane wyłączenia prądu wynikają z konieczności przeprowadzenia prac konserwacyjnych i modernizacyjnych infrastruktury przesyłowej. Zmiany mogą czasowo wpłynąć na działanie urządzeń domowych, oświetlenia oraz bram garażowych.
