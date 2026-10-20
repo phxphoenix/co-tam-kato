@@ -10,7 +10,8 @@ location: "Chorzów, Stadion Śląski"
 isAlert: false
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/kto-zostanie-trenerem-roku-a-kto-nadzieja-polskiej-lekkiej-atletyki-gala-zlote-kolce-juz-za-tydzien"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W piątek, 23 października, na Stadionie Śląskim odbędzie się uroczysta Gala ORLEN Złote Kolce Śląskie 2026, która podsumuje tegoroczny sezon lekkoatletyczny.
