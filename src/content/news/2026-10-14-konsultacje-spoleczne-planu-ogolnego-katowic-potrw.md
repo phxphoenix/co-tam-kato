@@ -10,6 +10,8 @@ location: "Katowice"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/katowice-konsultuja-plan-ogolny-uwagi-mozna-skladac-do-23-listopada"
 aiGenerated: true
+archived: true
+manualOverride: false
 ---
 
 Rozpoczęły się konsultacje społeczne dotyczące projektu planu ogólnego Katowic, który określi przyszłe kierunki zagospodarowania przestrzennego miasta.
