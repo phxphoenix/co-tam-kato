@@ -10,7 +10,8 @@ location: "Stadion Miejski w Tychach"
 isAlert: false
 sourceUrl: "https://mojetychy.pl/artykuly/artykul/tam-na-co-dzien-nie-wejdziesz-stadion-miejski-w-tychach-otworzy-swoje-zakamarki"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W sobotę, 17 października, mieszkańcy Tychów i regionu będą mogli bezpłatnie zajrzeć do przestrzeni Stadionu Miejskiego w Tychach, które na co dzień pozostają zamknięte dla publiczności. W programie zwiedzania znalazły się m.in. szatnia piłkarzy, ławka rezerwowych, strefa VIP, sala konferencji prasowych oraz Tyska Galeria Sportu.
