@@ -10,6 +10,8 @@ location: "Stary Magistrat, pl. Wolności 1, Tychy"
 isAlert: false
 sourceUrl: "https://mojetychy.pl/artykuly/artykul/40-lat-slaskiej-jesieni-gitarowej-jubileuszowa-wystawa-w-tychach"
 aiGenerated: true
+archived: true
+manualOverride: false
 ---
 
 Międzynarodowy Festiwal Muzyczny Śląska Jesień Gitarowa obchodzi jubileusz 40-lecia. Z tej okazji Muzeum Miejskie w Tychach zaprasza na wystawę prezentującą historię tego muzycznego wydarzenia.
