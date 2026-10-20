@@ -10,7 +10,8 @@ location: "Bytom, Szombierki i Stolarzowice"
 isAlert: false
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/mobilny-pszok-w-bytomiu-tu-oddasz-tekstylia-opony-leki-i-elektroodpady"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W piątek 16 października oraz w sobotę 17 października w Bytomiu funkcjonuje mobilny Punkt Selektywnego Zbierania Odpadów Komunalnych.
