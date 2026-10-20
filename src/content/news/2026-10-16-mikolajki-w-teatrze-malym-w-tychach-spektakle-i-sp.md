@@ -11,7 +11,8 @@ isAlert: false
 isForKids: true
 sourceUrl: "https://mojetychy.pl/artykuly/artykul/mikolajki-w-tychach-inne-niz-zwykle-najpierw-spektakl-pozniej-spotkanie-z-mikolajem"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Teatr Mały w Tychach zaplanował mikołajkowe wydarzenia dla dzieci w dniach od 6 do 8 grudnia 2026 roku. Najmłodsi będą mogli obejrzeć spektakl teatralny, a następnie osobiście spotkać się ze Świętym Mikołajem i odebrać przygotowane przez opiekunów upominki. W repertuarze przewidziano zarówno pokazy dedykowane rodzinom, jak i zorganizowanym grupom przedszkolnym oraz szkolnym.
