@@ -10,7 +10,8 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/symphoethnic-golec-uorkiestra,4090.html"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 13 marca 2027 roku w katowickim Spodku odbędzie się koncert Golec uOrkiestra w ramach projektu „Symphoethnic”. To niezwykłe widowisko łączy tradycyjne, góralskie brzmienia z rozbudowaną aranżacją orkiestry symfonicznej.
