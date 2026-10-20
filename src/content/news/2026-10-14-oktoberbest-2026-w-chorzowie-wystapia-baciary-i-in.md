@@ -10,7 +10,8 @@ location: "Hala MORiS, ul. Dąbrowskiego 113, Chorzów"
 isAlert: false
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/oktoberbest-2026-w-chorzowie-baciary-i-plejada-gwiazd-wystapia-w-hali-moris"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Hala MORiS przy ul. Dąbrowskiego 113 w Chorzowie zamieni się w miejsce muzycznej zabawy. Już w sobotę, 24 października 2026 roku, odbędzie się tam pierwsza edycja wydarzenia OktoberBest.
