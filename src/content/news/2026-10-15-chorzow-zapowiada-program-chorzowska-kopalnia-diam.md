@@ -12,7 +12,8 @@ isForKids: true
 ageRange: "dzieci i młodzież"
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/chorzow-chce-odkrywac-mlode-talenty-prezydent-zapowiedzial-nowy-program"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W chorzowskim Muzeum Hutnictwa odbyło się Forum Regionów Przyszłości, w którym wzięło udział blisko 200 przedstawicieli samorządów, nauki i biznesu.
