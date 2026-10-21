@@ -10,6 +10,7 @@ location: "Katowice, Strefa Kultury"
 isAlert: false
 sourceUrl: "https://slaskaopinia.pl/2026/10/10/to-finalowa-faza-przemiany-kopalni-katowice-w-stefe-kultury-wladze-woj-slaskiego-katowic-i-muzeum-slaskiego-wbily-pierwsze-lopaty-na-placu-budowy"
 aiGenerated: true
+archived: true
 ---
 
 Rozpoczęły się prace budowlane w ramach ostatniego etapu rewitalizacji dawnej Kopalni Katowice na terenie Strefy Kultury. 
