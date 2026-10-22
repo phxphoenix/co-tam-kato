@@ -1,7 +1,7 @@
 ---
 title: "Seniorady w rytmie miasta: Cykl spotkań integracyjnych dla seniorów w Katowicach"
-pubDate: 2026-10-15
-sourceDate: 2026-10-14
+publishedDate: 2026-10-14
+eventDate: null
 city: "katowice"
 category: "wydarzenia"
 status: "published"

@@ -1,7 +1,7 @@
 ---
 title: "Mieszkańcy południa Katowic sprzeciwiają się budowie osiedla na terenie dawnego stadionu"
-pubDate: 2026-10-11
-sourceDate: 2026-10-09
+publishedDate: 2026-10-09
+eventDate: null
 city: "katowice"
 category: "wydarzenia"
 status: "published"

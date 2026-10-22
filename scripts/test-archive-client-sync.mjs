@@ -25,7 +25,7 @@ assert.ok(
 console.log('✅ Krok 1: archiwum.astro przekazuje pełny zestaw artykułów do InteractiveFeed, umożliwiając natychmiastowe wyświetlenie po kliknięciu „A”.');
 
 // 2. Sprawdzenie updateArticleArchive i applyArchiveFrontmatter
-const sampleMd = '---\ntitle: "Temp"\npubDate: 2026-09-01\nstatus: "published"\narchived: false\n---\nTest\n';
+const sampleMd = '---\ntitle: "Temp"\npublishedDate: 2026-09-01\neventDate: null\nstatus: "published"\narchived: false\n---\nTest\n';
 const fmRes = applyArchiveFrontmatter(sampleMd, true, true);
 assert.equal(fmRes.success, true, 'applyArchiveFrontmatter musi zakończyć się sukcesem');
 assert.ok(fmRes.content?.includes('archived: true'), 'applyArchiveFrontmatter ustawia archived: true');

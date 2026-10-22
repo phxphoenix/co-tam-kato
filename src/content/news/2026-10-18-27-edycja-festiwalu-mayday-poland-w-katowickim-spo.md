@@ -1,7 +1,7 @@
 ---
 title: "27. edycja festiwalu MAYDAY Poland w katowickim Spodku"
-pubDate: 2026-10-18
-sourceDate: 2026-11-10
+publishedDate: 2026-10-18
+eventDate: 2026-11-10
 city: "katowice"
 category: "wydarzenia"
 status: "published"

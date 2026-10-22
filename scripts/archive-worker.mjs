@@ -100,6 +100,18 @@ export function getWarsawOffsetHours(date = new Date()) {
 }
 
 /**
+ * Odczytuje datę publikacji artykułu (publishedDate) z frontmattera.
+ * Wiek do archiwizacji wyliczany jest wyłącznie na podstawie publishedDate (niezależnie od eventDate).
+ */
+export function resolveArticlePublishedDate(readField) {
+  const rawPublishedDate = readField('publishedDate');
+  if (rawPublishedDate && rawPublishedDate !== 'null' && rawPublishedDate !== 'undefined') {
+    return rawPublishedDate;
+  }
+  return undefined;
+}
+
+/**
  * Główna funkcja wykonawcza workera archiwizacji
  */
 export async function runArchiveWorker(options = {}) {
@@ -195,7 +207,7 @@ export async function runArchiveWorker(options = {}) {
       };
 
       const title = readField('title') || file;
-      const pubDateStr = readField('sourceDate') || readField('pubDate');
+      const publishedDateStr = resolveArticlePublishedDate(readField);
       const isArchived = readField('archived') === 'true';
       const isManualOverride = readField('manualOverride') === 'true';
       const status = readField('status') || 'published';
@@ -213,13 +225,15 @@ export async function runArchiveWorker(options = {}) {
         continue;
       }
 
-      if (!pubDateStr) continue;
+      if (!publishedDateStr) continue;
 
-      const articleDate = new Date(pubDateStr.slice(0, 10) + 'T00:00:00Z');
+      const articleDate = new Date(publishedDateStr.slice(0, 10) + 'T00:00:00Z');
+      if (!Number.isFinite(articleDate.getTime())) continue;
+
       const diffMs = referenceTimestamp - articleDate.getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-      // Kryterium: Różnica między bieżącą datą a datą publikacji jest ŚCIŚLE WIĘKSZA niż skonfigurowana liczba dni (> archiveAfterDays)
+      // Kryterium: Różnica między bieżącą datą a datą publikacji (publishedDate) jest ŚCIŚLE WIĘKSZA niż skonfigurowana liczba dni (> archiveAfterDays)
       if (diffDays > archiveAfterDays) {
         let updatedFrontmatter = frontmatterRaw;
         if (/^archived\s*:/m.test(updatedFrontmatter)) {
@@ -235,7 +249,7 @@ export async function runArchiveWorker(options = {}) {
         archivedArticles.push({
           file,
           title,
-          pubDate: pubDateStr,
+          publishedDate: publishedDateStr,
           diffDays,
         });
 

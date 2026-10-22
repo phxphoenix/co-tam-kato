@@ -1,7 +1,7 @@
 ---
 title: "Ana Laíns - nie tylko fado. Koncert muzyki portugalskiej"
-pubDate: 2026-10-21
-sourceDate: 2026-10-21
+publishedDate: 2026-10-21
+eventDate: 2026-11-14
 city: "katowice"
 category: "kultura"
 status: "draft"

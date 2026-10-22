@@ -1,7 +1,7 @@
 ---
 title: "Ligowy boks wraca do Bytomskich Skarp: Concordia Knurów kontra Toruń"
-pubDate: 2026-10-21
-sourceDate: 2026-10-21
+publishedDate: 2026-10-21
+eventDate: 2026-10-30
 city: "bytom"
 category: "sport"
 status: "published"

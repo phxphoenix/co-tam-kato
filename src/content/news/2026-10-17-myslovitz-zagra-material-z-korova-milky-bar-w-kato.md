@@ -1,7 +1,7 @@
 ---
 title: "Myslovitz zagra materiał z „Korova Milky Bar” w katowickim Spodku"
-pubDate: 2026-10-17
-sourceDate: 2026-11-15
+publishedDate: 2026-10-17
+eventDate: 2026-11-15
 city: "katowice"
 category: "kultura"
 status: "published"

@@ -1,7 +1,7 @@
 ---
 title: "Muzeum Śląskie zaprasza na rodzinne warsztaty „Galeria dziwnych stworów”"
-pubDate: 2026-10-17
-sourceDate: 2026-10-17
+publishedDate: 2026-10-17
+eventDate: 2026-11-07
 city: "katowice"
 category: "dla-dzieci"
 status: "published"

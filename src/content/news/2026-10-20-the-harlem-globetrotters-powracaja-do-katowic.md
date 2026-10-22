@@ -1,7 +1,7 @@
 ---
 title: "THE HARLEM GLOBETROTTERS powracają do Katowic"
-pubDate: 2026-10-20
-sourceDate: 2027-05-20
+publishedDate: 2026-10-20
+eventDate: 2027-05-20
 city: "katowice"
 category: "sport"
 status: "published"

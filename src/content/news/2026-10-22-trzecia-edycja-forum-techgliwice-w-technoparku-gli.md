@@ -1,7 +1,7 @@
 ---
 title: "Trzecia edycja forum TechGliwice w Technoparku Gliwice"
-pubDate: 2026-10-22
-sourceDate: 2026-10-22
+publishedDate: 2026-10-22
+eventDate: 2026-10-27
 city: "cala-okolica"
 category: "wydarzenia"
 status: "published"

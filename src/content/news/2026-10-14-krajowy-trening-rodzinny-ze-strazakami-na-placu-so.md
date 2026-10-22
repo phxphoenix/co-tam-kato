@@ -1,7 +1,7 @@
 ---
 title: "Krajowy Trening Rodzinny ze strażakami na placu Sobieskiego w Bytomiu"
-pubDate: 2026-10-14
-sourceDate: 2026-10-13
+publishedDate: 2026-10-13
+eventDate: 2026-10-17
 city: "bytom"
 category: "wydarzenia"
 status: "published"

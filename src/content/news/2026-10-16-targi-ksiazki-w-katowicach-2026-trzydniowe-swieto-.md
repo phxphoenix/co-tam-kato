@@ -1,7 +1,7 @@
 ---
 title: "Targi Książki w Katowicach 2026: Trzydniowe święto literatury w MCK"
-pubDate: 2026-10-16
-sourceDate: 2026-10-16
+publishedDate: 2026-10-16
+eventDate: 2026-11-06
 city: "katowice"
 category: "kultura"
 status: "published"

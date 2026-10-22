@@ -1,7 +1,7 @@
 ---
 title: "Startuje 3. edycja plebiscytu kulinarnego „Katowice na talerzu”"
-pubDate: 2026-10-19
-sourceDate: 2026-10-19
+publishedDate: 2026-10-19
+eventDate: null
 city: "katowice"
 category: "gastro"
 status: "published"

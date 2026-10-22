@@ -1,7 +1,7 @@
 ---
 title: "JazzKLUB: Samora Pinderhughes Quintet w katowickim NOSPR"
-pubDate: 2026-10-18
-sourceDate: 2026-10-18
+publishedDate: 2026-10-18
+eventDate: 2026-10-21
 city: "katowice"
 category: "kultura"
 status: "published"

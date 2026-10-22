@@ -1,7 +1,7 @@
 ---
 title: "CHRONICLES: Celebration of League of Legends Music w Spodku"
-pubDate: 2026-10-20
-sourceDate: 2026-11-21
+publishedDate: 2026-10-20
+eventDate: 2026-11-21
 city: "katowice"
 category: "wydarzenia"
 status: "published"

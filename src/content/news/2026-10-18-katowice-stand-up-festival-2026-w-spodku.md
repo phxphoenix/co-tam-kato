@@ -1,7 +1,7 @@
 ---
 title: "Katowice Stand-up Festival™ 2026 w Spodku"
-pubDate: 2026-10-18
-sourceDate: 2026-10-31
+publishedDate: 2026-10-18
+eventDate: 2026-10-31
 city: "katowice"
 category: "wydarzenia"
 status: "published"

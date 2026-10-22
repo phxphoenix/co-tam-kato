@@ -1,7 +1,7 @@
 ---
 title: "Remont ul. Chrobrego w Chorzowie. Utrudnienia potrwają do grudnia"
-pubDate: 2026-10-14
-sourceDate: 2026-10-14
+publishedDate: 2026-10-14
+eventDate: null
 city: "chorzow"
 category: "drogi-komunikacja"
 status: "published"

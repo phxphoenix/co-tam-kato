@@ -1,7 +1,7 @@
 ---
 title: "Międzynarodowe zawody w łyżwiarstwie figurowym Diamond Spin 2026 na Jantorze"
-pubDate: 2026-10-14
-sourceDate: 2026-10-13
+publishedDate: 2026-10-13
+eventDate: 2026-10-14
 city: "katowice"
 category: "sport"
 status: "published"

@@ -14,16 +14,16 @@ const initialDays = settings.archiveAfterDays || 10;
 // Pobranie wszystkich artykułów z kolekcji news (opublikowane, szkice, archiwa)
 const allNews = await getCollection('news');
 
-// Domyślne sortowanie od najnowszych
+// Domyślne sortowanie od najnowszych według daty publikacji
 const sortedNews = allNews.sort(
-  (a, b) => (b.data.sourceDate ?? b.data.pubDate).getTime() - (a.data.sourceDate ?? a.data.pubDate).getTime()
+  (a, b) => b.data.publishedDate.getTime() - a.data.publishedDate.getTime()
 );
 
 const articles = sortedNews.map((item) => ({
   slug: item.id.replace(/\.(md|mdx)$/, ''),
   title: item.data.title,
-  pubDate: item.data.pubDate.toISOString(),
-  sourceDate: (item.data.sourceDate ?? item.data.pubDate).toISOString(),
+  publishedDate: item.data.publishedDate.toISOString(),
+  eventDate: item.data.eventDate ? item.data.eventDate.toISOString() : null,
   status: item.data.status,
   archived: Boolean(item.data.archived),
   manualOverride: Boolean(item.data.manualOverride),

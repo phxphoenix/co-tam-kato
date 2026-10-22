@@ -1,7 +1,7 @@
 ---
 title: "Wystawa żywych modliszek w Śląskim Ogrodzie Zoologicznym"
-pubDate: 2026-10-15
-sourceDate: 2026-10-15
+publishedDate: 2026-10-15
+eventDate: 2026-10-16
 city: "chorzow"
 category: "wydarzenia"
 status: "published"

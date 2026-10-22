@@ -1,7 +1,7 @@
 ---
 title: "Wystawa „Skarby rudzkiego muzeum” z okazji 50-lecia instytucji"
-pubDate: 2026-10-18
-sourceDate: 2026-10-18
+publishedDate: 2026-10-18
+eventDate: null
 city: "ruda-slaska"
 category: "kultura"
 status: "published"

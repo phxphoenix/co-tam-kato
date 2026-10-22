@@ -1,7 +1,7 @@
 ---
 title: "Jean-Michel Jarre | Oxygene & Beyond Tour w Spodku"
-pubDate: 2026-10-21
-sourceDate: 2027-09-21
+publishedDate: 2026-10-21
+eventDate: 2027-09-21
 city: "katowice"
 category: "kultura"
 status: "published"

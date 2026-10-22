@@ -1,7 +1,7 @@
 ---
 title: "Koncert Behemoth, Dimmu Borgir i Dark Funeral w Spodku"
-pubDate: 2026-10-18
-sourceDate: 2026-10-25
+publishedDate: 2026-10-18
+eventDate: 2026-10-25
 city: "katowice"
 category: "kultura"
 status: "published"

@@ -49,8 +49,8 @@ const testFilePath = path.join(NEWS_DIR, `${testSlug}.md`);
 
 const initialTestContent = `---
 title: "Testowy Artykuł do Manualnej Archiwizacji US2"
-pubDate: 2026-09-10
-sourceDate: 2026-09-10
+publishedDate: 2026-09-10
+eventDate: 2026-09-10
 city: "katowice"
 category: "wydarzenia"
 status: "published"
@@ -130,7 +130,8 @@ try {
   // Wywołajmy toggleItemArchive (przywrócenie) dla artykułu starszego niż AUTO_ARCHIVE_DAYS (data 2026-09-10)
   const toggledState = toggleItemArchive({
     slug: testSlug,
-    pubDate: '2026-09-10T00:00:00.000Z',
+    publishedDate: '2026-09-10T00:00:00.000Z',
+    eventDate: null,
     defaultArchived: true,
   });
 

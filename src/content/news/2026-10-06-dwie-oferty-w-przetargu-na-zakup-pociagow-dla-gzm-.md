@@ -1,7 +1,7 @@
 ---
 title: "Dwie oferty w przetargu na zakup pociągów dla GZM i Województwa Śląskiego"
-pubDate: 2026-10-06
-sourceDate: 2026-10-06
+publishedDate: 2026-10-06
+eventDate: null
 city: "cala-okolica"
 category: "drogi-komunikacja"
 status: "published"

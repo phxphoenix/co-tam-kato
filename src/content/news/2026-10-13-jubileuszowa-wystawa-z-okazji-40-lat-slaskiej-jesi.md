@@ -1,7 +1,7 @@
 ---
 title: "Jubileuszowa wystawa z okazji 40 lat Śląskiej Jesieni Gitarowej w Tychach"
-pubDate: 2026-10-13
-sourceDate: 2026-10-13
+publishedDate: 2026-10-13
+eventDate: 2026-10-16
 city: "tychy"
 category: "kultura"
 status: "published"

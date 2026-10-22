@@ -1,7 +1,7 @@
 ---
 title: "XII Festiwal Jazz&Literatura trwa w Chorzowie"
-pubDate: 2026-10-11
-sourceDate: 2026-10-09
+publishedDate: 2026-10-09
+eventDate: 2026-10-08
 city: "chorzow"
 category: "kultura"
 status: "published"

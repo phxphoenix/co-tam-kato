@@ -1,7 +1,7 @@
 ---
 title: "Jesienny festiwal świateł i wydłużone godziny kolejki Elka w Parku Śląskim"
-pubDate: 2026-09-26
-sourceDate: 2026-09-26
+publishedDate: 2026-09-26
+eventDate: null
 city: "chorzow"
 category: "kultura"
 status: "published"

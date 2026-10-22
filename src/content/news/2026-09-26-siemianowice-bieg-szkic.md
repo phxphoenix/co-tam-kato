@@ -1,7 +1,7 @@
 ---
 title: Bieg Hutnika i piknik sportowy w Parku Miejskim w Siemianowicach Śląskich
-pubDate: 2026-09-26
-sourceDate: 2026-09-26
+publishedDate: 2026-09-26
+eventDate: null
 city: siemianowice
 category: sport
 isForKids: false

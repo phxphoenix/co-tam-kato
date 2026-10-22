@@ -1,7 +1,7 @@
 ---
 title: "Spotkanie z Pawłem Wysoczańskim i pokaz filmu „Jurek” w Old Timers Garage"
-pubDate: 2026-10-21
-sourceDate: 2026-10-21
+publishedDate: 2026-10-21
+eventDate: 2026-10-24
 city: "katowice"
 category: "kultura"
 status: "published"

@@ -1,7 +1,7 @@
 ---
 title: "Koniec obsługi aplikacji mPay w Strefie Płatnego Parkowania w Katowicach"
-pubDate: 2026-10-13
-sourceDate: 2026-10-13
+publishedDate: 2026-10-13
+eventDate: null
 city: "katowice"
 category: "drogi-komunikacja"
 status: "published"

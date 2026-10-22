@@ -25,8 +25,8 @@ export interface FeedItem {
   id: string;
   slug: string;
   title: string;
-  pubDate: string; // ISO date string
-  sourceDate?: string; // ISO date string from the original publisher
+  publishedDate: string; // ISO date string
+  eventDate?: string | null; // Optional ISO date string for the actual event date
   city: string;
   category: string;
   status: 'published' | 'draft';
@@ -155,7 +155,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
     });
   };
 
-  const getItemDate = (item: FeedItem) => (item.sourceDate || item.pubDate).slice(0, 10);
+  const getItemDate = (item: FeedItem) => (item.publishedDate || '').slice(0, 10);
   const setPreset = (preset: 'all' | '7' | '30' | 'custom') => {
     setDatePreset(preset);
     if (preset === 'all') {
@@ -275,7 +275,9 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
 
       return true;
     }).sort((a, b) => {
-      const difference = getItemDate(b).localeCompare(getItemDate(a));
+      const timeA = new Date(a.publishedDate || 0).getTime();
+      const timeB = new Date(b.publishedDate || 0).getTime();
+      const difference = timeB - timeA;
       return sortOrder === 'newest' ? difference : -difference;
     });
   }, [initialItems, selectedCity, selectedCategory, searchQuery, showDrafts, onlyKids, showOnlyFavorites, favorites, dateFrom, dateTo, sortOrder, isArchiveView, getStatus]);
@@ -338,6 +340,20 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
       }).format(date);
     } catch {
       return dateStr;
+    }
+  };
+
+  // Kompaktowe formatowanie daty wydarzenia (DD.MM.YYYY)
+  const formatShortDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      return new Intl.DateTimeFormat('pl-PL', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).format(date);
+    } catch {
+      return dateStr.slice(0, 10);
     }
   };
 
@@ -832,8 +848,8 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
                     <ArchiveButton
                       slug={item.slug}
                       title={item.title}
-                      pubDate={item.pubDate}
-                      sourceDate={item.sourceDate}
+                      publishedDate={item.publishedDate}
+                      eventDate={item.eventDate}
                       defaultArchived={Boolean(item.archived)}
                       defaultManualOverride={Boolean(item.manualOverride)}
                       size="sm"
@@ -887,20 +903,31 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
                       <span className="truncate">{item.location}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-zinc-500">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 text-zinc-500 min-w-0">
                       <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>{formatDate(item.sourceDate || item.pubDate)}</span>
+                      <span className="truncate">{formatDate(item.publishedDate || '')}</span>
                     </div>
-                    {item.aiGenerated && (
-                      <span
-                        className="inline-flex items-center gap-1 text-[11px] text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-full"
-                        title="Przygotowane we współpracy z Agentem AI"
-                      >
-                        <Bot className="w-3 h-3 text-amber-400" />
-                        Agent AI
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {item.eventDate && (
+                        <span
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full whitespace-nowrap"
+                          title={`Data wydarzenia: ${formatDate(item.eventDate)}`}
+                        >
+                          <Calendar className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                          <span>Wydarzenie: {formatShortDate(item.eventDate)}</span>
+                        </span>
+                      )}
+                      {item.aiGenerated && (
+                        <span
+                          className="inline-flex items-center gap-1 text-[11px] text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-full whitespace-nowrap"
+                          title="Przygotowane we współpracy z Agentem AI"
+                        >
+                          <Bot className="w-3 h-3 text-amber-400" />
+                          Agent AI
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 

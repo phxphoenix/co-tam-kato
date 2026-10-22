@@ -1,7 +1,7 @@
 ---
 title: "Jubileuszowy koncert Palucha „O MÓJ BORZE” w katowickim Spodku"
-pubDate: 2026-10-15
-sourceDate: 2026-10-17
+publishedDate: 2026-10-15
+eventDate: 2026-10-17
 city: "katowice"
 category: "kultura"
 status: "published"

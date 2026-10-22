@@ -1,7 +1,7 @@
 ---
 title: "KULT w Spodku w ramach Pomarańczowej Trasy 2026"
-pubDate: 2026-10-19
-sourceDate: 2026-11-14
+publishedDate: 2026-10-19
+eventDate: 2026-11-14
 city: "katowice"
 category: "kultura"
 status: "published"

@@ -1,7 +1,7 @@
 ---
 title: "Papa Roach zagra w katowickim Spodku"
-pubDate: 2026-10-19
-sourceDate: 2026-11-16
+publishedDate: 2026-10-19
+eventDate: 2026-11-16
 city: "katowice"
 category: "wydarzenia"
 status: "published"

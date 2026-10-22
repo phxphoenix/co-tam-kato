@@ -1,7 +1,7 @@
 ---
 title: "Ruszyła druga edycja kampanii Kampus GZM"
-pubDate: 2026-09-26
-sourceDate: 2026-09-16
+publishedDate: 2026-09-16
+eventDate: null
 city: "cala-okolica"
 category: "wydarzenia"
 status: "published"

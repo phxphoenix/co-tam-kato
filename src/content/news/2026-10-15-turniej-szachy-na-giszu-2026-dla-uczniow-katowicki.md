@@ -1,7 +1,7 @@
 ---
 title: "Turniej Szachy na Giszu 2026 dla uczniów katowickich szkół"
-pubDate: 2026-10-15
-sourceDate: 2026-10-15
+publishedDate: 2026-10-15
+eventDate: 2026-10-24
 city: "katowice"
 category: "dla-dzieci"
 status: "published"

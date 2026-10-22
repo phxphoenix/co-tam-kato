@@ -1,7 +1,7 @@
 ---
 title: "Musical Metro świętuje 35-lecie w katowickim Spodku"
-pubDate: 2026-10-20
-sourceDate: 2027-02-20
+publishedDate: 2026-10-20
+eventDate: 2027-02-20
 city: "katowice"
 category: "kultura"
 status: "published"

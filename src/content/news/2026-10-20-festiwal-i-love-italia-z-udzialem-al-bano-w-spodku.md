@@ -1,7 +1,7 @@
 ---
 title: "Festiwal I Love Italia z udziałem Al Bano w Spodku"
-pubDate: 2026-10-20
-sourceDate: 2028-03-11
+publishedDate: 2026-10-20
+eventDate: 2028-03-11
 city: "katowice"
 category: "kultura"
 status: "published"

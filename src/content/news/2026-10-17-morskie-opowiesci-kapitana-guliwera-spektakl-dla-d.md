@@ -1,7 +1,7 @@
 ---
 title: "Morskie opowieści Kapitana Guliwera – spektakl dla dzieci w Katowicach"
-pubDate: 2026-10-17
-sourceDate: 2026-10-17
+publishedDate: 2026-10-17
+eventDate: 2026-11-01
 city: "katowice"
 category: "dla-dzieci"
 status: "published"

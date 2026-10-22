@@ -1,7 +1,7 @@
 ---
 title: "Wystawa prac podopiecznych Fundacji Spina w Katowicach"
-pubDate: 2026-10-22
-sourceDate: 2026-10-22
+publishedDate: 2026-10-22
+eventDate: 2026-10-25
 city: "katowice"
 category: "kultura"
 status: "published"

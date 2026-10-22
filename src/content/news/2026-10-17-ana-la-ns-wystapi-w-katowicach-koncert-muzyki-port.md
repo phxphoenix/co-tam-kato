@@ -1,7 +1,7 @@
 ---
 title: "Ana Laíns wystąpi w Katowicach: Koncert muzyki portugalskiej"
-pubDate: 2026-10-17
-sourceDate: 2026-10-17
+publishedDate: 2026-10-17
+eventDate: 2026-11-14
 city: "katowice"
 category: "kultura"
 status: "published"

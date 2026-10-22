@@ -23,12 +23,20 @@ const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 
 const slug = entry.id.replace(/\.(md|mdx)$/, '');
 
-const formattedDate = new Intl.DateTimeFormat('pl-PL', {
+const formattedPublishedDate = new Intl.DateTimeFormat('pl-PL', {
   weekday: 'long',
   day: 'numeric',
   month: 'long',
   year: 'numeric',
-}).format(new Date(entry.data.sourceDate ?? entry.data.pubDate));
+}).format(new Date(entry.data.publishedDate));
+
+const formattedEventDate = entry.data.eventDate
+  ? new Intl.DateTimeFormat('pl-PL', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(new Date(entry.data.eventDate))
+  : null;
 
 // Inne wpisy z tego samego miasta
 const allNews = await getCollection('news');
@@ -89,8 +97,8 @@ const relatedNews = allNews
             client:load
             slug={slug}
             title={entry.data.title}
-            pubDate={entry.data.pubDate.toISOString()}
-            sourceDate={(entry.data.sourceDate ?? entry.data.pubDate).toISOString()}
+            publishedDate={entry.data.publishedDate.toISOString()}
+            eventDate={entry.data.eventDate ? entry.data.eventDate.toISOString() : null}
             defaultArchived={Boolean(entry.data.archived)}
             defaultManualOverride={Boolean(entry.data.manualOverride)}
             showLabel={true}
@@ -112,9 +120,17 @@ const relatedNews = allNews
 
       <!-- Metadane: Data, Miejsce, Autor -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4 border-y border-zinc-800/80 mb-8 text-xs text-zinc-400">
-        <div class="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-amber-400 flex-shrink-0" />
-          <span class="capitalize">{formattedDate}</span>
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-amber-400 flex-shrink-0" />
+            <span>Opublikowano: <span class="text-zinc-300 font-medium capitalize">{formattedPublishedDate}</span></span>
+          </div>
+          {formattedEventDate && (
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold">
+              <Calendar className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+              <span>Data wydarzenia: {formattedEventDate}</span>
+            </span>
+          )}
         </div>
         {entry.data.location && (
           <div class="flex items-center gap-2">
@@ -145,8 +161,8 @@ const relatedNews = allNews
             client:load
             slug={slug}
             title={entry.data.title}
-            pubDate={entry.data.pubDate.toISOString()}
-            sourceDate={(entry.data.sourceDate ?? entry.data.pubDate).toISOString()}
+            publishedDate={entry.data.publishedDate.toISOString()}
+            eventDate={entry.data.eventDate ? entry.data.eventDate.toISOString() : null}
             defaultArchived={Boolean(entry.data.archived)}
             defaultManualOverride={Boolean(entry.data.manualOverride)}
             showLabel={true}

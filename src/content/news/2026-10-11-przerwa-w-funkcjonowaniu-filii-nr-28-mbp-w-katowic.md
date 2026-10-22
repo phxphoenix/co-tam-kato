@@ -1,7 +1,7 @@
 ---
 title: "Przerwa w funkcjonowaniu Filii nr 28 MBP w Katowicach-Podlesiu"
-pubDate: 2026-10-11
-sourceDate: 2026-10-09
+publishedDate: 2026-10-09
+eventDate: null
 city: "katowice"
 category: "alerty"
 status: "published"

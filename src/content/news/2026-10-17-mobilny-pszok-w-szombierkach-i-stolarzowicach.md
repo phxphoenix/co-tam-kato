@@ -1,7 +1,7 @@
 ---
 title: "Mobilny PSZOK w Szombierkach i Stolarzowicach"
-pubDate: 2026-10-17
-sourceDate: 2026-10-16
+publishedDate: 2026-10-16
+eventDate: null
 city: "bytom"
 category: "alerty"
 status: "published"

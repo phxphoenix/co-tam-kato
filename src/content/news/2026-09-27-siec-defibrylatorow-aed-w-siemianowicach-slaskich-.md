@@ -1,7 +1,7 @@
 ---
 title: "Sieć defibrylatorów AED w Siemianowicach Śląskich wzrosła do 41 punktów"
-pubDate: 2026-09-27
-sourceDate: 2026-09-18
+publishedDate: 2026-09-18
+eventDate: null
 city: "siemianowice"
 category: "alerty"
 status: "published"

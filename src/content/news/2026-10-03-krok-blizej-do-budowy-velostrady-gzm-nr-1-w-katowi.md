@@ -1,7 +1,7 @@
 ---
 title: "Krok bliżej do budowy Velostrady GZM nr 1 w Katowicach"
-pubDate: 2026-10-03
-sourceDate: 2026-10-02
+publishedDate: 2026-10-02
+eventDate: null
 city: "katowice"
 category: "drogi-komunikacja"
 status: "published"

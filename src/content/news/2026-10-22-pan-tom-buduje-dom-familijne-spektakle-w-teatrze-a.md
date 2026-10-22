@@ -1,7 +1,7 @@
 ---
 title: "Pan Tom buduje dom – familijne spektakle w Teatrze Ateneum"
-pubDate: 2026-10-22
-sourceDate: 2026-10-22
+publishedDate: 2026-10-22
+eventDate: null
 city: "katowice"
 category: "kultura"
 status: "published"

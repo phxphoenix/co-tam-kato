@@ -1,7 +1,7 @@
 ---
 title: "Jubileuszowy koncert „Królowie Życia” Skawińskiego i Tkaczyka w Spodku"
-pubDate: 2026-10-16
-sourceDate: 2026-10-18
+publishedDate: 2026-10-16
+eventDate: 2026-10-18
 city: "katowice"
 category: "wydarzenia"
 status: "published"

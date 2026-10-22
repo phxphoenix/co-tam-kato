@@ -1,7 +1,7 @@
 ---
 title: "Przerwy w dostawie prądu w Tychach. Sprawdź harmonogram wyłączeń"
-pubDate: 2026-10-17
-sourceDate: 2026-10-16
+publishedDate: 2026-10-16
+eventDate: null
 city: "tychy"
 category: "alerty"
 status: "published"

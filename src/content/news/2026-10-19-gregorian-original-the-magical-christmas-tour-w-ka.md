@@ -1,7 +1,7 @@
 ---
 title: "GREGORIAN ORIGINAL | The Magical Christmas Tour w Katowicach"
-pubDate: 2026-10-19
-sourceDate: 2027-12-11
+publishedDate: 2026-10-19
+eventDate: 2027-12-11
 city: "katowice"
 category: "wydarzenia"
 status: "published"

@@ -2,8 +2,8 @@
 title: >-
   Śląski Teatr Lalki i Aktora Ateneum: Barwny spektakl i warsztaty animacji
   lalek
-pubDate: 2026-09-26
-sourceDate: 2026-09-26
+publishedDate: 2026-09-26
+eventDate: null
 city: katowice
 category: dla-dzieci
 isForKids: true

@@ -1,7 +1,7 @@
 ---
 title: "Gala ORLEN Złote Kolce Śląskie 2026 na Stadionie Śląskim"
-pubDate: 2026-10-17
-sourceDate: 2026-10-16
+publishedDate: 2026-10-16
+eventDate: 2026-10-23
 city: "chorzow"
 category: "sport"
 status: "published"

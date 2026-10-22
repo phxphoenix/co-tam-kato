@@ -1,7 +1,7 @@
 ---
 title: "Climathon GZM 2026: Trwają zapisy na ekologiczny maraton projektowania"
-pubDate: 2026-10-09
-sourceDate: 2026-10-09
+publishedDate: 2026-10-09
+eventDate: 2026-10-26
 city: "cala-okolica"
 category: "wydarzenia"
 status: "published"

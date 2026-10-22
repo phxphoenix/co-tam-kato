@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Sparkles,
   Check,
+  Calendar,
 } from 'lucide-react';
 import { validateArchivePeriod } from '../../lib/archive-validation';
 import AdminHeaderNav from './AdminHeaderNav';
@@ -20,8 +21,8 @@ import AdminHeaderNav from './AdminHeaderNav';
 export interface AdminArticleItem {
   slug: string;
   title: string;
-  pubDate: string;
-  sourceDate?: string;
+  publishedDate: string;
+  eventDate?: string | null;
   status: string;
   archived: boolean;
   manualOverride: boolean;
@@ -41,7 +42,8 @@ export interface ArchiveWorkerResult {
   archivedArticles: Array<{
     file: string;
     title: string;
-    pubDate: string;
+    publishedDate: string;
+    eventDate?: string | null;
     diffDays: number;
   }>;
 }
@@ -532,7 +534,7 @@ export default function ArchiveAdminDashboard({
       )}
 
       {/* Lista artykułów z kolumną / flagą Archived (True / False) */}
-      <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6">
+      <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-800 mb-4">
           <div>
             <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
@@ -542,8 +544,8 @@ export default function ArchiveAdminDashboard({
               </span>
             </h2>
             <p className="text-xs text-zinc-400 mt-0.5">
-              Jednoznaczny podgląd flagi <strong className="text-zinc-200">Archived (True / False)</strong> oraz możliwość
-              szybkiego manualnego przełączenia.
+              Jednoznaczny podgląd daty publikacji, daty wydarzenia oraz flagi{' '}
+              <strong className="text-zinc-200">Archived (True / False)</strong> z możliwością szybkiego przełączenia.
             </p>
           </div>
 
@@ -612,54 +614,71 @@ export default function ArchiveAdminDashboard({
         {/* Tabela artykułów */}
         <div className="overflow-x-auto rounded-xl border border-zinc-800">
           <table className="w-full text-left text-xs text-zinc-300">
-            <thead className="bg-zinc-950/80 text-zinc-400 uppercase tracking-wider font-semibold border-b border-zinc-800">
+            <thead className="bg-zinc-950/80 text-zinc-400 text-[11px] uppercase tracking-wider font-semibold border-b border-zinc-800">
               <tr>
-                <th scope="col" className="px-4 py-3">Tytuł wpisu</th>
-                <th scope="col" className="px-4 py-3 whitespace-nowrap">Data publikacji</th>
-                <th scope="col" className="px-4 py-3 whitespace-nowrap text-center">Status wpisu</th>
-                <th scope="col" className="px-4 py-3 whitespace-nowrap text-center">ManualOverride</th>
-                <th scope="col" className="px-4 py-3 whitespace-nowrap text-center font-bold text-zinc-200">
+                <th scope="col" className="px-3.5 py-3 min-w-[220px]">Tytuł wpisu</th>
+                <th scope="col" className="px-3 py-3 whitespace-nowrap">Data publikacji</th>
+                <th scope="col" className="px-3 py-3 whitespace-nowrap">Data wydarzenia</th>
+                <th scope="col" className="px-3 py-3 whitespace-nowrap text-center">Status wpisu</th>
+                <th scope="col" className="px-3 py-3 whitespace-nowrap text-center">ManualOverride</th>
+                <th scope="col" className="px-3 py-3 whitespace-nowrap text-center font-bold text-zinc-200">
                   Flaga Archived
                 </th>
-                <th scope="col" className="px-4 py-3 whitespace-nowrap text-right">Akcja</th>
+                <th scope="col" className="px-3.5 py-3 whitespace-nowrap text-right">Akcja</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/60 font-medium">
               {filteredArticles.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-zinc-400">
+                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-400">
                     Brak artykułów spełniających wybrane kryteria filtrowania.
                   </td>
                 </tr>
               ) : (
                 filteredArticles.map((art) => {
                   const isActionLoading = actionLoadingSlug === art.slug;
-                  const pubDateFormatted = (art.sourceDate || art.pubDate).slice(0, 10);
+                  const publishedDateFormatted = (art.publishedDate || '').slice(0, 10);
+                  const eventDateFormatted = art.eventDate ? art.eventDate.slice(0, 10) : null;
 
                   return (
                     <tr key={art.slug} className="hover:bg-zinc-800/30 transition">
                       {/* Tytuł */}
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-zinc-100 flex items-center gap-1.5">
+                      <td className="px-3.5 py-2.5 max-w-[260px] sm:max-w-[320px] lg:max-w-[380px]">
+                        <div className="font-semibold text-zinc-100 line-clamp-1">
                           <a
                             href={`${baseUrl.replace(/\/$/, '')}/wpis/${art.slug}`}
                             target="_blank"
                             rel="noreferrer"
                             className="hover:text-amber-400 transition hover:underline"
+                            title={art.title}
                           >
                             {art.title}
                           </a>
                         </div>
-                        <div className="text-[11px] text-zinc-400 font-mono mt-0.5">{art.slug}</div>
+                        <div className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate" title={art.slug}>
+                          {art.slug}
+                        </div>
                       </td>
 
-                      {/* Data */}
-                      <td className="px-4 py-3 whitespace-nowrap text-zinc-400 font-mono">
-                        {pubDateFormatted}
+                      {/* Data publikacji */}
+                      <td className="px-3 py-2.5 whitespace-nowrap text-zinc-300 font-mono text-[11px]">
+                        {publishedDateFormatted}
+                      </td>
+
+                      {/* Data wydarzenia */}
+                      <td className="px-3 py-2.5 whitespace-nowrap font-mono text-[11px]">
+                        {eventDateFormatted ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/25">
+                            <Calendar className="w-3 h-3 text-amber-400 shrink-0" />
+                            <span>{eventDateFormatted}</span>
+                          </span>
+                        ) : (
+                          <span className="text-zinc-500 pl-2">—</span>
+                        )}
                       </td>
 
                       {/* Status */}
-                      <td className="px-4 py-3 whitespace-nowrap text-center">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-center">
                         <span
                           className={`inline-block px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
                             art.status === 'published'
@@ -674,34 +693,34 @@ export default function ArchiveAdminDashboard({
                       </td>
 
                       {/* ManualOverride */}
-                      <td className="px-4 py-3 whitespace-nowrap text-center">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-center">
                         {art.manualOverride ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
                             <Shield className="w-3 h-3 text-indigo-400" />
                             <span>True</span>
                           </span>
                         ) : (
-                          <span className="text-zinc-400 text-xs">—</span>
+                          <span className="text-zinc-500 text-xs">—</span>
                         )}
                       </td>
 
                       {/* Kolumna Archived (True / False) */}
-                      <td className="px-4 py-3 whitespace-nowrap text-center">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-center">
                         {art.archived ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
-                            <Archive className="w-3.5 h-3.5 text-indigo-400" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                            <Archive className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                             <span>True (Archiwum)</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                             <span>False (Główna)</span>
                           </span>
                         )}
                       </td>
 
                       {/* Szybka akcja */}
-                      <td className="px-4 py-3 whitespace-nowrap text-right">
+                      <td className="px-3.5 py-2.5 whitespace-nowrap text-right">
                         <button
                           type="button"
                           onClick={() => handleToggleArticle(art)}

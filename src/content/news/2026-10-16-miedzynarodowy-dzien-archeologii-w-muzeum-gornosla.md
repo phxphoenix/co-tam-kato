@@ -1,7 +1,7 @@
 ---
 title: "Międzynarodowy Dzień Archeologii w Muzeum Górnośląskim w Bytomiu"
-pubDate: 2026-10-16
-sourceDate: 2026-10-15
+publishedDate: 2026-10-15
+eventDate: 2026-10-17
 city: "bytom"
 category: "kultura"
 status: "published"

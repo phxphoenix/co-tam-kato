@@ -1,7 +1,7 @@
 ---
 title: "VISUAL CONCERT | Koncert muzyki filmowej i epickiej w Spodku"
-pubDate: 2026-10-21
-sourceDate: 2027-03-06
+publishedDate: 2026-10-21
+eventDate: 2027-03-06
 city: "katowice"
 category: "kultura"
 status: "published"

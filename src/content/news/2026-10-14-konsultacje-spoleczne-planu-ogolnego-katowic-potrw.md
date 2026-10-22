@@ -1,7 +1,7 @@
 ---
 title: "Konsultacje społeczne planu ogólnego Katowic potrwają do 23 listopada"
-pubDate: 2026-10-14
-sourceDate: 2026-10-13
+publishedDate: 2026-10-13
+eventDate: null
 city: "katowice"
 category: "wydarzenia"
 status: "published"

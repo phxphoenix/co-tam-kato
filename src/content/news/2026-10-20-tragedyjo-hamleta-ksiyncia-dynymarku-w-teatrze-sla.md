@@ -1,7 +1,7 @@
 ---
 title: "„Tragedyjo Hamleta, ksiyncia Dynymarku” w Teatrze Śląskim"
-pubDate: 2026-10-20
-sourceDate: 2026-10-20
+publishedDate: 2026-10-20
+eventDate: 2026-11-07
 city: "katowice"
 category: "kultura"
 status: "published"

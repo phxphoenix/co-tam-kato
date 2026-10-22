@@ -21,17 +21,20 @@ export default config({
     news: collection({
       label: 'Wszystkie artykuły (opublikowane, szkice i usunięte)',
       slugField: 'title',
-      columns: ['title', 'pubDate', 'sourceDate', 'status', 'archived', 'manualOverride', 'city', 'aiGenerated'],
+      columns: ['title', 'publishedDate', 'eventDate', 'status', 'archived', 'manualOverride', 'city', 'aiGenerated'],
       path: 'src/content/news/*',
       format: { contentField: 'content' },
       schema: {
         title: fields.slug({ name: { label: 'Tytuł' } }),
-        pubDate: fields.date({
-          label: 'Data dodania do Co Tam KATO',
+        publishedDate: fields.date({
+          label: 'Data publikacji artykułu (w źródle lub dodania na portal)',
+          description: 'Wymagana data publikacji używana do sortowania wpisów na stronie głównej oraz wyliczania wieku do archiwizacji.',
           defaultValue: { kind: 'today' },
+          validation: { isRequired: true },
         }),
-        sourceDate: fields.date({
-          label: 'Data publikacji oryginalnego źródła (opcjonalnie)',
+        eventDate: fields.date({
+          label: 'Data wydarzenia / rozpoczęcia (opcjonalnie)',
+          description: 'Faktyczna data lub data rozpoczęcia wydarzenia (np. koncertu, spektaklu). Pozostaw puste, jeśli artykuł nie dotyczy konkretnego wydarzenia.',
         }),
         city: fields.select({
           label: 'Miasto / Rejon',

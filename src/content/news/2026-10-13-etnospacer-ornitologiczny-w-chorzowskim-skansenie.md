@@ -1,7 +1,7 @@
 ---
 title: "ETNOspacer ornitologiczny w chorzowskim skansenie"
-pubDate: 2026-10-13
-sourceDate: 2026-10-13
+publishedDate: 2026-10-13
+eventDate: 2026-10-18
 city: "chorzow"
 category: "wydarzenia"
 status: "published"

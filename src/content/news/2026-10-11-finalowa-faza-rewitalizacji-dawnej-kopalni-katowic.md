@@ -1,7 +1,7 @@
 ---
 title: "Finałowa faza rewitalizacji dawnej Kopalni Katowice w Strefie Kultury"
-pubDate: 2026-10-11
-sourceDate: 2026-10-10
+publishedDate: 2026-10-10
+eventDate: null
 city: "katowice"
 category: "kultura"
 status: "published"

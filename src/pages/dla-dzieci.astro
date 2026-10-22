@@ -8,17 +8,17 @@ const allNews = (await getCollection('news')).filter(
   (item) => item.data.status !== 'deleted' && !item.data.archived
 );
 
-// Sortowanie od najnowszych
+// Sortowanie od najnowszych po dacie publikacji
 const sortedNews = allNews.sort(
-  (a, b) => (b.data.sourceDate ?? b.data.pubDate).getTime() - (a.data.sourceDate ?? a.data.pubDate).getTime()
+  (a, b) => b.data.publishedDate.getTime() - a.data.publishedDate.getTime()
 );
 
 const serializedItems = sortedNews.map((item) => ({
   id: item.id,
   slug: item.id.replace(/\.(md|mdx)$/, ''),
   title: item.data.title,
-  pubDate: item.data.pubDate.toISOString(),
-  sourceDate: (item.data.sourceDate ?? item.data.pubDate).toISOString(),
+  publishedDate: item.data.publishedDate.toISOString(),
+  eventDate: item.data.eventDate ? item.data.eventDate.toISOString() : null,
   city: item.data.city,
   category: item.data.category,
   status: item.data.status,

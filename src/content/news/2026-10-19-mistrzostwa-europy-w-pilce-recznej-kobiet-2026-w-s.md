@@ -1,7 +1,7 @@
 ---
 title: "Mistrzostwa Europy w Piłce Ręcznej Kobiet 2026 w Spodku"
-pubDate: 2026-10-19
-sourceDate: 2026-12-03
+publishedDate: 2026-10-19
+eventDate: 2026-12-03
 city: "katowice"
 category: "sport"
 status: "published"

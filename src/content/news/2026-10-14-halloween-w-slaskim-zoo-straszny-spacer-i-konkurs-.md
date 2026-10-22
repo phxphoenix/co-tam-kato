@@ -1,7 +1,7 @@
 ---
 title: "Halloween w Śląskim ZOO: Straszny spacer i konkurs przebierańców"
-pubDate: 2026-10-14
-sourceDate: 2026-10-14
+publishedDate: 2026-10-14
+eventDate: 2026-10-30
 city: "chorzow"
 category: "dla-dzieci"
 status: "published"

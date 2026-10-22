@@ -1,7 +1,7 @@
 ---
 title: "„Targowisko, które żyje” – nowa koncepcja rozwoju targowisk miejskich w Metropolii"
-pubDate: 2026-09-29
-sourceDate: 2026-09-22
+publishedDate: 2026-09-22
+eventDate: null
 city: "cala-okolica"
 category: "wydarzenia"
 status: "published"

@@ -99,8 +99,8 @@ fs.writeFileSync(
   oldArticlePath,
   `---
 title: "Stary Artykuł Sprzed 24 Dni US3"
-pubDate: 2026-09-20
-sourceDate: 2026-09-20
+publishedDate: 2026-09-20
+eventDate: null
 city: "katowice"
 category: "wydarzenia"
 status: "published"
@@ -119,8 +119,8 @@ fs.writeFileSync(
   freshArticlePath,
   `---
 title: "Świeży Artykuł Sprzed 2 Dni US3"
-pubDate: 2026-10-12
-sourceDate: 2026-10-12
+publishedDate: 2026-10-12
+eventDate: null
 city: "katowice"
 category: "wydarzenia"
 status: "published"
@@ -139,8 +139,8 @@ fs.writeFileSync(
   protectedArticlePath,
   `---
 title: "Artykuł Chroniony ManualOverride US3"
-pubDate: 2026-09-20
-sourceDate: 2026-09-20
+publishedDate: 2026-09-20
+eventDate: null
 city: "katowice"
 category: "wydarzenia"
 status: "published"

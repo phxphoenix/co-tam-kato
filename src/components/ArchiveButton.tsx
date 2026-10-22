@@ -25,8 +25,8 @@ export const ArchiveAIcon: React.FC<{ className?: string }> = ({ className = 'w-
 interface ArchiveButtonProps {
   slug: string;
   title?: string;
-  pubDate?: string;
-  sourceDate?: string;
+  publishedDate?: string;
+  eventDate?: string | null;
   defaultArchived?: boolean;
   defaultManualOverride?: boolean;
   showLabel?: boolean;
@@ -38,8 +38,8 @@ interface ArchiveButtonProps {
 export const ArchiveButton: React.FC<ArchiveButtonProps> = ({
   slug,
   title,
-  pubDate,
-  sourceDate,
+  publishedDate,
+  eventDate,
   defaultArchived = false,
   defaultManualOverride = false,
   showLabel = false,
@@ -64,8 +64,8 @@ export const ArchiveButton: React.FC<ArchiveButtonProps> = ({
       slug,
       defaultArchived,
       defaultManualOverride,
-      pubDate,
-      sourceDate,
+      publishedDate,
+      eventDate,
     });
 
     if (onToggle) {

@@ -1,7 +1,7 @@
 ---
 title: "Dzień otwarty i bezpłatne zwiedzanie Stadionu Miejskiego w Tychach"
-pubDate: 2026-10-15
-sourceDate: 2026-10-15
+publishedDate: 2026-10-15
+eventDate: 2026-10-17
 city: "tychy"
 category: "sport"
 status: "published"

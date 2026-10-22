@@ -1,7 +1,7 @@
 ---
 title: "OktoberBest 2026 w Chorzowie: Wystąpią Baciary i inni"
-pubDate: 2026-10-14
-sourceDate: 2026-10-14
+publishedDate: 2026-10-14
+eventDate: 2026-10-24
 city: "chorzow"
 category: "wydarzenia"
 status: "published"

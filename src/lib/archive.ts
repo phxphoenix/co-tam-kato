@@ -4,6 +4,7 @@ import { AUTO_ARCHIVE_DAYS } from './constants.ts';
 export interface ArchiveState {
   archived: boolean;
   manualOverride?: boolean;
+  publishedDate?: string;
   persisted?: 'fs' | 'github' | 'client';
   updatedAt?: number;
 }
@@ -37,7 +38,22 @@ export function getStoredArchiveOverrides(): Record<string, ArchiveState> {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw);
-    return typeof parsed === 'object' && parsed !== null ? parsed : {};
+    if (typeof parsed !== 'object' || parsed === null) return {};
+    // Jednostronny fallback przy odczycie z localStorage dla starszych zapisanych stanów (publishedDate ?? pubDate)
+    const normalized: Record<string, ArchiveState> = {};
+    for (const [slug, val] of Object.entries(parsed)) {
+      if (val && typeof val === 'object') {
+        const entry = val as Record<string, any>;
+        normalized[slug] = {
+          ...entry,
+          archived: Boolean(entry.archived),
+          ...(entry.publishedDate ?? entry.pubDate
+            ? { publishedDate: entry.publishedDate ?? entry.pubDate }
+            : {}),
+        };
+      }
+    }
+    return normalized;
   } catch (error) {
     console.warn('Nie udało się odczytać stanu archiwum z localStorage:', error);
     return {};
@@ -240,15 +256,32 @@ async function syncToBackend(
  * Przełącza status archiwizacji artykułu (Archive / Unarchive)
  * Zwraca nowy stan { archived, manualOverride }
  */
-export function toggleItemArchive(options: {
+export interface ToggleArchiveOptions {
   slug: string;
   defaultArchived?: boolean;
   defaultManualOverride?: boolean;
+  /** Data publikacji artykułu (ISO date string) */
+  publishedDate?: string;
+  /** Opcjonalna data wydarzenia (ISO date string lub null) */
+  eventDate?: string | null;
+  /** Jednostronny fallback przy odczycie starszego stanu (publishedDate ?? pubDate) */
   pubDate?: string;
-  sourceDate?: string;
-}): ArchiveState {
-  const { slug, defaultArchived = false, defaultManualOverride = false, pubDate, sourceDate } = options;
+}
+
+/**
+ * Przełącza status archiwizacji artykułu (Archive / Unarchive)
+ * Zwraca nowy stan { archived, manualOverride }
+ */
+export function toggleItemArchive(options: ToggleArchiveOptions): ArchiveState {
+  const {
+    slug,
+    defaultArchived = false,
+    defaultManualOverride = false,
+    publishedDate,
+    pubDate,
+  } = options;
   const currentOverrides = getStoredArchiveOverrides();
+  const storedEntry = currentOverrides[slug];
 
   const isCurrentlyArchived =
     slug in currentOverrides
@@ -262,10 +295,11 @@ export function toggleItemArchive(options: {
 
   // AC 4: Jeśli użytkownik ręcznie przywraca z archiwum artykuł starszy niż AUTO_ARCHIVE_DAYS,
   // otrzymuje on flagę manualOverride = true, aby nocny worker go nie zarchiwizował ponownie.
+  // Zachowujemy jednostronny fallback (publishedDate ?? pubDate) dla zapisanych wcześniej stanów w localStorage.
+  const resolvedPublishedDate = publishedDate ?? pubDate ?? storedEntry?.publishedDate;
   if (!nextArchived) {
-    const rawDate = sourceDate || pubDate;
-    if (rawDate) {
-      const articleTime = new Date(rawDate).getTime();
+    if (resolvedPublishedDate) {
+      const articleTime = new Date(resolvedPublishedDate).getTime();
       const now = Date.now();
       const daysOld = (now - articleTime) / (1000 * 60 * 60 * 24);
       if (daysOld >= AUTO_ARCHIVE_DAYS) {
@@ -279,6 +313,7 @@ export function toggleItemArchive(options: {
   const newState: ArchiveState = {
     archived: nextArchived,
     manualOverride: nextManualOverride,
+    ...(resolvedPublishedDate ? { publishedDate: resolvedPublishedDate } : {}),
     updatedAt: Date.now(),
   };
 

@@ -1,7 +1,7 @@
 ---
 title: "SYMPHOETHNIC Golec uOrkiestra w Spodku"
-pubDate: 2026-10-19
-sourceDate: 2027-03-13
+publishedDate: 2026-10-19
+eventDate: 2027-03-13
 city: "katowice"
 category: "wydarzenia"
 status: "published"

@@ -1,7 +1,7 @@
 ---
 title: "Kolej Metropolitalna ma ruszyć z Bytomia na początku 2027 roku"
-pubDate: 2026-10-17
-sourceDate: 2026-10-16
+publishedDate: 2026-10-16
+eventDate: null
 city: "bytom"
 category: "drogi-komunikacja"
 status: "published"

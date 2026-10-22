@@ -51,12 +51,15 @@ Masz do wyboru dwie metody edycji i publikacji:
 
 
 ### Sposób B: Zwykłe pliki Markdown
-Wszystkie artykuły znajdują się w katalogu `src/content/news/`. Każdy plik to zwykły tekst z nagłówkiem (frontmatter):
+Wszystkie artykuły znajdują się w katalogu `src/content/news/`. Każdy plik to zwykły tekst z nagłówkiem (frontmatter). Model danych rozdziela datę na dwie osobne właściwości:
+- `publishedDate` (wymagane) – data publikacji artykułu (w źródle lub data dodania na portal Co Tam KATO), używana do sortowania feedu na stronie głównej i archiwizacji.
+- `eventDate` (opcjonalne / nullable) – faktyczna data lub data rozpoczęcia wydarzenia (np. koncertu, spektaklu), jeśli artykuł dotyczy konkretnego wydarzenia (zapobiega przyklejaniu odległych wydarzeń na górze strony głównej).
 
 ```markdown
 ---
 title: "Tytuł Twojego nowego wydarzenia"
-pubDate: 2026-09-26
+publishedDate: 2026-09-26
+eventDate: 2026-10-18 # opcjonalne (lub null), jeśli artykuł dotyczy konkretnego wydarzenia
 city: "katowice" # katowice, chorzow, sosnowiec, siemianowice, etc.
 category: "wydarzenia" # wydarzenia, drogi-komunikacja, kultura, gastro, sport, alerty
 status: "published" # 'published' lub 'draft'
@@ -65,6 +68,7 @@ location: "Spodek, al. Korfantego 35"
 isAlert: false
 sourceUrl: "https://przyklad.pl"
 aiGenerated: false
+archived: false
 ---
 
 Tutaj wpisujesz pełną treść artykułu. Możesz używać pogrubień, list punktowanych i nagłówków.
@@ -96,9 +100,12 @@ Wszystkie monitorowane źródła (kanały RSS, strony instytucjonalne i portale 
 ## 📂 Struktura katalogów
 
 ```text
-├── .github/workflows/      # Przepisy automatyzacji (Agent AI 01:00, 07:00, 13:00, 19:00 oraz Deploy)
+├── .github/workflows/      # Przepisy automatyzacji (Agent AI 01:00, 07:00, 13:00, 19:00, Archive Worker oraz Deploy)
+├── config/
+│   └── sources.md          # Centralna baza monitorowanych źródeł (Single Source of Truth)
 ├── public/                 # Statyczne pliki publiczne (favicon.svg itp.)
 ├── scripts/
+│   ├── archive-worker.mjs  # Nocny worker automatycznej archiwizacji
 │   └── daily-digest.mjs    # Skrypt Agenta AI do pobierania i redagowania newsów
 ├── src/
 │   ├── components/         # Komponenty interfejsu (React & Astro)
@@ -116,14 +123,16 @@ Wszystkie monitorowane źródła (kanały RSS, strony instytucjonalne i portale 
 │   │   └── constants.ts    # Baza miast, kolorów i kategorii
 │   ├── pages/              # Routing podstron Astro (czyste SSG)
 │   │   ├── index.astro     # Strona główna
+│   │   ├── archiwum.astro  # Podstrona zarchiwizowanych wiadomości
 │   │   ├── dla-dzieci.astro # Podstrona z wydarzeniami dla dzieci
 │   │   ├── o-projekcie.astro # Podstrona informacyjna
 │   │   ├── ulubione.astro  # Zapisane ulubione artykuły
 │   │   └── wpis/[slug].astro # Szablon pojedynczego artykułu
-│   ├── server/             # Handlery SSR (proxy OAuth Keystatic dla Vercel)
+│   ├── server/             # Handlery SSR (proxy OAuth Keystatic dla Vercel, API archiwum i źródeł)
 │   │   └── keystatic-api.ts
 │   ├── styles/
 │   │   └── global.css      # Style Tailwind CSS v4
+│   ├── content.config.ts   # Konfiguracja kolekcji Astro i schemat walidacji Zod
 │   └── env.d.ts            # Deklaracje typów dla Astro i środowiska
 ├── astro.config.mjs        # Konfiguracja Astro (dualizm SSG / Vercel Serverless)
 ├── keystatic.config.ts     # Konfiguracja panelu admina Keystatic

@@ -1,7 +1,7 @@
 ---
 title: "Mikołajki w Teatrze Małym w Tychach: Spektakle i spotkania ze Świętym Mikołajem"
-pubDate: 2026-10-16
-sourceDate: 2026-10-15
+publishedDate: 2026-10-15
+eventDate: 2026-12-06
 city: "tychy"
 category: "dla-dzieci"
 status: "published"

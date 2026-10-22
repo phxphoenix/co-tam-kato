@@ -1,7 +1,7 @@
 ---
 title: "Listopadowe Harce Sportowe dla rodzin w tyskiej Hali Sportowej MOSiR"
-pubDate: 2026-10-16
-sourceDate: 2026-10-16
+publishedDate: 2026-10-16
+eventDate: 2026-11-07
 city: "tychy"
 category: "dla-dzieci"
 status: "published"

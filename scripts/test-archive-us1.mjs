@@ -63,8 +63,8 @@ const testFilePath = path.join(NEWS_DIR, `${testSlug}.md`);
 
 const testArticleContent = `---
 title: "Testowy Zarchiwizowany Festiwal w Kato"
-pubDate: 2026-09-15
-sourceDate: 2026-09-15
+publishedDate: 2026-09-15
+eventDate: 2026-09-15
 city: "katowice"
 category: "dla-dzieci"
 status: "published"

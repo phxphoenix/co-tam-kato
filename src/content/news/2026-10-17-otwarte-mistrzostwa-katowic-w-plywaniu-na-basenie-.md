@@ -1,7 +1,7 @@
 ---
 title: "Otwarte Mistrzostwa Katowic w Pływaniu na Basenie Burowiec"
-pubDate: 2026-10-17
-sourceDate: 2026-10-16
+publishedDate: 2026-10-16
+eventDate: 2026-10-18
 city: "katowice"
 category: "sport"
 status: "published"

@@ -1,7 +1,7 @@
 ---
 title: "Sosnowiec domknie ring tramwajowy. Przetarg na tory w ul. 11 Listopada"
-pubDate: 2026-10-16
-sourceDate: 2026-10-16
+publishedDate: 2026-10-16
+eventDate: null
 city: "sosnowiec"
 category: "drogi-komunikacja"
 status: "published"

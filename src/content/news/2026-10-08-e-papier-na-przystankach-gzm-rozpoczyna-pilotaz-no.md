@@ -1,7 +1,7 @@
 ---
 title: "E-papier na przystankach. GZM rozpoczyna pilotaż nowych tablic informacji pasażerskiej"
-pubDate: 2026-10-08
-sourceDate: 2026-10-08
+publishedDate: 2026-10-08
+eventDate: null
 city: "cala-okolica"
 category: "drogi-komunikacja"
 status: "published"

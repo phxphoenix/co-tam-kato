@@ -1,7 +1,7 @@
 ---
 title: "Koncert „Zadzwońcie po Milicję!” w katowickim Spodku"
-pubDate: 2026-10-22
-sourceDate: 2026-11-20
+publishedDate: 2026-10-22
+eventDate: 2026-11-20
 city: "katowice"
 category: "kultura"
 status: "published"

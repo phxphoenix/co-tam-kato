@@ -1,7 +1,7 @@
 ---
 title: "The Legend of Rock Symphonic z Brucem Dickinsonem w Spodku"
-pubDate: 2026-10-21
-sourceDate: 2027-01-30
+publishedDate: 2026-10-21
+eventDate: 2027-01-30
 city: "katowice"
 category: "kultura"
 status: "published"
