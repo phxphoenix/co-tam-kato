@@ -10,7 +10,8 @@ location: "Kościół Ewangelicki Zbawiciela w Katowicach-Szopienicach"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/dete-instrumenty-zabrzmia-w-kosciele-zbawiciela-w-niedziele-darmowy-koncert"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W niedzielę, 25 października 2026 roku, miłośnicy muzyki sakralnej i dętej będą mieli okazję uczestniczyć w wyjątkowym wydarzeniu. W Kościele Ewangelickim Zbawiciela w Katowicach-Szopienicach odbędzie się koncert zatytułowany „Musica Sacra”.
