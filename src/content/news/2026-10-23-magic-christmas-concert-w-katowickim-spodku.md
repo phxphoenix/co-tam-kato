@@ -10,7 +10,8 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/magic-christmas-concert,3848.html"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W niedzielę, 27 grudnia 2026 roku, w katowickim Spodku odbędzie się widowisko muzyczne Magic Christmas Concert. Wydarzenie skierowane jest do miłośników nastrojowych, świątecznych aranżacji i widowiskowych opraw scenicznych.
