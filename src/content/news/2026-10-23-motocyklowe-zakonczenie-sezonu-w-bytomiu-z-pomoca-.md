@@ -10,7 +10,8 @@ location: "Bytom, ul. Brzezińska 27"
 isAlert: false
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/motocyklisci-zakoncza-sezon-w-bytomiu-przy-okazji-pomoga-bezdomnym-zwierzetom"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Fani jednośladów i osoby chcące wesprzeć lokalne schronisko spotkają się w najbliższą sobotę w Bytomiu. Klub Invaders MC Poland organizuje tradycyjne zakończenie sezonu motocyklowego, które odbędzie się przy ulicy Brzezińskiej 27.
