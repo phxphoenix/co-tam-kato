@@ -10,7 +10,8 @@ location: "Okręgowa Stacja Kontroli Pojazdów PKM Katowice"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/darmowe-sprawdzanie-swiatel-w-katowicach-sa-cztery-terminy-nie-trzeba-sie-zapisywac"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Jesienią i zimą zmrok zapada znacznie szybciej, dlatego sprawne i prawidłowo ustawione reflektory samochodowe mają kluczowe znaczenie dla bezpieczeństwa na drogach. W Katowicach rusza akcja bezpłatnego sprawdzania oświetlenia pojazdów.
