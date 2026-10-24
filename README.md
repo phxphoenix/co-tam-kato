@@ -92,6 +92,19 @@ W katalogu `.github/workflows/daily-digest.yml` oraz `scripts/daily-digest.mjs` 
 npm.cmd run digest
 ```
 
+### Kaskadowy Fallback modeli Gemini i ochrona limitów (Free Tier):
+Agent AI działa wyłącznie w ramach bezpłatnego planu (**Free Tier**) Google Gemini i posiada wbudowany mechanizm odporności na błędy limitów (`429 Rate Limit / Quota Exceeded`, `503 Overloaded / UNAVAILABLE`):
+- **Hierarchia modeli (`GEMINI_MODELS`)**: Kolejność modeli definiowana jest przez zmienną środowiskową `GEMINI_MODELS` (skonfigurowaną w [`.github/workflows/daily-digest.yml`](.github/workflows/daily-digest.yml) oraz jako domyślna tablica `DEFAULT_FALLBACK_MODELS` w [`scripts/daily-digest.mjs`](scripts/daily-digest.mjs)):
+  1. `gemini-3.8-flash`
+  2. `gemini-3.6-flash`
+  3. `gemini-3-flash`
+  4. `gemini-3.5-flash-lite`
+  5. `gemini-3.1-flash-lite`
+  6. `gemini-2.5-flash`
+  7. `gemini-2.5-flash-lite`
+- **Pamięć stanu w uruchomieniu (`exhaustedModels`)**: Modele, które zwróciły błąd `429` lub `503`, są zapamiętywane w bieżącym przebiegu i pomijane przy kolejnych zapytaniach (po krótkim buforze `1.5s` przed przełączeniem na następny model).
+- **Ochrona limitów minutowych (RPM / TPM Guard)**: Skrypt automatycznie pilnuje minimalnych odstępów między kolejnymi zapytaniami do tego samego modelu (`12.5s` dla pełnych modeli `flash` o limicie 5 RPM oraz `4.5s` dla modeli `flash-lite`), a workflow GitHub Actions ma ustawiony bezpieczny limit czasu `timeout-minutes: 15`.
+
 ### Baza monitorowanych źródeł (Single Source of Truth):
 Wszystkie monitorowane źródła (kanały RSS, strony instytucjonalne i portale miejskie) są zdefiniowane i zarządzane centralnie w pliku [`config/sources.md`](config/sources.md). Skrypt Agenta AI dynamicznie odczytuje tę tabelę, filtruje źródła ze statusem `ACTIVE` i stosuje odpowiedni routing (`RSS`, `WEB`, `DYNAMIC_WEB`) oraz dedykowane wskazówki parsowania.
 

@@ -16,6 +16,59 @@ const ALLOWED_CATEGORIES = new Set([
 const EVENT_FUTURE_DAYS = 45;
 const BOT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 CoTamKato-Bot/1.0';
 
+export const DEFAULT_FALLBACK_MODELS = [
+  'gemini-3.8-flash',
+  'gemini-3.6-flash',
+  'gemini-3-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+];
+
+export const FLASH_LITE_MIN_INTERVAL_MS = 4500;
+export const FLASH_FULL_MIN_INTERVAL_MS = 12500;
+export const FALLBACK_SWITCH_DELAY_MS = 1500;
+
+export const exhaustedModels = new Set();
+export const lastCallTimestampByModel = new Map();
+
+export function getGeminiModels(envValue = process.env.GEMINI_MODELS) {
+  if (typeof envValue === 'string') {
+    const parsed = envValue
+      .split(',')
+      .map((m) => m.trim())
+      .filter(Boolean);
+    if (parsed.length > 0) {
+      return parsed;
+    }
+  }
+  return [...DEFAULT_FALLBACK_MODELS];
+}
+
+export function getMinIntervalForModel(modelName = '') {
+  return modelName.toLowerCase().includes('lite')
+    ? FLASH_LITE_MIN_INTERVAL_MS
+    : FLASH_FULL_MIN_INTERVAL_MS;
+}
+
+function isRateLimitOrOverloadedError(status, detail = '') {
+  if (status === 429 || status === 503) return true;
+  const text = String(detail);
+  return /RESOURCE_EXHAUSTED|rate\s*limit|quota|overloaded|UNAVAILABLE/i.test(text);
+}
+
+function formatFallbackReason(status, detail = '') {
+  const matchedKeyword = String(detail).match(/RESOURCE_EXHAUSTED|UNAVAILABLE|rate\s*limit|quota|overloaded/i)?.[0];
+  if (status && matchedKeyword) {
+    return `HTTP ${status} / ${matchedKeyword}`;
+  }
+  if (status) {
+    return `HTTP ${status}`;
+  }
+  return matchedKeyword || 'limit/przeciążenie';
+}
+
 const POLISH_MONTHS = {
   stycznia: 1, luteg: 2, lutego: 2, marca: 3, kwietnia: 4, maja: 5, czerwca: 6,
   lipca: 7, sierpnia: 8, wrzesnia: 9, września: 9, pazdziernika: 10, października: 10,
@@ -524,7 +577,120 @@ async function collectNews() {
   return collected;
 }
 
-async function analyzeWithGemini(newsItems, existingArticles, apiKey) {
+export async function callGeminiWithFallback(promptOrOptions, apiKeyArg, extraOptions = {}) {
+  const isOptionsObject = typeof promptOrOptions === 'object' && promptOrOptions !== null;
+  const options = isOptionsObject
+    ? promptOrOptions
+    : { ...extraOptions, prompt: promptOrOptions, apiKey: apiKeyArg };
+
+  const {
+    prompt,
+    apiKey = process.env.GEMINI_API_KEY,
+    contents,
+    generationConfig = { responseMimeType: 'application/json' },
+    systemInstruction,
+    models: customModels,
+    fetchImpl = fetch,
+    sleepImpl = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    nowImpl = () => Date.now(),
+  } = options;
+
+  const modelHierarchy = Array.isArray(customModels) && customModels.length > 0
+    ? customModels
+    : getGeminiModels();
+
+  const availableModels = modelHierarchy.filter((model) => !exhaustedModels.has(model));
+  if (availableModels.length === 0) {
+    throw new Error('Wszystkie modele z hierarchii Gemini osiągnęły limity w bieżącym uruchomieniu.');
+  }
+
+  const requestBody = {
+    contents: contents || [{ parts: [{ text: prompt }] }],
+    generationConfig,
+    ...(systemInstruction ? { systemInstruction } : {}),
+  };
+
+  let lastError;
+
+  for (let i = 0; i < availableModels.length; i++) {
+    const model = availableModels[i];
+
+    // Ochrona limitów minutowych (RPM / TPM Guard) przed wykonaniem zapytania do tego samego modelu
+    const lastCallTs = lastCallTimestampByModel.get(model);
+    if (lastCallTs !== undefined) {
+      const minIntervalMs = getMinIntervalForModel(model);
+      const elapsed = nowImpl() - lastCallTs;
+      if (elapsed < minIntervalMs) {
+        await sleepImpl(minIntervalMs - elapsed);
+      }
+    }
+
+    lastCallTimestampByModel.set(model, nowImpl());
+
+    let response;
+    try {
+      response = await fetchImpl(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        signal: AbortSignal.timeout(60000),
+        body: JSON.stringify(requestBody),
+      });
+    } catch (networkError) {
+      if (isRateLimitOrOverloadedError(networkError?.status, networkError?.message)) {
+        const reason = formatFallbackReason(networkError?.status, networkError?.message);
+        console.warn(`[Gemini Fallback] Model ${model} osiągnął limit (${reason}). Przełączam na kolejny model z hierarchii...`);
+        exhaustedModels.add(model);
+        lastError = networkError;
+        if (i < availableModels.length - 1) {
+          await sleepImpl(FALLBACK_SWITCH_DELAY_MS);
+          continue;
+        }
+      }
+      throw networkError;
+    }
+
+    if (response.ok) {
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('Gemini zwróciło pustą odpowiedź.');
+      const parsed = JSON.parse(text);
+      if (!Array.isArray(parsed)) throw new Error('Odpowiedź Gemini nie jest tablicą JSON.');
+      console.log(`[Gemini Agent] Pomyślnie przetworzono przy użyciu modelu: ${model}`);
+      return parsed;
+    }
+
+    const detail = await response.text();
+    lastError = new Error(`Gemini API zwróciło HTTP ${response.status}: ${detail.slice(0, 500)}`);
+
+    if (isRateLimitOrOverloadedError(response.status, detail)) {
+      const reason = formatFallbackReason(response.status, detail);
+      console.warn(`[Gemini Fallback] Model ${model} osiągnął limit (${reason}). Przełączam na kolejny model z hierarchii...`);
+      exhaustedModels.add(model);
+      if (i < availableModels.length - 1) {
+        await sleepImpl(FALLBACK_SWITCH_DELAY_MS);
+        continue;
+      }
+      throw lastError;
+    }
+
+    if (response.status === 404) {
+      console.warn(`[Gemini Fallback] Model ${model} nie jest dostępny (HTTP 404). Przełączam na kolejny model z hierarchii...`);
+      exhaustedModels.add(model);
+      if (i < availableModels.length - 1) {
+        await sleepImpl(FALLBACK_SWITCH_DELAY_MS);
+        continue;
+      }
+      throw lastError;
+    }
+
+    // Błąd niebędący limitem (np. 400 Bad Request, 401, 403) — nie przełączamy modelu
+    throw lastError;
+  }
+
+  throw lastError;
+}
+
+export async function analyzeWithGemini(newsItems, existingArticles, apiKey, options = {}) {
   const coverageCutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
   const coveredTopics = existingArticles
     .filter((article) => {
@@ -576,57 +742,12 @@ ${JSON.stringify(coveredTopics)}
 Materiały źródłowe:
 ${JSON.stringify(promptItems.slice(0, 60))}`;
 
-  const models = [
-    { id: 'gemini-3.8-flash', attempts: 3 },
-    { id: 'gemini-3.7-flash', attempts: 3 },
-    { id: 'gemini-3.5-flash-lite', attempts: 2 },
-  ];
-  let lastError;
-  for (const [modelIndex, model] of models.entries()) {
-    for (let attempt = 1; attempt <= model.attempts; attempt++) {
-      try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.id}:generateContent`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-          signal: AbortSignal.timeout(60000),
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: 'application/json' },
-          }),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (!text) throw new Error('Gemini zwróciło pustą odpowiedź.');
-          const parsed = JSON.parse(text);
-          if (!Array.isArray(parsed)) throw new Error('Odpowiedź Gemini nie jest tablicą JSON.');
-          return parsed;
-        }
-        if (response.status === 404) {
-          console.warn(`  Model ${model.id} nie jest dostępny (HTTP 404). Przełączam na kolejny model.`);
-          break;
-        }
-        const detail = await response.text();
-        lastError = new Error(`Gemini API zwróciło HTTP ${response.status}: ${detail.slice(0, 500)}`);
-        if (response.status !== 408 && response.status !== 429 && response.status < 500) throw lastError;
-      } catch (error) {
-        lastError = error;
-        if (error.message.startsWith('Gemini API zwróciło HTTP ') && !/HTTP (408|429|5\d\d):/.test(error.message)) throw error;
-      }
-
-      const hasAnotherAttempt = attempt < model.attempts || modelIndex < models.length - 1;
-      if (hasAnotherAttempt) {
-        if (attempt === model.attempts) {
-          console.warn(`  Model ${model.id} pozostaje niedostępny; przełączam na ${models[modelIndex + 1].id}.`);
-        } else {
-          const delayMs = Math.min(5000 * (2 ** (attempt - 1)), 30000) + Math.floor(Math.random() * 2000);
-          console.warn(`  Model ${model.id} chwilowo niedostępny; ponawiam za około ${Math.ceil(delayMs / 1000)} s (${attempt}/${model.attempts - 1}).`);
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
-        }
-      }
-    }
-  }
-  throw lastError;
+  return callGeminiWithFallback({
+    prompt,
+    apiKey,
+    generationConfig: { responseMimeType: 'application/json' },
+    ...options,
+  });
 }
 
 function slugify(text) {

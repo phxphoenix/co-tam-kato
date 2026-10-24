@@ -171,9 +171,22 @@ Skrypt `scripts/daily-digest.mjs` weryfikuje aktualne przesunięcie strefy (`Eur
 
 Błąd pojedynczego źródła jest izolowany blokiem try/catch i nie przerywa pracy skryptu dla pozostałych źródeł; dopiero brak jakichkolwiek materiałów ze wszystkich źródeł kończy proces błędem.
 
-### Redakcja i zabezpieczenia
+### Redakcja, Model Fallback i zabezpieczenia limitów (RPM / TPM Guard)
 
-Do Gemini wysyłanych jest maksymalnie 60 elementów źródłowych, a prompt żąda maksymalnie trzech artykułów. Model ma zwracać JSON, wybrać kategorię/miasto, streszczenie, krótką treść Markdown i ustawić niepewne informacje jako szkice. Model nie ma otrzymywać klucza z treści promptu; klucz jest nagłówkiem żądania API. Skrypt ponawia błędy 429/serwerowe lub przejściowe maksymalnie trzy próby z rosnącym opóźnieniem.
+Do Gemini wysyłanych jest maksymalnie 60 elementów źródłowych, a prompt żąda maksymalnie trzech artykułów. Model ma zwracać JSON, wybrać kategorię/miasto, streszczenie, krótką treść Markdown i ustawić niepewne informacje jako szkice. Model nie ma otrzymywać klucza z treści promptu; klucz jest nagłówkiem żądania API (`x-goog-api-key`).
+
+Aby utrzymać działanie wyłącznie w ramach **Free Tier** i wyeliminować błędy `429 Rate Limit / Quota Exceeded`, wywołania API są realizowane przez funkcję `callGeminiWithFallback` w `scripts/daily-digest.mjs`:
+1. **Hierarchia modeli (Single Source of Truth)**:
+   - Lista modeli pobierana jest ze zmiennej środowiskowej `GEMINI_MODELS` (zdefiniowanej w `.github/workflows/daily-digest.yml`), a w przypadku jej braku – ze stałej `DEFAULT_FALLBACK_MODELS` w kolejności:
+     `gemini-3.8-flash` -> `gemini-3.6-flash` -> `gemini-3-flash` -> `gemini-3.5-flash-lite` -> `gemini-3.1-flash-lite` -> `gemini-2.5-flash` -> `gemini-2.5-flash-lite`.
+2. **Kaskadowy Model Fallback i pamięć stanu (`exhaustedModels`)**:
+   - W przypadku odpowiedzi HTTP `429` (`RESOURCE_EXHAUSTED`, `rate limit`, `quota`) lub `503` (`overloaded`, `UNAVAILABLE`) skrypt loguje ostrzeżenie `[Gemini Fallback]`, zapisuje model w zbiorze `exhaustedModels` (aby nie odpytywać go ponownie w tym samym przebiegu), odczekuje `1500 ms` bufora i przełącza zapytanie na kolejny model z hierarchii.
+   - Błędy niebędące limitami (np. `400 Bad Request` lub błąd parsowania JSON) przerywają wywołanie natychmiast bez przełączania modelu.
+3. **Ochrona limitów minutowych (RPM / TPM Guard)**:
+   - Mapa `lastCallTimestampByModel` śledzi czas ostatniego zapytania dla każdego modelu i wymusza minimalny odstęp przed kolejnym wywołaniem tego samego modelu: **12500 ms** dla pełnych modeli `flash` (limit 5 RPM) oraz **4500 ms** dla modeli `flash-lite`.
+   - Job `daily-digest` w `.github/workflows/daily-digest.yml` ma ustawiony parametr `timeout-minutes: 15`, zapewniający bezpieczny zapas czasu na ewentualne przełączenia i throttling.
+4. **Logowanie diagnostyczne**:
+   - Po każdym udanym wywołaniu w logach zapisywana jest informacja: `[Gemini Agent] Pomyślnie przetworzono przy użyciu modelu: <model>`.
 
 Odpowiedź jest parsowana jako JSON i sprawdzana: wymagane są tytuł, streszczenie, treść i URL; miasto/kategoria/status muszą być dozwolone; URL musi być HTTP/HTTPS i pochodzić z pobranych pozycji. Docelowo skrypt zapisuje `publishedDate` (data publikacji w źródle lub data utworzenia wpisu w strefie `Europe/Warsaw`) oraz opcjonalne `eventDate` (jeśli artykuł dotyczy konkretnego wydarzenia). Wpis otrzymuje nazwę `YYYY-MM-DD-slug.md`, status zaproponowany przez model, `aiGenerated: true`, a brakująca lokalizacja staje się pustym tekstem.
 
@@ -223,8 +236,9 @@ W katalogu `src/content/news/` znajdują się artykuły opisujące wydarzenia i 
 - `src/pages/index.astro` — agregacja i serializacja wiadomości.
 - `src/components/InteractiveFeed.tsx` — wyszukiwarka i filtry.
 - `src/pages/wpis/[slug].astro` — generowanie pojedynczych artykułów.
-- `scripts/daily-digest.mjs` — pobieranie RSS/WEB, walidacja AI i zapis wpisów.
-- `.github/workflows/daily-digest.yml` — codzienny job redakcyjny.
+- `scripts/daily-digest.mjs` — pobieranie RSS/WEB, kaskadowy Model Fallback Gemini (`callGeminiWithFallback`) z ochroną RPM/TPM Guard, walidacja AI i zapis wpisów.
+- `scripts/test-gemini-fallback.mjs` — testy jednostkowe hierarchii modeli `GEMINI_MODELS`, mechanizmu Model Fallback (`429`/`503`) i throttlingu RPM/TPM.
+- `.github/workflows/daily-digest.yml` — codzienny job redakcyjny (`timeout-minutes: 15`, konfiguracja `GEMINI_MODELS`).
 - `.github/workflows/deploy.yml` — kompilacja i GitHub Pages.
 - `src/lib/constants.ts` — nazwy i style miast oraz kategorii.
 - `src/content/settings/archive.json` — plik konfiguracyjny okresu archiwizacji (domyślnie 10 dni).
