@@ -173,7 +173,7 @@ Błąd pojedynczego źródła jest izolowany blokiem try/catch i nie przerywa pr
 
 ### Redakcja, Model Fallback i zabezpieczenia limitów (RPM / TPM Guard)
 
-Do Gemini wysyłanych jest maksymalnie 60 elementów źródłowych, a prompt żąda maksymalnie trzech artykułów. Model ma zwracać JSON, wybrać kategorię/miasto, streszczenie, krótką treść Markdown i ustawić niepewne informacje jako szkice. Model nie ma otrzymywać klucza z treści promptu; klucz jest nagłówkiem żądania API (`x-goog-api-key`).
+Do Gemini wysyłanych jest maksymalnie 60 elementów źródłowych wyselekcjonowanych przez `selectPromptItems` (po wstępnym odfiltrowaniu już opublikowanych lub usuniętych konkretnych adresów URL oraz ze zbalansowanym przydziałem round-robin pomiędzy źródłami `RSS` i `WEB`, domyślnie po 30 pozycji z automatyczną realokacją wolnej puli), a prompt żąda maksymalnie trzech artykułów. Model otrzymuje także listę ostatnio omówionych tematów (`buildCoveredTopics`) i ma zwracać JSON, wybrać kategorię/miasto, streszczenie, krótką treść Markdown i ustawić niepewne informacje jako szkice. Model nie ma otrzymywać klucza z treści promptu; klucz jest nagłówkiem żądania API (`x-goog-api-key`).
 
 Aby utrzymać działanie wyłącznie w ramach **Free Tier** i wyeliminować błędy `429 Rate Limit / Quota Exceeded`, wywołania API są realizowane przez funkcję `callGeminiWithFallback` w `scripts/daily-digest.mjs`:
 1. **Hierarchia modeli (Single Source of Truth)**:
@@ -190,7 +190,11 @@ Aby utrzymać działanie wyłącznie w ramach **Free Tier** i wyeliminować bł�
 
 Odpowiedź jest parsowana jako JSON i sprawdzana: wymagane są tytuł, streszczenie, treść i URL; miasto/kategoria/status muszą być dozwolone; URL musi być HTTP/HTTPS i pochodzić z pobranych pozycji. Docelowo skrypt zapisuje `publishedDate` (data publikacji w źródle lub data utworzenia wpisu w strefie `Europe/Warsaw`) oraz opcjonalne `eventDate` (jeśli artykuł dotyczy konkretnego wydarzenia). Wpis otrzymuje nazwę `YYYY-MM-DD-slug.md`, status zaproponowany przez model, `aiGenerated: true`, a brakująca lokalizacja staje się pustym tekstem.
 
-Przed zapisem skrypt porównuje artykuły z lokalnymi rekordami `deleted`, według znormalizowanego URL albo tytułu (w tym progu podobieństwa słów), aby ograniczyć ponowną publikację wycofanych tematów. Pomija też plik, jeśli taki sam slug już istnieje. Walidacja Astro w CI stanowi drugi etap sprawdzenia treści.
+Przed zapisem skrypt przeprowadza wielowarstwową deduplikację (`resolveCandidateArticles`, `isDuplicateArticle`, `matchesDeletedArticle`):
+- **Normalizacja adresów URL i tytułów**: `normalizeSourceUrl` usuwa parametry śledzące (`utm_*`, `fbclid`, `gclid` itp.) i prefiks `www.`, zachowując parametry identyfikujące wydarzenie (np. `?id=...`, `?eventId=...`); ogólne adresy repertuarów i stron głównych ze źródeł (`isGenericSourceUrl`) nie powodują fałszywych blokad po samym URL-u. Porównywanie tytułów pomija syntetyczne etykiety kontenerów `WEB` (`isSyntheticContainer`, `isDiscoveredLinkOnly`) i poprawnie normalizuje polskie znaki (w tym `ł`).
+- **Zastępowanie szkiców (`draft` -> `published`)**: nowy pełnowartościowy artykuł `published` automatycznie zastępuje wcześniejszy nieopublikowany szkic (`status: draft`) na ten sam temat (usuwając zastąpiony plik szkicu), podczas gdy duplikaty `draft` do istniejących szkiców lub wpisów opublikowanych są odrzucane.
+- **Tematy cykliczne w Archiwum (`archived: true`)**: dokładny (niegeneryczny) adres URL wydarzenia pozostaje zablokowany bezterminowo, natomiast przy **innym adresie URL** nowa edycja cyklicznego wydarzenia jest dopuszczana, jeśli `eventDate` różni się o ponad `7` dni (lub po upływie `35` dni od publikacji w przypadku zarchiwizowanych komunikatów miejskich bez przyszłej daty `eventDate`).
+- **Blokada `deleted` i kolizji slugów**: wpisy o statusie `deleted` nadal blokują ponowną publikację wycofanych tematów po URL-u i podobieństwie tytułu, a kolizja istniejącego sluga pomija zapis. Walidacja Astro w CI stanowi drugi etap sprawdzenia treści.
 
 ### Zapis i publikacja
 
@@ -236,7 +240,8 @@ W katalogu `src/content/news/` znajdują się artykuły opisujące wydarzenia i 
 - `src/pages/index.astro` — agregacja i serializacja wiadomości.
 - `src/components/InteractiveFeed.tsx` — wyszukiwarka i filtry.
 - `src/pages/wpis/[slug].astro` — generowanie pojedynczych artykułów.
-- `scripts/daily-digest.mjs` — pobieranie RSS/WEB, kaskadowy Model Fallback Gemini (`callGeminiWithFallback`) z ochroną RPM/TPM Guard, walidacja AI i zapis wpisów.
+- `scripts/daily-digest.mjs` — pobieranie RSS/WEB, zbalansowana selekcja puli promptu (`selectPromptItems`), kaskadowy Model Fallback Gemini (`callGeminiWithFallback`) z ochroną RPM/TPM Guard, wielowarstwowa deduplikacja i zastępowanie szkiców (`resolveCandidateArticles`) oraz zapis wpisów.
+- `scripts/test-duplicate-detection.mjs` — testy jednostkowe wykrywania duplikatów, normalizacji URL/tytułów, zastępowania `draft` -> `published`, tematów cyklicznych w Archiwum oraz selekcji puli `RSS`/`WEB`.
 - `scripts/test-gemini-fallback.mjs` — testy jednostkowe hierarchii modeli `GEMINI_MODELS`, mechanizmu Model Fallback (`429`/`503`/`404`/timeouty) i throttlingu RPM/TPM.
 - `.github/workflows/daily-digest.yml` — codzienny job redakcyjny (`timeout-minutes: 15`, konfiguracja `GEMINI_MODELS`).
 - `.github/workflows/deploy.yml` — kompilacja i GitHub Pages.
