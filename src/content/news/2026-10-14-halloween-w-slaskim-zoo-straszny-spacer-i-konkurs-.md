@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "od 7 lat"
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/halloween-w-slaskim-zoo-straszny-spacer-potworne-party-i-konkurs-przebierancow"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Śląski Ogród Zoologiczny przygotował wyjątkowe wydarzenie dla najmłodszych. 30 października 2026 r. w godzinach 16:00–20:00 odbędzie się Halloween ZOO Party.
