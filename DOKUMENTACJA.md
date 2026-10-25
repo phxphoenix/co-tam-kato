@@ -180,7 +180,7 @@ Aby utrzymać działanie wyłącznie w ramach **Free Tier** i wyeliminować bł�
    - Lista modeli pobierana jest ze zmiennej środowiskowej `GEMINI_MODELS` (zdefiniowanej w `.github/workflows/daily-digest.yml`), a w przypadku jej braku – ze stałej `DEFAULT_FALLBACK_MODELS` w kolejności:
      `gemini-3.8-flash` -> `gemini-3.6-flash` -> `gemini-3-flash` -> `gemini-3.5-flash-lite` -> `gemini-3.1-flash-lite` -> `gemini-2.5-flash` -> `gemini-2.5-flash-lite`.
 2. **Kaskadowy Model Fallback i pamięć stanu (`exhaustedModels`)**:
-   - W przypadku odpowiedzi HTTP `429` (`RESOURCE_EXHAUSTED`, `rate limit`, `quota`) lub `503` (`overloaded`, `UNAVAILABLE`) skrypt loguje ostrzeżenie `[Gemini Fallback]`, zapisuje model w zbiorze `exhaustedModels` (aby nie odpytywać go ponownie w tym samym przebiegu), odczekuje `1500 ms` bufora i przełącza zapytanie na kolejny model z hierarchii.
+   - W przypadku odpowiedzi HTTP `429` (`RESOURCE_EXHAUSTED`, `rate limit`, `quota`), `503` (`overloaded`, `UNAVAILABLE`), niedostępności modelu `404`, a także przekroczenia czasu oczekiwania (`AbortSignal.timeout(60000)` / `TimeoutError`, timeouty połączenia Undici `UND_ERR_*_TIMEOUT` / `ETIMEDOUT` oraz odpowiedzi HTTP `408` / `504 DEADLINE_EXCEEDED`) skrypt loguje ostrzeżenie `[Gemini Fallback]`, zapisuje model w zbiorze `exhaustedModels` (aby nie odpytywać go ponownie w tym samym przebiegu), odczekuje `1500 ms` bufora i przełącza zapytanie na kolejny model z hierarchii.
    - Błędy niebędące limitami (np. `400 Bad Request` lub błąd parsowania JSON) przerywają wywołanie natychmiast bez przełączania modelu.
 3. **Ochrona limitów minutowych (RPM / TPM Guard)**:
    - Mapa `lastCallTimestampByModel` śledzi czas ostatniego zapytania dla każdego modelu i wymusza minimalny odstęp przed kolejnym wywołaniem tego samego modelu: **12500 ms** dla pełnych modeli `flash` (limit 5 RPM) oraz **4500 ms** dla modeli `flash-lite`.
@@ -237,7 +237,7 @@ W katalogu `src/content/news/` znajdują się artykuły opisujące wydarzenia i 
 - `src/components/InteractiveFeed.tsx` — wyszukiwarka i filtry.
 - `src/pages/wpis/[slug].astro` — generowanie pojedynczych artykułów.
 - `scripts/daily-digest.mjs` — pobieranie RSS/WEB, kaskadowy Model Fallback Gemini (`callGeminiWithFallback`) z ochroną RPM/TPM Guard, walidacja AI i zapis wpisów.
-- `scripts/test-gemini-fallback.mjs` — testy jednostkowe hierarchii modeli `GEMINI_MODELS`, mechanizmu Model Fallback (`429`/`503`) i throttlingu RPM/TPM.
+- `scripts/test-gemini-fallback.mjs` — testy jednostkowe hierarchii modeli `GEMINI_MODELS`, mechanizmu Model Fallback (`429`/`503`/`404`/timeouty) i throttlingu RPM/TPM.
 - `.github/workflows/daily-digest.yml` — codzienny job redakcyjny (`timeout-minutes: 15`, konfiguracja `GEMINI_MODELS`).
 - `.github/workflows/deploy.yml` — kompilacja i GitHub Pages.
 - `src/lib/constants.ts` — nazwy i style miast oraz kategorii.

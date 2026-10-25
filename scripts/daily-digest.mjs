@@ -29,6 +29,7 @@ export const DEFAULT_FALLBACK_MODELS = [
 export const FLASH_LITE_MIN_INTERVAL_MS = 4500;
 export const FLASH_FULL_MIN_INTERVAL_MS = 12500;
 export const FALLBACK_SWITCH_DELAY_MS = 1500;
+export const GEMINI_REQUEST_TIMEOUT_MS = 60000;
 
 export const exhaustedModels = new Set();
 export const lastCallTimestampByModel = new Map();
@@ -58,6 +59,39 @@ function isRateLimitOrOverloadedError(status, detail = '') {
   return /RESOURCE_EXHAUSTED|rate\s*limit|quota|overloaded|UNAVAILABLE/i.test(text);
 }
 
+export function isTimeoutError(error, status = error?.status, detail = '') {
+  if (status === 408 || status === 504) return true;
+
+  const name = String(error?.name || '');
+  const causeName = String(error?.cause?.name || '');
+  if (
+    name === 'TimeoutError' ||
+    name === 'AbortError' ||
+    causeName === 'TimeoutError' ||
+    causeName === 'AbortError'
+  ) {
+    return true;
+  }
+
+  const code = String(error?.code ?? error?.cause?.code ?? '');
+  if (
+    code === '23' ||
+    code === 'ETIMEDOUT' ||
+    code === 'ESOCKETTIMEDOUT' ||
+    code === 'UND_ERR_CONNECT_TIMEOUT' ||
+    code === 'UND_ERR_HEADERS_TIMEOUT' ||
+    code === 'UND_ERR_BODY_TIMEOUT'
+  ) {
+    return true;
+  }
+
+  const combinedText = [error?.message, error?.cause?.message, detail]
+    .filter(Boolean)
+    .join(' ');
+
+  return /aborted due to timeout|timed?\s*out|DEADLINE_EXCEEDED|TimeoutError/i.test(combinedText);
+}
+
 function formatFallbackReason(status, detail = '') {
   const matchedKeyword = String(detail).match(/RESOURCE_EXHAUSTED|UNAVAILABLE|rate\s*limit|quota|overloaded/i)?.[0];
   if (status && matchedKeyword) {
@@ -67,6 +101,22 @@ function formatFallbackReason(status, detail = '') {
     return `HTTP ${status}`;
   }
   return matchedKeyword || 'limit/przeciążenie';
+}
+
+function formatTimeoutReason(error, status = error?.status, detail = '', requestTimeoutMs = GEMINI_REQUEST_TIMEOUT_MS) {
+  const matchedKeyword = String(detail || error?.message || '').match(/DEADLINE_EXCEEDED/i)?.[0];
+  if (status && matchedKeyword) {
+    return `HTTP ${status} / ${matchedKeyword}`;
+  }
+  if (status) {
+    return `HTTP ${status} / Timeout`;
+  }
+  const code = error?.cause?.code || (typeof error?.code === 'string' ? error.code : '');
+  if (code) {
+    return `timeout / ${code}`;
+  }
+  const seconds = Math.max(1, Math.round(requestTimeoutMs / 1000));
+  return `timeout ${seconds}s`;
 }
 
 const POLISH_MONTHS = {
@@ -590,6 +640,7 @@ export async function callGeminiWithFallback(promptOrOptions, apiKeyArg, extraOp
     generationConfig = { responseMimeType: 'application/json' },
     systemInstruction,
     models: customModels,
+    requestTimeoutMs = GEMINI_REQUEST_TIMEOUT_MS,
     fetchImpl = fetch,
     sleepImpl = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     nowImpl = () => Date.now(),
@@ -627,21 +678,35 @@ export async function callGeminiWithFallback(promptOrOptions, apiKeyArg, extraOp
 
     lastCallTimestampByModel.set(model, nowImpl());
 
+    const hasNextModel = i < availableModels.length - 1;
+    const switchHint = hasNextModel
+      ? 'Przełączam na kolejny model z hierarchii...'
+      : 'Brak kolejnych modeli w hierarchii.';
+
     let response;
     try {
       response = await fetchImpl(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        signal: AbortSignal.timeout(60000),
+        signal: AbortSignal.timeout(requestTimeoutMs),
         body: JSON.stringify(requestBody),
       });
     } catch (networkError) {
-      if (isRateLimitOrOverloadedError(networkError?.status, networkError?.message)) {
-        const reason = formatFallbackReason(networkError?.status, networkError?.message);
-        console.warn(`[Gemini Fallback] Model ${model} osiągnął limit (${reason}). Przełączam na kolejny model z hierarchii...`);
+      if (isTimeoutError(networkError)) {
+        const reason = formatTimeoutReason(networkError, networkError?.status, networkError?.message, requestTimeoutMs);
+        console.warn(`[Gemini Fallback] Model ${model} przekroczył czas oczekiwania (${reason}). ${switchHint}`);
         exhaustedModels.add(model);
         lastError = networkError;
-        if (i < availableModels.length - 1) {
+        if (hasNextModel) {
+          await sleepImpl(FALLBACK_SWITCH_DELAY_MS);
+          continue;
+        }
+      } else if (isRateLimitOrOverloadedError(networkError?.status, networkError?.message)) {
+        const reason = formatFallbackReason(networkError?.status, networkError?.message);
+        console.warn(`[Gemini Fallback] Model ${model} osiągnął limit (${reason}). ${switchHint}`);
+        exhaustedModels.add(model);
+        lastError = networkError;
+        if (hasNextModel) {
           await sleepImpl(FALLBACK_SWITCH_DELAY_MS);
           continue;
         }
@@ -650,7 +715,22 @@ export async function callGeminiWithFallback(promptOrOptions, apiKeyArg, extraOp
     }
 
     if (response.ok) {
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (bodyError) {
+        if (isTimeoutError(bodyError)) {
+          const reason = formatTimeoutReason(bodyError, undefined, '', requestTimeoutMs);
+          console.warn(`[Gemini Fallback] Model ${model} przekroczył czas oczekiwania podczas odczytu odpowiedzi (${reason}). ${switchHint}`);
+          exhaustedModels.add(model);
+          lastError = bodyError;
+          if (hasNextModel) {
+            await sleepImpl(FALLBACK_SWITCH_DELAY_MS);
+            continue;
+          }
+        }
+        throw bodyError;
+      }
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) throw new Error('Gemini zwróciło pustą odpowiedź.');
       const parsed = JSON.parse(text);
@@ -659,14 +739,41 @@ export async function callGeminiWithFallback(promptOrOptions, apiKeyArg, extraOp
       return parsed;
     }
 
-    const detail = await response.text();
+    let detail = '';
+    try {
+      detail = await response.text();
+    } catch (bodyError) {
+      if (isTimeoutError(bodyError, response.status)) {
+        const reason = formatTimeoutReason(bodyError, response.status, '', requestTimeoutMs);
+        console.warn(`[Gemini Fallback] Model ${model} przekroczył czas oczekiwania (${reason}). ${switchHint}`);
+        exhaustedModels.add(model);
+        lastError = bodyError;
+        if (hasNextModel) {
+          await sleepImpl(FALLBACK_SWITCH_DELAY_MS);
+          continue;
+        }
+      }
+      throw bodyError;
+    }
+
     lastError = new Error(`Gemini API zwróciło HTTP ${response.status}: ${detail.slice(0, 500)}`);
 
     if (isRateLimitOrOverloadedError(response.status, detail)) {
       const reason = formatFallbackReason(response.status, detail);
-      console.warn(`[Gemini Fallback] Model ${model} osiągnął limit (${reason}). Przełączam na kolejny model z hierarchii...`);
+      console.warn(`[Gemini Fallback] Model ${model} osiągnął limit (${reason}). ${switchHint}`);
       exhaustedModels.add(model);
-      if (i < availableModels.length - 1) {
+      if (hasNextModel) {
+        await sleepImpl(FALLBACK_SWITCH_DELAY_MS);
+        continue;
+      }
+      throw lastError;
+    }
+
+    if (isTimeoutError(null, response.status, detail)) {
+      const reason = formatTimeoutReason(null, response.status, detail, requestTimeoutMs);
+      console.warn(`[Gemini Fallback] Model ${model} przekroczył czas oczekiwania (${reason}). ${switchHint}`);
+      exhaustedModels.add(model);
+      if (hasNextModel) {
         await sleepImpl(FALLBACK_SWITCH_DELAY_MS);
         continue;
       }
@@ -674,9 +781,9 @@ export async function callGeminiWithFallback(promptOrOptions, apiKeyArg, extraOp
     }
 
     if (response.status === 404) {
-      console.warn(`[Gemini Fallback] Model ${model} nie jest dostępny (HTTP 404). Przełączam na kolejny model z hierarchii...`);
+      console.warn(`[Gemini Fallback] Model ${model} nie jest dostępny (HTTP 404). ${switchHint}`);
       exhaustedModels.add(model);
-      if (i < availableModels.length - 1) {
+      if (hasNextModel) {
         await sleepImpl(FALLBACK_SWITCH_DELAY_MS);
         continue;
       }

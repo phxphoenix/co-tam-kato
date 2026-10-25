@@ -6,10 +6,12 @@ import {
   FLASH_LITE_MIN_INTERVAL_MS,
   FLASH_FULL_MIN_INTERVAL_MS,
   FALLBACK_SWITCH_DELAY_MS,
+  GEMINI_REQUEST_TIMEOUT_MS,
   exhaustedModels,
   lastCallTimestampByModel,
   getGeminiModels,
   getMinIntervalForModel,
+  isTimeoutError,
   callGeminiWithFallback,
 } from './daily-digest.mjs';
 
@@ -352,4 +354,177 @@ console.log('\n--- 5. Spójność zmiennej GEMINI_MODELS i timeout-minutes w Git
 }
 
 console.log('✅ Konfiguracja .github/workflows/daily-digest.yml jest spójna ze skryptem agenta.');
+
+// ---------------------------------------------------------------------------
+// 6. Obsługa timeoutów (AbortSignal.timeout, UND_ERR_*, HTTP 504, stream body) w Fallbacku
+// ---------------------------------------------------------------------------
+console.log('\n--- 6. Obsługa timeoutów (AbortSignal.timeout, UND_ERR_HEADERS_TIMEOUT, HTTP 504, body stream) ---');
+
+assert.equal(GEMINI_REQUEST_TIMEOUT_MS, 60000, 'Domyślny timeout pojedynczego zapytania Gemini musi wynosić 60000 ms (60s)');
+assert.equal(
+  isTimeoutError(new DOMException('The operation was aborted due to timeout', 'TimeoutError')),
+  true,
+  'DOMException TimeoutError z AbortSignal.timeout musi być rozpoznawany jako timeout'
+);
+assert.equal(
+  isTimeoutError(new TypeError('fetch failed', { cause: Object.assign(new Error('Headers Timeout Error'), { code: 'UND_ERR_HEADERS_TIMEOUT' }) })),
+  true,
+  'Undici UND_ERR_HEADERS_TIMEOUT wewnątrz error.cause musi być rozpoznawany jako timeout'
+);
+assert.equal(
+  isTimeoutError(new Error('Invalid JSON'), 400, 'INVALID_ARGUMENT'),
+  false,
+  'Zwykły błąd 400 nie może być rozpoznawany jako timeout'
+);
+
+resetState();
+{
+  const calledModelsTimeout = [];
+  const sleepCallsTimeout = [];
+  const warnLogsTimeout = [];
+  const origWarn = console.warn;
+  const origLog = console.log;
+  console.warn = (...args) => warnLogsTimeout.push(args.join(' '));
+  console.log = () => {};
+
+  try {
+    const mockFetchTimeouts = async (url, init) => {
+      const model = url.match(/models\/([^:]+):generateContent/)[1];
+      calledModelsTimeout.push(model);
+
+      // Model 1: rzeczywiste przerwanie przez AbortSignal.timeout(requestTimeoutMs)
+      // (symulujemy otwarte gniazdo sieciowe za pomocą ref-owanego timera, tak jak w prawdziwym fetch)
+      if (model === 'gemini-3.8-flash') {
+        await new Promise((_, reject) => {
+          const openSocketTimer = setTimeout(() => {}, 5000);
+          if (init?.signal?.aborted) {
+            clearTimeout(openSocketTimer);
+            reject(init.signal.reason);
+            return;
+          }
+          init?.signal?.addEventListener(
+            'abort',
+            () => {
+              clearTimeout(openSocketTimer);
+              reject(init.signal.reason);
+            },
+            { once: true }
+          );
+        });
+      }
+
+      // Model 2: błąd sieciowy Undici z kodem UND_ERR_HEADERS_TIMEOUT w cause
+      if (model === 'gemini-3.6-flash') {
+        throw new TypeError('fetch failed', {
+          cause: Object.assign(new Error('Headers Timeout Error'), { code: 'UND_ERR_HEADERS_TIMEOUT' }),
+        });
+      }
+
+      // Model 3: odpowiedź HTTP 504 DEADLINE_EXCEEDED z Google API
+      if (model === 'gemini-3-flash') {
+        return {
+          ok: false,
+          status: 504,
+          text: async () => '{"error":{"code":504,"status":"DEADLINE_EXCEEDED","message":"Deadline expired before operation could complete."}}',
+        };
+      }
+
+      // Model 4: nagłówki 200 OK przyszły, ale strumień body zawiesił się i rzucił TimeoutError przy response.json()
+      if (model === 'gemini-3.5-flash-lite') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => {
+            throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+          },
+        };
+      }
+
+      // Model 5: sukces!
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: '[{"title":"Po timeoutach dziala"}]' }] } }],
+        }),
+      };
+    };
+
+    const result = await callGeminiWithFallback({
+      prompt: 'Timeout fallback test',
+      apiKey: 'key',
+      requestTimeoutMs: 30,
+      fetchImpl: mockFetchTimeouts,
+      sleepImpl: async (ms) => {
+        sleepCallsTimeout.push(ms);
+      },
+    });
+
+    assert.deepEqual(result, [{ title: 'Po timeoutach dziala' }]);
+    assert.deepEqual(
+      calledModelsTimeout,
+      [
+        'gemini-3.8-flash',
+        'gemini-3.6-flash',
+        'gemini-3-flash',
+        'gemini-3.5-flash-lite',
+        'gemini-3.1-flash-lite',
+      ],
+      'Powinien przełączyć kolejno przez wszystkie 4 warianty timeoutów aż do gemini-3.1-flash-lite'
+    );
+    assert.deepEqual(
+      sleepCallsTimeout,
+      [
+        FALLBACK_SWITCH_DELAY_MS,
+        FALLBACK_SWITCH_DELAY_MS,
+        FALLBACK_SWITCH_DELAY_MS,
+        FALLBACK_SWITCH_DELAY_MS,
+      ],
+      'Każdy fallback po timeoucie musi odczekać FALLBACK_SWITCH_DELAY_MS (1500 ms)'
+    );
+    assert.equal(exhaustedModels.has('gemini-3.8-flash'), true);
+    assert.equal(exhaustedModels.has('gemini-3.6-flash'), true);
+    assert.equal(exhaustedModels.has('gemini-3-flash'), true);
+    assert.equal(exhaustedModels.has('gemini-3.5-flash-lite'), true);
+    assert.equal(exhaustedModels.has('gemini-3.1-flash-lite'), false);
+    assert.equal(warnLogsTimeout.length, 4, 'Powinny zostać zapisane 4 ostrzeżenia [Gemini Fallback] o przekroczeniu czasu oczekiwania');
+    assert.ok(
+      warnLogsTimeout.every((l) => l.includes('[Gemini Fallback]') && l.includes('przekroczył czas oczekiwania')),
+      'Każdy log timeoutu musi zawierać frazę "przekroczył czas oczekiwania"'
+    );
+  } finally {
+    console.warn = origWarn;
+    console.log = origLog;
+  }
+}
+
+// Sprawdzenie, że timeout na wszystkich modelach kończy się rzuceniem wyjątku
+resetState();
+{
+  const origWarn = console.warn;
+  console.warn = () => {};
+  try {
+    const calledAllTimeout = [];
+    await assert.rejects(
+      () =>
+        callGeminiWithFallback({
+          prompt: 'All timeout',
+          apiKey: 'key',
+          models: ['gemini-3.8-flash', 'gemini-2.5-flash-lite'],
+          fetchImpl: async (url) => {
+            calledAllTimeout.push(url.match(/models\/([^:]+):generateContent/)[1]);
+            throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+          },
+          sleepImpl: async () => {},
+        }),
+      /aborted due to timeout/,
+      'Gdy wszystkie modele z listy przekroczą timeout, funkcja musi rzucić błąd timeoutu'
+    );
+    assert.deepEqual(calledAllTimeout, ['gemini-3.8-flash', 'gemini-2.5-flash-lite']);
+  } finally {
+    console.warn = origWarn;
+  }
+}
+
+console.log('✅ Obsługa timeoutów (AbortSignal.timeout, UND_ERR_*, HTTP 504, odczyt body) w Fallbacku działa bezbłędnie.');
 console.log('\n🎉 Wszystkie testy Model Fallback i Rate Pacingu zakończone sukcesem (100% PASS)!\n');
