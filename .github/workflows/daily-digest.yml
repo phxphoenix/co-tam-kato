@@ -33,16 +33,30 @@ jobs:
       - name: Pobranie kodu repozytorium
         uses: actions/checkout@v4
 
+      - name: Weryfikacja harmonogramu strefy czasowej (CET / CEST)
+        id: schedule_check
+        env:
+          CRON_SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          if [ -n "${{ github.event.schedule }}" ]; then
+            node scripts/daily-digest.mjs --check-schedule --scheduled "--cron=${{ github.event.schedule }}"
+          else
+            node scripts/daily-digest.mjs --check-schedule
+          fi
+
       - name: Konfiguracja Node.js
+        if: steps.schedule_check.outputs.should_run == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'npm'
 
       - name: Instalacja zależności
+        if: steps.schedule_check.outputs.should_run == 'true'
         run: npm ci
 
       - name: Uruchomienie Agenta AI (Zbieranie i redagowanie wiadomości)
+        if: steps.schedule_check.outputs.should_run == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           # Kolejność modeli definiuje kaskadę fallbacku (Model Fallback) w ramach Free Tier
@@ -56,9 +70,11 @@ jobs:
           fi
 
       - name: Walidacja treści Astro
+        if: steps.schedule_check.outputs.should_run == 'true'
         run: npm run build
 
       - name: Zapisanie i publikacja nowych wpisów w repozytorium
+        if: steps.schedule_check.outputs.should_run == 'true'
         run: |
           git config --global user.name "Co Tam KATO Bot"
           git config --global user.email "bot@co-tam-kato.local"

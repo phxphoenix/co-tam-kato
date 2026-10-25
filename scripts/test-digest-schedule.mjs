@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { getWarsawOffsetHours, shouldRunForSchedule } from './daily-digest.mjs';
 
 console.log('🧪 Rozpoczynam testy logiki harmonogramu Agenta AI (Co Tam KATO)...');
@@ -52,4 +56,66 @@ assert.equal(shouldRunForSchedule(null, summerDate), true, 'Brak crona (manual) 
 assert.equal(shouldRunForSchedule(undefined, winterDate), true, 'Brak crona (manual) musi się wykonać');
 assert.equal(shouldRunForSchedule('', summerDate), true, 'Pusty ciąg cron (manual) musi się wykonać');
 
+// 5. Weryfikacja wczesnej bramki schedule_check w .github/workflows/daily-digest.yml
+const workflowContent = fs.readFileSync(path.resolve('.github/workflows/daily-digest.yml'), 'utf8');
+assert.match(
+  workflowContent,
+  /id:\s*schedule_check/,
+  'Workflow daily-digest.yml musi posiadać wczesny krok o id: schedule_check'
+);
+assert.match(
+  workflowContent,
+  /--check-schedule/,
+  'Krok schedule_check musi wywoływać daily-digest.mjs z flagą --check-schedule przed instalacją zależności'
+);
+
+const stepCheckIndex = workflowContent.indexOf('id: schedule_check');
+const stepSetupNodeIndex = workflowContent.indexOf('uses: actions/setup-node@v4');
+const stepNpmCiIndex = workflowContent.indexOf('run: npm ci');
+assert.ok(
+  stepCheckIndex > 0 && stepCheckIndex < stepSetupNodeIndex && stepCheckIndex < stepNpmCiIndex,
+  'Krok schedule_check musi znajdować się PRZED actions/setup-node oraz npm ci'
+);
+
+const guardedSteps = workflowContent.match(/if:\s*steps\.schedule_check\.outputs\.should_run\s*==\s*'true'/g) || [];
+assert.equal(
+  guardedSteps.length,
+  5,
+  'Wszystkie 5 ciężkich kroków (setup-node, npm ci, digest, build, commit/push) musi być chronionych warunkiem should_run == true'
+);
+
+// 6. Test integracyjny flagi --check-schedule oraz zapisu do GITHUB_OUTPUT
+const tmpOutFile = path.join(os.tmpdir(), `kato-gh-output-${Date.now()}.txt`);
+try {
+  const activeCron = currentOffset === 1 ? '0 0,6,12,18 * * *' : '0 5,11,17,23 * * *';
+  const inactiveCron = currentOffset === 1 ? '0 5,11,17,23 * * *' : '0 0,6,12,18 * * *';
+
+  fs.writeFileSync(tmpOutFile, '', 'utf8');
+  execFileSync(
+    process.execPath,
+    ['scripts/daily-digest.mjs', '--check-schedule', '--scheduled', `--cron=${activeCron}`],
+    { env: { ...process.env, GITHUB_OUTPUT: tmpOutFile } }
+  );
+  assert.equal(
+    fs.readFileSync(tmpOutFile, 'utf8').trim(),
+    'should_run=true',
+    'Dla aktywnego crona --check-schedule musi zapisać should_run=true do GITHUB_OUTPUT'
+  );
+
+  fs.writeFileSync(tmpOutFile, '', 'utf8');
+  execFileSync(
+    process.execPath,
+    ['scripts/daily-digest.mjs', '--check-schedule', '--scheduled', `--cron=${inactiveCron}`],
+    { env: { ...process.env, GITHUB_OUTPUT: tmpOutFile } }
+  );
+  assert.equal(
+    fs.readFileSync(tmpOutFile, 'utf8').trim(),
+    'should_run=false',
+    'Dla nieaktywnego crona --check-schedule musi zapisać should_run=false do GITHUB_OUTPUT'
+  );
+} finally {
+  if (fs.existsSync(tmpOutFile)) fs.unlinkSync(tmpOutFile);
+}
+
+console.log('✓ Wczesna bramka schedule_check (GITHUB_OUTPUT + pomijanie npm ci / build) zweryfikowana.');
 console.log('🎉 Wszystkie testy logiki harmonogramu zakończone sukcesem (PASS)!');

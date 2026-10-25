@@ -1190,10 +1190,23 @@ export function shouldRunForSchedule(cronArg, referenceDate = new Date()) {
 
 async function main() {
   const isDryRun = process.argv.includes('--dry-run');
+  const isCheckScheduleOnly = process.argv.includes('--check-schedule');
   const cronArg = process.argv.find((arg) => arg.startsWith('--cron='))?.split('=')[1] || process.env.CRON_SCHEDULE;
   const isScheduled = process.argv.includes('--scheduled') || Boolean(process.env.CRON_SCHEDULE);
 
   if (isScheduled && !shouldRunForSchedule(cronArg)) {
+    if (process.env.GITHUB_OUTPUT) {
+      fs.appendFileSync(process.env.GITHUB_OUTPUT, 'should_run=false\n', 'utf8');
+    }
+    return;
+  }
+
+  if (process.env.GITHUB_OUTPUT) {
+    fs.appendFileSync(process.env.GITHUB_OUTPUT, 'should_run=true\n', 'utf8');
+  }
+
+  if (isCheckScheduleOnly) {
+    console.log(`✓ Harmonogram aktywny (${cronArg || 'uruchomienie ręczne'}) dla strefy Europe/Warsaw (UTC+${getWarsawOffsetHours()}).`);
     return;
   }
 
