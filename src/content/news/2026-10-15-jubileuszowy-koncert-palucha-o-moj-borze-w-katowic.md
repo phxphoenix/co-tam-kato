@@ -10,7 +10,7 @@ location: "Katowice, Spodek, al. Korfantego 35"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/paluch-o-moj-borze-koncert-jubileuszowy,3983.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W katowickim Spodku zaplanowano jubileuszowy koncert poznańskiego rapera Palucha zatytułowany **„O MÓJ BORZE”**.
