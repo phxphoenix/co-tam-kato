@@ -10,7 +10,7 @@ location: "Spodek, Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/krolowie-zycia-skawinski-tkaczyk-50-lat-na-scenie,3904.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W niedzielę, 18 października 2026 roku, w katowickim Spodku odbędzie się koncert „KRÓLOWIE ŻYCIA Skawiński/Tkaczyk 50 LAT NA SCENIE”. Artyści podsumują pół wieku wspólnej działalności muzycznej, wykonując znane utwory ze swojego dorobku. Ceny biletów na wydarzenie rozpoczynają się od 107 zł.

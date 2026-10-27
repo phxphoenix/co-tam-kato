@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "dla dzieci i rodzin"
 sourceUrl: "https://mojetychy.pl/artykuly/artykul/listopadowe-harce-sportowe-w-tychach-mnostwo-atrakcji-dla-calych-rodzin"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W sobotę, 7 listopada, od godziny 10:00 w Hali Sportowej MOSiR w Tychach odbędzie się bezpłatna impreza rekreacyjna „Listopadowe Harce Sportowe”. Organizatorzy przygotowali m.in. 15-metrowy dmuchany tor przeszkód oraz stacje ze sportowymi wyzwaniami skierowane do dzieci, młodzieży i całych rodzin szukających aktywnego wypoczynku.

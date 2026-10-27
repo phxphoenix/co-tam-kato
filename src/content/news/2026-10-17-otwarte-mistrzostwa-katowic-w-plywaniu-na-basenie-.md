@@ -10,7 +10,7 @@ location: "Katowice, Basen Burowiec"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/plywacy-powalcza-w-katowicach-w-niedziele-otwarte-mistrzostwa-katowic"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W niedzielę, 18 października, na Basenie Burowiec w Katowicach odbędą się Otwarte Mistrzostwa Katowic w Pływaniu.

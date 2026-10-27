@@ -10,7 +10,7 @@ location: "Międzynarodowe Centrum Kongresowe, plac Sławika i Antalla 1, Katowi
 isAlert: false
 sourceUrl: "https://silesion.pl/targi-ksiazki-w-katowicach-2026-program/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=targi-ksiazki-w-katowicach-2026-program"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W dniach 6–8 listopada 2026 roku w Międzynarodowym Centrum Kongresowym w Katowicach zagości kolejna odsłona Targów Książki. Zaplanowano liczne panele autorskie, stoiska wydawnictw oraz spotkania ze znanymi polskimi autorami – m.in. Jakubem Żulczykiem, Jakubem Małeckim i Tomaszem Siembiedą. Na wydarzeniu pojawią się także twórcy i wystawcy z Czech, Słowacji oraz Rumunii.
