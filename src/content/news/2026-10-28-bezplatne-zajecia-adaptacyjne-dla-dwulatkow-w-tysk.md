@@ -12,7 +12,8 @@ isForKids: true
 ageRange: "2 lata"
 sourceUrl: "https://mojetychy.pl/artykuly/artykul/bezplatne-zajecia-adaptacyjne-dla-przyszlych-przedszkolakow-w-tychach"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Rodzice najmłodszych mieszkańców Tychów mogą skorzystać z bezpłatnych zajęć adaptacyjnych przygotowujących maluchy do rozpoczęcia edukacji przedszkolnej. Pierwsze spotkanie zorganizowane przez tyskie przedszkola publiczne zaplanowano na poniedziałek, 2 listopada 2026 roku, w tyskiej Mediatece przy al. Piłsudskiego 16.
