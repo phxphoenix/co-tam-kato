@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "3-5 lat"
 sourceUrl: "https://muzeumslaskie.pl/warsztaty-spotkania-i-wydarzenia-cykliczne/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Muzeum Śląskie w Katowicach kontynuuje popularny cykl rodzinnych spotkań „Zagadka dla kilkulatka”. Kolejne zajęcia odbędą się 7 listopada o godzinie 11:00 i poprowadzą najmłodszych w fascynujący świat sztuki współczesnej.

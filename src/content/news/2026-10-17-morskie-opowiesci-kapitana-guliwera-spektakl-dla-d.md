@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "4-10 lat"
 sourceUrl: "https://pik.katowice.pl/morskie-opowiesci-kapitana-guliwera-spektakl-slask/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 1 listopada 2026 roku o godzinie 12:00 najmłodsi mieszkańcy aglomeracji katowickiej będą mieli okazję zobaczyć barwne i pełne humoru widowisko pt. „Morskie opowieści Kapitana Guliwera”.

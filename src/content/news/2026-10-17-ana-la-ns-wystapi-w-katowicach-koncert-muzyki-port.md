@@ -10,7 +10,7 @@ location: "Kinoteatr Rialto Katowice"
 isAlert: false
 sourceUrl: "https://kinoteatrrialto.bilety24.pl/wydarzenie/?id=161518"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Miłośnici muzyki świata i klimatycznych brzmień mają powody do radości. Na zaproszenie Stowarzyszenia Miłośników Portugalii „My Lisbon Story” do Katowic powraca Ana Laíns – uznana artystka i jedna z najważniejszych ambasadorek portugalskiej kultury.
