@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Search,
   MapPin,
@@ -6,7 +6,6 @@ import {
   ExternalLink,
   Bot,
   ShieldAlert,
-  Sparkles,
   Filter,
   X,
   Smile,
@@ -20,6 +19,15 @@ import { CategoryBadge } from './CategoryBadge';
 import { useFavorites } from '../lib/favorites';
 import { ArchiveButton, ArchiveAIcon } from './ArchiveButton';
 import { useArchive, SYNC_RESULT_EVENT, type ArchiveState, type ArchiveSyncResult } from '../lib/archive';
+import { PaginationBar } from './PaginationBar';
+import {
+  ARCHIVE_PAGE_SIZE_OPTIONS,
+  PAGINATION_STORAGE_KEYS,
+  buildPageSizeOptions,
+  getPaginationMeta,
+  readStoredPageSize,
+  writeStoredPageSize,
+} from '../lib/pagination';
 
 export interface FeedItem {
   id: string;
@@ -47,9 +55,9 @@ interface InteractiveFeedProps {
   defaultOnlyKids?: boolean;
   defaultOnlyFavorites?: boolean;
   isArchiveView?: boolean;
+  homePageSize?: number;
+  archivePageSize?: number;
 }
-
-const PAGE_SIZE = 12;
 
 export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
   initialItems,
@@ -57,6 +65,8 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
   defaultOnlyKids = false,
   defaultOnlyFavorites = false,
   isArchiveView = false,
+  homePageSize = 12,
+  archivePageSize = 24,
 }) => {
   const rawBase = import.meta.env.BASE_URL || '/';
   const baseUrl = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
@@ -83,8 +93,35 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
-  const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
-  const sentinelRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Stan paginacji
+  const configuredDefaultPageSize = isArchiveView ? archivePageSize : homePageSize;
+  const [pageSize, setPageSize] = useState<number>(configuredDefaultPageSize);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const articlesContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Dla widoku Archiwum odczytaj zapamiętany limit z localStorage (z fallbackiem do archivePageSize z config/sources.md)
+  useEffect(() => {
+    if (isArchiveView) {
+      const stored = readStoredPageSize(PAGINATION_STORAGE_KEYS.ARCHIVE_PAGE_SIZE, archivePageSize);
+      setPageSize(stored);
+    } else {
+      setPageSize(homePageSize);
+    }
+  }, [isArchiveView, archivePageSize, homePageSize]);
+
+  const archiveSizeOptions = useMemo(
+    () => buildPageSizeOptions(ARCHIVE_PAGE_SIZE_OPTIONS, archivePageSize),
+    [archivePageSize]
+  );
+
+  const handleArchivePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+    if (isArchiveView) {
+      writeStoredPageSize(PAGINATION_STORAGE_KEYS.ARCHIVE_PAGE_SIZE, newSize);
+    }
+  };
 
   // Auto-zamykanie powiadomienia Toast po 5 sekundach (AC 5)
   useEffect(() => {
@@ -217,7 +254,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
     }).length;
   }, [initialItems, showDrafts, getStatus]);
 
-  // Filtrowanie wpisów
+  // Filtrowanie wpisów (przeszukuje wszystkie aktywne artykuły przed podziałem na strony)
   const filteredItems = useMemo(() => {
     return initialItems.filter((item) => {
       // Filtr statusu (domyślnie tylko opublikowane)
@@ -282,9 +319,9 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
     });
   }, [initialItems, selectedCity, selectedCategory, searchQuery, showDrafts, onlyKids, showOnlyFavorites, favorites, dateFrom, dateTo, sortOrder, isArchiveView, getStatus]);
 
-  // Reset widocznych elementów przy zmianie filtrów lub sortowania
+  // Reset strony do 1 przy każdej zmianie filtra wyszukiwania, kategorii, miasta, daty, sortowania lub limitu na stronę
   useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
+    setCurrentPage(1);
   }, [
     selectedCity,
     selectedCategory,
@@ -295,38 +332,38 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
     dateFrom,
     dateTo,
     sortOrder,
+    pageSize,
   ]);
 
-  // Wpisy do wyświetlenia (paginacja / dynamiczne doładowywanie)
-  const displayedItems = useMemo(() => {
-    return filteredItems.slice(0, visibleCount);
-  }, [filteredItems, visibleCount]);
+  // Obliczenie parametrów paginacji
+  const paginationMeta = useMemo(
+    () => getPaginationMeta(currentPage, pageSize, filteredItems.length),
+    [currentPage, pageSize, filteredItems.length]
+  );
 
-  // Obsługa automatycznego doładowywania kolejnych wpisów przy scrollu (infinite scroll)
+  // Auto-korekta strony: gdy currentPage > totalPages (np. po zarchiwizowaniu/przywróceniu artykułu), przestaw na ostatnią dostępną stronę
   useEffect(() => {
-    if (visibleCount >= filteredItems.length) return;
-    const target = sentinelRef.current;
-    if (!target || typeof IntersectionObserver === 'undefined') return;
+    if (currentPage > paginationMeta.totalPages) {
+      setCurrentPage(Math.max(1, paginationMeta.totalPages));
+    }
+  }, [currentPage, paginationMeta.totalPages]);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredItems.length));
-        }
-      },
-      { rootMargin: '300px' }
-    );
+  // Wpisy dla aktualnej strony
+  const displayedItems = useMemo(() => {
+    return filteredItems.slice(paginationMeta.startIndex, paginationMeta.endIndex);
+  }, [filteredItems, paginationMeta.startIndex, paginationMeta.endIndex]);
 
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [visibleCount, filteredItems.length]);
-
-  const handleLoadMore = () => {
-    setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredItems.length));
-  };
-
-  const handleLoadAll = () => {
-    setVisibleCount(filteredItems.length);
+  // Przejście na wybraną stronę ze Scroll-to-Top
+  const handlePageChange = (newPage: number) => {
+    const targetPage = Math.max(1, Math.min(newPage, paginationMeta.totalPages));
+    if (targetPage === paginationMeta.safeCurrentPage) return;
+    setCurrentPage(targetPage);
+    if (
+      articlesContainerRef.current &&
+      typeof articlesContainerRef.current.scrollIntoView === 'function'
+    ) {
+      articlesContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   // Formatowanie daty po polsku
@@ -373,6 +410,7 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
     setShowOnlyFavorites(false);
     setSearchQuery('');
     setPreset('all');
+    setCurrentPage(1);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.delete('widok');
@@ -649,340 +687,344 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
         </div>
       </div>
 
-      {/* Nagłówek wyników i status */}
-      <div className="flex items-center justify-between text-sm text-zinc-400 px-1">
-        <span className="flex items-center flex-wrap gap-1.5">
-          <span>
-            Znaleziono <strong className="text-zinc-100">{filteredItems.length}</strong>{' '}
-            {isArchiveView
-              ? filteredItems.length === 1
-                ? 'zarchiwizowany artykuł'
-                : 'zarchiwizowanych artykułów'
-              : filteredItems.length === 1
-              ? 'wiadomość'
-              : 'wiadomości'}
+      {/* Kotwica dla Scroll-to-Top przy zmianie strony */}
+      <div ref={articlesContainerRef} className="scroll-mt-24 space-y-6">
+        {/* Nagłówek wyników i status */}
+        <div className="flex items-center justify-between text-sm text-zinc-400 px-1">
+          <span className="flex items-center flex-wrap gap-1.5">
+            <span>
+              Znaleziono <strong className="text-zinc-100">{filteredItems.length}</strong>{' '}
+              {isArchiveView
+                ? filteredItems.length === 1
+                  ? 'zarchiwizowany artykuł'
+                  : 'zarchiwizowanych artykułów'
+                : filteredItems.length === 1
+                ? 'wiadomość'
+                : 'wiadomości'}
+            </span>
+            {isArchiveView && (
+              <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                <Archive className="w-3 h-3 text-amber-400" />
+                Sekcja Archiwum
+              </span>
+            )}
+            {showOnlyFavorites && (
+              <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                <Heart className="w-3 h-3 fill-current text-rose-400" />
+                Tylko Ulubione
+              </span>
+            )}
+            {onlyKids && <span className="text-zinc-400">(👶 Dzieci 4-10 lat)</span>}
+            {selectedCity !== 'all' && <span>dla: <span className="text-zinc-200 font-medium">{CITIES[selectedCity]?.name}</span></span>}
+            {showDrafts && <span className="text-amber-300 font-medium">(Tryb szkiców)</span>}
           </span>
-          {isArchiveView && (
-            <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
-              <Archive className="w-3 h-3 text-amber-400" />
-              Sekcja Archiwum
-            </span>
-          )}
-          {showOnlyFavorites && (
-            <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
-              <Heart className="w-3 h-3 fill-current text-rose-400" />
-              Tylko Ulubione
-            </span>
-          )}
-          {onlyKids && <span className="text-zinc-400">(👶 Dzieci 4-10 lat)</span>}
-          {selectedCity !== 'all' && <span>dla: <span className="text-zinc-200 font-medium">{CITIES[selectedCity]?.name}</span></span>}
-          {showDrafts && <span className="text-amber-300 font-medium">(Tryb szkiców)</span>}
-        </span>
-        <label className="inline-flex items-center gap-2 text-xs text-zinc-400">
-          <ArrowDownWideNarrow className="w-3.5 h-3.5 text-amber-400" />
-          <span>Sortuj</span>
-          <select
-            value={sortOrder}
-            onChange={(event) => setSortOrder(event.target.value as 'newest' | 'oldest')}
-            className="bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:border-amber-400 focus:outline-none"
-          >
-            <option value="newest">Najnowsze najpierw</option>
-            <option value="oldest">Najstarsze najpierw</option>
-          </select>
-        </label>
-      </div>
-
-      {/* Dedykowany pusty stan dla braku ulubionych */}
-      {showOnlyFavorites && favoritesCount === 0 && (
-        <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-rose-500/30 rounded-3xl">
-          <div className="inline-flex p-4 rounded-full bg-rose-500/10 text-rose-400 mb-4 border border-rose-500/20">
-            <Heart className="w-8 h-8" />
-          </div>
-          <h3 className="text-lg font-semibold text-zinc-100 mb-1">
-            Nie masz jeszcze ulubionych artykułów
-          </h3>
-          <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
-            Kliknij ikonę serduszka (❤️) na dowolnym kafelku lub wewnątrz wybranego artykułu, aby zapisać go w tej sekcji.
-          </p>
-          <button
-            onClick={() => setShowOnlyFavorites(false)}
-            className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-sm transition-colors"
-          >
-            Przeglądaj wszystkie wiadomości
-          </button>
-        </div>
-      )}
-
-      {/* Brak wyników przy aktywnych filtrach w trybie ulubionych */}
-      {showOnlyFavorites && favoritesCount > 0 && filteredItems.length === 0 && (
-        <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
-          <div className="inline-flex p-4 rounded-full bg-zinc-800/80 text-rose-400 mb-4">
-            <Heart className="w-8 h-8" />
-          </div>
-          <h3 className="text-lg font-semibold text-zinc-200 mb-1">
-            Brak ulubionych wpisów dla wybranych filtrów
-          </h3>
-          <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
-            Masz zapisane {favoritesCount} {favoritesCount === 1 ? 'artykuł' : 'artykuły'} w ulubionych, ale żaden nie pasuje do aktualnych filtrów miasta, kategorii lub daty.
-          </p>
-          <button
-            onClick={() => {
-              setSelectedCity('all');
-              setSelectedCategory('all');
-              setSearchQuery('');
-              setPreset('all');
-            }}
-            className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-semibold text-sm transition-colors shadow-lg shadow-rose-500/20"
-          >
-            Pokaż wszystkie zapisane ulubione
-          </button>
-        </div>
-      )}
-
-      {/* Dedykowany pusty stan dla całkowitego braku artykułów w archiwum (AC 6) */}
-      {(isArchiveView && initialItems.length === 0 || (isArchiveView && archivedTotalCount === 0)) && (
-        <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
-          <div className="inline-flex p-4 rounded-full bg-amber-500/10 text-amber-400 mb-4 border border-amber-500/20">
-            <Archive className="w-8 h-8" />
-          </div>
-          <h3 className="text-lg font-semibold text-zinc-100 mb-1">
-            Brak zarchiwizowanych artykułów
-          </h3>
-          <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
-            Aktualnie żadne artykuły nie zostały jeszcze przeniesione do archiwum.
-          </p>
-          <a
-            href={baseUrl}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-sm transition-colors"
-          >
-            Przejdź do aktualności
-          </a>
-        </div>
-      )}
-
-      {/* Pusty stan dla archiwum gdy wpisy są w archiwum, ale żaden nie pasuje do wybranych filtrów */}
-      {isArchiveView && initialItems.length > 0 && archivedTotalCount > 0 && filteredItems.length === 0 && (
-        <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
-          <div className="inline-flex p-4 rounded-full bg-zinc-800/80 text-amber-400 mb-4">
-            <Archive className="w-8 h-8" />
-          </div>
-          <h3 className="text-lg font-semibold text-zinc-200 mb-1">
-            Brak zarchiwizowanych artykułów dla wybranych filtrów
-          </h3>
-          <p className="text-sm text-zinc-500 max-w-md mx-auto mb-6">
-            W archiwum znajduje się {archivedTotalCount}{' '}
-            {archivedTotalCount === 1 ? 'wpis' : (archivedTotalCount % 10 >= 2 && archivedTotalCount % 10 <= 4 && (archivedTotalCount % 100 < 10 || archivedTotalCount % 100 >= 20)) ? 'wpisy' : 'wpisów'}, ale żaden nie pasuje do aktualnych filtrów miasta, kategorii lub daty.
-          </p>
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-sm transition-colors"
-          >
-            Resetuj filtry
-          </button>
-        </div>
-      )}
-
-      {/* Brak wyników w trybie standardowym */}
-      {!isArchiveView && !showOnlyFavorites && filteredItems.length === 0 && (
-        <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
-          <div className="inline-flex p-4 rounded-full bg-zinc-800/80 text-amber-400 mb-4">
-            <Search className="w-8 h-8" />
-          </div>
-          <h3 className="text-lg font-semibold text-zinc-200 mb-1">
-            Brak wydarzeń spełniających kryteria
-          </h3>
-          <p className="text-sm text-zinc-500 max-w-md mx-auto mb-6">
-            Nie znaleźliśmy żadnych wpisów dla wybranego miasta lub filtru. Spróbuj wyczyścić filtry.
-          </p>
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-sm transition-colors"
-          >
-            Pokaż wszystkie wiadomości
-          </button>
-        </div>
-      )}
-
-      {/* Siatka kart wpisów */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {displayedItems.map((item) => {
-          const itemIsFav = isLoaded && isFavorite(item.slug);
-          const itemIsArchived = isArchiveLoaded ? getStatus(item.slug, Boolean(item.archived)) : Boolean(item.archived);
-
-          return (
-            <article
-              key={item.id}
-              className={`group bg-zinc-900/80 hover:bg-zinc-900 border rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 ${
-                item.isAlert
-                  ? 'border-rose-500/40 hover:border-rose-500/70 bg-gradient-to-b from-rose-950/20 to-zinc-900/80'
-                  : item.category === 'dla-dzieci' || item.isForKids
-                  ? 'border-emerald-500/40 hover:border-emerald-500/70 bg-gradient-to-b from-emerald-950/15 to-zinc-900/80'
-                  : itemIsFav
-                  ? 'border-rose-500/30 hover:border-rose-500/50 bg-gradient-to-b from-rose-950/10 to-zinc-900/80'
-                  : 'border-zinc-800/90 hover:border-zinc-700'
-              }`}
+          <label className="inline-flex items-center gap-2 text-xs text-zinc-400">
+            <ArrowDownWideNarrow className="w-3.5 h-3.5 text-amber-400" />
+            <span>Sortuj</span>
+            <select
+              value={sortOrder}
+              onChange={(event) => setSortOrder(event.target.value as 'newest' | 'oldest')}
+              className="bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:border-amber-400 focus:outline-none"
             >
-              <div>
-                {/* Odznaki: Miasto + Kategoria + Wiek dziecka jeśli określony + Przyciski Archiwum & Serduszko */}
-                <div className="flex items-center justify-between gap-2 mb-3.5">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <CityBadge city={item.city} size="sm" />
-                    <CategoryBadge category={item.category} />
-                    {itemIsArchived && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                        <Archive className="w-3 h-3 text-amber-400" />
-                        Archiwum
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {(item.ageRange || item.isForKids) && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                        <Smile className="w-3 h-3" />
-                        {item.ageRange || 'Dzieci 4-10 lat'}
-                      </span>
-                    )}
-
-                    {/* Dedykowany przycisk archiwizacji z literą „A” (AC 1, AC 3, AC 5) */}
-                    <ArchiveButton
-                      slug={item.slug}
-                      title={item.title}
-                      publishedDate={item.publishedDate}
-                      eventDate={item.eventDate}
-                      defaultArchived={Boolean(item.archived)}
-                      defaultManualOverride={Boolean(item.manualOverride)}
-                      size="sm"
-                      onToggle={(newState, oldState) => handleArchiveToggle(item, newState, oldState)}
-                    />
-
-                    {/* Ergonomiczna ikona serduszka na kafelku */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleFavorite(item.slug);
-                      }}
-                      aria-label={itemIsFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}
-                      title={itemIsFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}
-                      className={`p-1.5 rounded-full border transition-all duration-200 active:scale-90 focus:outline-none focus:ring-2 focus:ring-rose-400/50 cursor-pointer ${
-                        itemIsFav
-                          ? 'bg-rose-500/20 text-rose-500 border-rose-500/40 hover:bg-rose-500/30 shadow-sm shadow-rose-500/10 scale-105'
-                          : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/60 hover:text-rose-400 hover:border-rose-400/50 hover:bg-zinc-800'
-                      }`}
-                    >
-                      <Heart
-                        className={`w-4 h-4 transition-transform duration-200 ${
-                          itemIsFav ? 'fill-rose-500 text-rose-500 scale-110 drop-shadow' : ''
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Tytuł */}
-                <h2 className="text-lg font-bold text-zinc-100 group-hover:text-amber-400 transition-colors line-clamp-2 mb-2 leading-snug">
-                  <a href={`${baseUrl}wpis/${item.slug}`} className="hover:underline">
-                    {item.title}
-                  </a>
-                </h2>
-
-                {/* Zajawka */}
-                <p className="text-sm text-zinc-400 line-clamp-3 mb-4 leading-relaxed">
-                  {item.summary}
-                </p>
-              </div>
-
-              <div>
-                {/* Metadane: Lokalizacja i Data */}
-                <div className="space-y-1.5 text-xs text-zinc-500 border-t border-zinc-800/80 pt-3.5 mb-4">
-                  {item.location && (
-                    <div className="flex items-center gap-1.5 text-zinc-400 truncate">
-                      <MapPin className="w-3.5 h-3.5 text-amber-400/80 flex-shrink-0" />
-                      <span className="truncate">{item.location}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-1.5 text-zinc-500 min-w-0">
-                      <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span className="truncate">{formatDate(item.publishedDate || '')}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {item.eventDate && (
-                        <span
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full whitespace-nowrap"
-                          title={`Data wydarzenia: ${formatDate(item.eventDate)}`}
-                        >
-                          <Calendar className="w-3 h-3 text-amber-400 flex-shrink-0" />
-                          <span>Wydarzenie: {formatShortDate(item.eventDate)}</span>
-                        </span>
-                      )}
-                      {item.aiGenerated && (
-                        <span
-                          className="inline-flex items-center gap-1 text-[11px] text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-full whitespace-nowrap"
-                          title="Przygotowane we współpracy z Agentem AI"
-                        >
-                          <Bot className="w-3 h-3 text-amber-400" />
-                          Agent AI
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Przycisk Przejdź do wpisu */}
-                <a
-                  href={`${baseUrl}wpis/${item.slug}`}
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-800/70 hover:bg-amber-400 text-zinc-300 hover:text-zinc-950 transition-all group-hover:bg-zinc-800"
-                >
-                  Czytaj szczegóły
-                  <span className="transition-transform group-hover:translate-x-1">→</span>
-                </a>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-
-      {/* Element sentinel do infinite scroll */}
-      {visibleCount < filteredItems.length && (
-        <div ref={sentinelRef} className="h-6 w-full" aria-hidden="true" />
-      )}
-
-      {/* Paginacja / Załaduj więcej */}
-      {filteredItems.length > PAGE_SIZE && (
-        <div className="flex flex-col items-center justify-center gap-3 pt-6 pb-2 border-t border-zinc-800/60">
-          <div className="text-xs text-zinc-400">
-            Wyświetlono <strong className="text-zinc-100">{displayedItems.length}</strong> z{' '}
-            <strong className="text-zinc-100">{filteredItems.length}</strong> artykułów
-          </div>
-          <div className="w-full max-w-xs bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-            <div
-              className="bg-amber-400 h-full rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(100, (displayedItems.length / filteredItems.length) * 100)}%` }}
-            />
-          </div>
-          {visibleCount < filteredItems.length && (
-            <div className="flex items-center gap-2 mt-1">
-              <button
-                type="button"
-                onClick={handleLoadMore}
-                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-xs transition-colors shadow-md shadow-amber-400/10 inline-flex items-center gap-1.5 cursor-pointer"
-              >
-                <span>Załaduj więcej wpisów (+{Math.min(PAGE_SIZE, filteredItems.length - visibleCount)})</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleLoadAll}
-                className="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white font-semibold text-xs border border-zinc-700 transition-colors cursor-pointer"
-              >
-                Pokaż wszystkie ({filteredItems.length})
-              </button>
-            </div>
-          )}
+              <option value="newest">Najnowsze najpierw</option>
+              <option value="oldest">Najstarsze najpierw</option>
+            </select>
+          </label>
         </div>
-      )}
+
+        {/* Górny pasek sterowania paginacją w widoku Archiwum */}
+        {isArchiveView && filteredItems.length > 0 && (
+          <PaginationBar
+            position="top"
+            currentPage={paginationMeta.safeCurrentPage}
+            pageSize={pageSize}
+            totalItems={filteredItems.length}
+            onPageChange={handlePageChange}
+            pageSizeOptions={archiveSizeOptions}
+            onPageSizeChange={handleArchivePageSizeChange}
+          />
+        )}
+
+        {/* Dedykowany pusty stan dla braku ulubionych */}
+        {showOnlyFavorites && favoritesCount === 0 && (
+          <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-rose-500/30 rounded-3xl">
+            <div className="inline-flex p-4 rounded-full bg-rose-500/10 text-rose-400 mb-4 border border-rose-500/20">
+              <Heart className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-semibold text-zinc-100 mb-1">
+              Nie masz jeszcze ulubionych artykułów
+            </h3>
+            <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
+              Kliknij ikonę serduszka (❤️) na dowolnym kafelku lub wewnątrz wybranego artykułu, aby zapisać go w tej sekcji.
+            </p>
+            <button
+              onClick={() => setShowOnlyFavorites(false)}
+              className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-sm transition-colors"
+            >
+              Przeglądaj wszystkie wiadomości
+            </button>
+          </div>
+        )}
+
+        {/* Brak wyników przy aktywnych filtrach w trybie ulubionych */}
+        {showOnlyFavorites && favoritesCount > 0 && filteredItems.length === 0 && (
+          <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
+            <div className="inline-flex p-4 rounded-full bg-zinc-800/80 text-rose-400 mb-4">
+              <Heart className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-semibold text-zinc-200 mb-1">
+              Brak ulubionych wpisów dla wybranych filtrów
+            </h3>
+            <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
+              Masz zapisane {favoritesCount} {favoritesCount === 1 ? 'artykuł' : 'artykuły'} w ulubionych, ale żaden nie pasuje do aktualnych filtrów miasta, kategorii lub daty.
+            </p>
+            <button
+              onClick={() => {
+                setSelectedCity('all');
+                setSelectedCategory('all');
+                setSearchQuery('');
+                setPreset('all');
+              }}
+              className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-semibold text-sm transition-colors shadow-lg shadow-rose-500/20"
+            >
+              Pokaż wszystkie zapisane ulubione
+            </button>
+          </div>
+        )}
+
+        {/* Dedykowany pusty stan dla całkowitego braku artykułów w archiwum (AC 6) */}
+        {(isArchiveView && initialItems.length === 0 || (isArchiveView && archivedTotalCount === 0)) && (
+          <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
+            <div className="inline-flex p-4 rounded-full bg-amber-500/10 text-amber-400 mb-4 border border-amber-500/20">
+              <Archive className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-semibold text-zinc-100 mb-1">
+              Brak zarchiwizowanych artykułów
+            </h3>
+            <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
+              Aktualnie żadne artykuły nie zostały jeszcze przeniesione do archiwum.
+            </p>
+            <a
+              href={baseUrl}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-sm transition-colors"
+            >
+              Przejdź do aktualności
+            </a>
+          </div>
+        )}
+
+        {/* Pusty stan dla archiwum gdy wpisy są w archiwum, ale żaden nie pasuje do wybranych filtrów */}
+        {isArchiveView && initialItems.length > 0 && archivedTotalCount > 0 && filteredItems.length === 0 && (
+          <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
+            <div className="inline-flex p-4 rounded-full bg-zinc-800/80 text-amber-400 mb-4">
+              <Archive className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-semibold text-zinc-200 mb-1">
+              Brak zarchiwizowanych artykułów dla wybranych filtrów
+            </h3>
+            <p className="text-sm text-zinc-500 max-w-md mx-auto mb-6">
+              W archiwum znajduje się {archivedTotalCount}{' '}
+              {archivedTotalCount === 1 ? 'wpis' : (archivedTotalCount % 10 >= 2 && archivedTotalCount % 10 <= 4 && (archivedTotalCount % 100 < 10 || archivedTotalCount % 100 >= 20)) ? 'wpisy' : 'wpisów'}, ale żaden nie pasuje do aktualnych filtrów miasta, kategorii lub daty.
+            </p>
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-sm transition-colors"
+            >
+              Resetuj filtry
+            </button>
+          </div>
+        )}
+
+        {/* Brak wyników w trybie standardowym */}
+        {!isArchiveView && !showOnlyFavorites && filteredItems.length === 0 && (
+          <div className="text-center py-16 px-4 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-3xl">
+            <div className="inline-flex p-4 rounded-full bg-zinc-800/80 text-amber-400 mb-4">
+              <Search className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-semibold text-zinc-200 mb-1">
+              Brak wydarzeń spełniających kryteria
+            </h3>
+            <p className="text-sm text-zinc-500 max-w-md mx-auto mb-6">
+              Nie znaleźliśmy żadnych wpisów dla wybranego miasta lub filtru. Spróbuj wyczyścić filtry.
+            </p>
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-sm transition-colors"
+            >
+              Pokaż wszystkie wiadomości
+            </button>
+          </div>
+        )}
+
+        {/* Siatka kart wpisów */}
+        {displayedItems.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedItems.map((item) => {
+              const itemIsFav = isLoaded && isFavorite(item.slug);
+              const itemIsArchived = isArchiveLoaded ? getStatus(item.slug, Boolean(item.archived)) : Boolean(item.archived);
+
+              return (
+                <article
+                  key={item.id}
+                  className={`group bg-zinc-900/80 hover:bg-zinc-900 border rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 ${
+                    item.isAlert
+                      ? 'border-rose-500/40 hover:border-rose-500/70 bg-gradient-to-b from-rose-950/20 to-zinc-900/80'
+                      : item.category === 'dla-dzieci' || item.isForKids
+                      ? 'border-emerald-500/40 hover:border-emerald-500/70 bg-gradient-to-b from-emerald-950/15 to-zinc-900/80'
+                      : itemIsFav
+                      ? 'border-rose-500/30 hover:border-rose-500/50 bg-gradient-to-b from-rose-950/10 to-zinc-900/80'
+                      : 'border-zinc-800/90 hover:border-zinc-700'
+                  }`}
+                >
+                  <div>
+                    {/* Odznaki: Miasto + Kategoria + Wiek dziecka jeśli określony + Przyciski Archiwum & Serduszko */}
+                    <div className="flex items-center justify-between gap-2 mb-3.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <CityBadge city={item.city} size="sm" />
+                        <CategoryBadge category={item.category} />
+                        {itemIsArchived && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                            <Archive className="w-3 h-3 text-amber-400" />
+                            Archiwum
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {(item.ageRange || item.isForKids) && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                            <Smile className="w-3 h-3" />
+                            {item.ageRange || 'Dzieci 4-10 lat'}
+                          </span>
+                        )}
+
+                        {/* Dedykowany przycisk archiwizacji z literą „A” (AC 1, AC 3, AC 5) */}
+                        <ArchiveButton
+                          slug={item.slug}
+                          title={item.title}
+                          publishedDate={item.publishedDate}
+                          eventDate={item.eventDate}
+                          defaultArchived={Boolean(item.archived)}
+                          defaultManualOverride={Boolean(item.manualOverride)}
+                          size="sm"
+                          onToggle={(newState, oldState) => handleArchiveToggle(item, newState, oldState)}
+                        />
+
+                        {/* Ergonomiczna ikona serduszka na kafelku */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleFavorite(item.slug);
+                          }}
+                          aria-label={itemIsFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}
+                          title={itemIsFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}
+                          className={`p-1.5 rounded-full border transition-all duration-200 active:scale-90 focus:outline-none focus:ring-2 focus:ring-rose-400/50 cursor-pointer ${
+                            itemIsFav
+                              ? 'bg-rose-500/20 text-rose-500 border-rose-500/40 hover:bg-rose-500/30 shadow-sm shadow-rose-500/10 scale-105'
+                              : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/60 hover:text-rose-400 hover:border-rose-400/50 hover:bg-zinc-800'
+                          }`}
+                        >
+                          <Heart
+                            className={`w-4 h-4 transition-transform duration-200 ${
+                              itemIsFav ? 'fill-rose-500 text-rose-500 scale-110 drop-shadow' : ''
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Tytuł */}
+                    <h2 className="text-lg font-bold text-zinc-100 group-hover:text-amber-400 transition-colors line-clamp-2 mb-2 leading-snug">
+                      <a href={`${baseUrl}wpis/${item.slug}`} className="hover:underline">
+                        {item.title}
+                      </a>
+                    </h2>
+
+                    {/* Zajawka */}
+                    <p className="text-sm text-zinc-400 line-clamp-3 mb-4 leading-relaxed">
+                      {item.summary}
+                    </p>
+                  </div>
+
+                  <div>
+                    {/* Metadane: Lokalizacja i Data */}
+                    <div className="space-y-1.5 text-xs text-zinc-500 border-t border-zinc-800/80 pt-3.5 mb-4">
+                      {item.location && (
+                        <div className="flex items-center gap-1.5 text-zinc-400 truncate">
+                          <MapPin className="w-3.5 h-3.5 text-amber-400/80 flex-shrink-0" />
+                          <span className="truncate">{item.location}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 text-zinc-500 min-w-0">
+                          <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="truncate">{formatDate(item.publishedDate || '')}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {item.eventDate && (
+                            <span
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full whitespace-nowrap"
+                              title={`Data wydarzenia: ${formatDate(item.eventDate)}`}
+                            >
+                              <Calendar className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                              <span>Wydarzenie: {formatShortDate(item.eventDate)}</span>
+                            </span>
+                          )}
+                          {item.aiGenerated && (
+                            <span
+                              className="inline-flex items-center gap-1 text-[11px] text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-full whitespace-nowrap"
+                              title="Przygotowane we współpracy z Agentem AI"
+                            >
+                              <Bot className="w-3 h-3 text-amber-400" />
+                              Agent AI
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Przycisk Przejdź do wpisu */}
+                    <a
+                      href={`${baseUrl}wpis/${item.slug}`}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-800/70 hover:bg-amber-400 text-zinc-300 hover:text-zinc-950 transition-all group-hover:bg-zinc-800"
+                    >
+                      Czytaj szczegóły
+                      <span className="transition-transform group-hover:translate-x-1">→</span>
+                    </a>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Dolny pasek paginacji:
+            - dla Archiwum: zawsze gdy są artykuły (zawiera selektor [12, 24, 48, 96] + licznik + strony)
+            - dla Strony Głównej / pozostałych feedów: tylko gdy filteredItems.length > pageSize */}
+        {isArchiveView
+          ? filteredItems.length > 0 && (
+              <PaginationBar
+                position="bottom"
+                currentPage={paginationMeta.safeCurrentPage}
+                pageSize={pageSize}
+                totalItems={filteredItems.length}
+                onPageChange={handlePageChange}
+                pageSizeOptions={archiveSizeOptions}
+                onPageSizeChange={handleArchivePageSizeChange}
+              />
+            )
+          : filteredItems.length > pageSize && (
+              <PaginationBar
+                position="bottom"
+                currentPage={paginationMeta.safeCurrentPage}
+                pageSize={pageSize}
+                totalItems={filteredItems.length}
+                onPageChange={handlePageChange}
+              />
+            )}
+      </div>
 
       {/* Toast Feedback z przyciskiem Cofnij (AC 5) */}
       {toast && (

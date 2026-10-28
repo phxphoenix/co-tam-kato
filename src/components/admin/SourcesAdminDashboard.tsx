@@ -13,10 +13,16 @@ import {
   Globe,
   Zap,
   CheckCircle2,
-  Filter,
-  Info,
+  Sliders,
+  LayoutGrid,
+  RotateCcw,
 } from 'lucide-react';
 import AdminHeaderNav from './AdminHeaderNav';
+import {
+  GRID_RECOMMENDED_MULTIPLES,
+  ADMIN_ARCHIVE_PAGE_SIZE_OPTIONS,
+  PAGINATION_STORAGE_KEYS,
+} from '../../lib/pagination';
 
 export type SourceType = 'RSS' | 'WEB' | 'DYNAMIC_WEB';
 export type SourceStatus = 'ACTIVE' | 'INACTIVE' | 'TEMPLATE' | string;
@@ -31,19 +37,55 @@ export interface EventSourceItem {
   hints: string;
 }
 
+export interface PaginationSettings {
+  homePageSize: number;
+  archivePageSize: number;
+  adminArchivePageSize: number;
+}
+
 interface SourcesAdminDashboardProps {
   initialSources: EventSourceItem[];
+  initialPaginationSettings?: PaginationSettings;
   baseUrl?: string;
 }
 
+const DEFAULT_PAGINATION: PaginationSettings = {
+  homePageSize: 12,
+  archivePageSize: 24,
+  adminArchivePageSize: 25,
+};
+
 export default function SourcesAdminDashboard({
   initialSources = [],
+  initialPaginationSettings = DEFAULT_PAGINATION,
   baseUrl = '/',
 }: SourcesAdminDashboardProps) {
   const [sources, setSources] = useState<EventSourceItem[]>(initialSources);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'RSS' | 'WEB' | 'DYNAMIC_WEB'>('ALL');
+
+  // Stany ustawień paginacji
+  const [homePageSizeInput, setHomePageSizeInput] = useState<string>(
+    String(initialPaginationSettings?.homePageSize ?? DEFAULT_PAGINATION.homePageSize)
+  );
+  const [archivePageSizeInput, setArchivePageSizeInput] = useState<string>(
+    String(initialPaginationSettings?.archivePageSize ?? DEFAULT_PAGINATION.archivePageSize)
+  );
+  const [adminArchivePageSizeInput, setAdminArchivePageSizeInput] = useState<string>(
+    String(initialPaginationSettings?.adminArchivePageSize ?? DEFAULT_PAGINATION.adminArchivePageSize)
+  );
+  const [savedPagination, setSavedPagination] = useState<PaginationSettings>({
+    homePageSize: initialPaginationSettings?.homePageSize ?? DEFAULT_PAGINATION.homePageSize,
+    archivePageSize: initialPaginationSettings?.archivePageSize ?? DEFAULT_PAGINATION.archivePageSize,
+    adminArchivePageSize:
+      initialPaginationSettings?.adminArchivePageSize ?? DEFAULT_PAGINATION.adminArchivePageSize,
+  });
+  const [isSavingPagination, setIsSavingPagination] = useState(false);
+  const [paginationFeedback, setPaginationFeedback] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   // Stany akcji i ładowania
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -77,6 +119,111 @@ export default function SourcesAdminDashboard({
     return () => clearTimeout(timer);
   }, [toast]);
 
+  // Walidacja pól paginacji w locie
+  const paginationValidation = useMemo(() => {
+    const h = parseInt(homePageSizeInput, 10);
+    const a = parseInt(archivePageSizeInput, 10);
+    const adm = parseInt(adminArchivePageSizeInput, 10);
+
+    if (!Number.isInteger(h) || h < 1 || h > 500) {
+      return {
+        valid: false,
+        error: 'Rozmiar strony głównej (homePageSize) musi być liczbą całkowitą od 1 do 500.',
+      };
+    }
+    if (!Number.isInteger(a) || a < 1 || a > 500) {
+      return {
+        valid: false,
+        error: 'Rozmiar strony archiwum (archivePageSize) musi być liczbą całkowitą od 1 do 500.',
+      };
+    }
+    if (!Number.isInteger(adm) || adm < 1 || adm > 500) {
+      return {
+        valid: false,
+        error: 'Rozmiar strony Panelu Archive (adminArchivePageSize) musi być liczbą całkowitą od 1 do 500.',
+      };
+    }
+
+    return {
+      valid: true,
+      values: {
+        homePageSize: h,
+        archivePageSize: a,
+        adminArchivePageSize: adm,
+      },
+    };
+  }, [homePageSizeInput, archivePageSizeInput, adminArchivePageSizeInput]);
+
+  // Zapis ustawień paginacji do config/sources.md
+  const handleSavePaginationSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!paginationValidation.valid || !paginationValidation.values) {
+      setPaginationFeedback({
+        type: 'error',
+        message: paginationValidation.error || 'Wprowadź poprawne wartości paginacji.',
+      });
+      return;
+    }
+
+    setIsSavingPagination(true);
+    setPaginationFeedback(null);
+
+    try {
+      const res = await fetch(`${cleanBase}/api/sources`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paginationSettings: paginationValidation.values,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Nie udało się zapisać ustawień paginacji.');
+      }
+
+      const updatedSettings: PaginationSettings =
+        data.paginationSettings || paginationValidation.values;
+      setSavedPagination(updatedSettings);
+      setHomePageSizeInput(String(updatedSettings.homePageSize));
+      setArchivePageSizeInput(String(updatedSettings.archivePageSize));
+      setAdminArchivePageSizeInput(String(updatedSettings.adminArchivePageSize));
+
+      // Zaktualizuj również domyślne wartości w localStorage, aby od razu odzwierciedlić zmianę
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.removeItem(PAGINATION_STORAGE_KEYS.ARCHIVE_PAGE_SIZE);
+          window.localStorage.removeItem(PAGINATION_STORAGE_KEYS.ADMIN_ARCHIVE_PAGE_SIZE);
+        } catch {
+          // ignore
+        }
+      }
+
+      setPaginationFeedback({
+        type: 'success',
+        message: `Zapisano ustawienia paginacji w config/sources.md (Strona Główna: ${updatedSettings.homePageSize}, Archiwum: ${updatedSettings.archivePageSize}, Panel Archive: ${updatedSettings.adminArchivePageSize}).`,
+      });
+      setToast({
+        type: 'success',
+        message: 'Pomyślnie zapisano ustawienia wyświetlania i paginacji w config/sources.md!',
+      });
+    } catch (err: any) {
+      setPaginationFeedback({
+        type: 'error',
+        message: err?.message || 'Wystąpił błąd podczas zapisywania ustawień paginacji.',
+      });
+    } finally {
+      setIsSavingPagination(false);
+    }
+  };
+
+  const handleResetPaginationDefaults = () => {
+    setHomePageSizeInput(String(DEFAULT_PAGINATION.homePageSize));
+    setArchivePageSizeInput(String(DEFAULT_PAGINATION.archivePageSize));
+    setAdminArchivePageSizeInput(String(DEFAULT_PAGINATION.adminArchivePageSize));
+    setPaginationFeedback(null);
+  };
+
   // Odświeżenie listy z API
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -87,6 +234,12 @@ export default function SourcesAdminDashboard({
         throw new Error(data.error || 'Nie udało się pobrać listy źródeł.');
       }
       setSources(data.sources);
+      if (data.paginationSettings) {
+        setSavedPagination(data.paginationSettings);
+        setHomePageSizeInput(String(data.paginationSettings.homePageSize));
+        setArchivePageSizeInput(String(data.paginationSettings.archivePageSize));
+        setAdminArchivePageSizeInput(String(data.paginationSettings.adminArchivePageSize));
+      }
       setToast({
         type: 'success',
         message: `Pomyślnie załadowano ${data.sources.length} źródeł z pliku config/sources.md`,
@@ -260,15 +413,19 @@ export default function SourcesAdminDashboard({
         }
 
         setSources((prev) =>
-          prev.map((s) => (s.id === editingId ? data.source || {
-            ...s,
-            name: formName.trim(),
-            type: formType,
-            url: formUrl.trim(),
-            category: formCategory.trim(),
-            hints: formHints.trim(),
-            status: formStatus,
-          } : s))
+          prev.map((s) =>
+            s.id === editingId
+              ? data.source || {
+                  ...s,
+                  name: formName.trim(),
+                  type: formType,
+                  url: formUrl.trim(),
+                  category: formCategory.trim(),
+                  hints: formHints.trim(),
+                  status: formStatus,
+                }
+              : s
+          )
         );
 
         setIsModalOpen(false);
@@ -353,6 +510,11 @@ export default function SourcesAdminDashboard({
     }
   };
 
+  const homeNum = parseInt(homePageSizeInput, 10);
+  const archiveNum = parseInt(archivePageSizeInput, 10);
+  const isHomeMultipleOf6 = Number.isInteger(homeNum) && homeNum > 0 && homeNum % 6 === 0;
+  const isArchiveMultipleOf6 = Number.isInteger(archiveNum) && archiveNum > 0 && archiveNum % 6 === 0;
+
   return (
     <div className="space-y-8">
       {/* Pasek nawigacyjny modułów Admina */}
@@ -369,7 +531,7 @@ export default function SourcesAdminDashboard({
             <span>Źródła Wydarzeń</span>
           </h1>
           <p className="text-sm text-zinc-400 mt-1 max-w-2xl">
-            Przeglądaj, filtruj i edytuj listę źródeł wydarzeń. Każda zmiana jest bezpośrednio zapisywana do pliku{' '}
+            Przeglądaj, filtruj i edytuj listę źródeł wydarzeń oraz parametry wyświetlania. Każda zmiana jest bezpośrednio zapisywana do pliku{' '}
             <code className="text-amber-300 font-mono text-xs bg-zinc-900 px-1 py-0.5 rounded">config/sources.md</code>, zachowując instrukcje dla Agenta AI.
           </p>
         </div>
@@ -434,6 +596,267 @@ export default function SourcesAdminDashboard({
           </div>
         </div>
       </div>
+
+      {/* Sekcja: Ustawienia wyświetlania i paginacji */}
+      <section
+        aria-labelledby="pagination-settings-heading"
+        className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 shadow-xl space-y-5"
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-800/80 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0 mt-0.5">
+              <LayoutGrid className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 id="pagination-settings-heading" className="text-base sm:text-lg font-bold text-zinc-100 flex items-center gap-2">
+                <span>Ustawienia wyświetlania i paginacji</span>
+                <span className="text-[11px] font-mono font-normal px-2 py-0.5 rounded-full bg-zinc-800 text-amber-300 border border-zinc-700">
+                  config/sources.md
+                </span>
+              </h2>
+              <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                Skonfiguruj domyślną liczbę artykułów wyświetlanych na jednej stronie dla Strony Głównej, Archiwum oraz Panelu Archive. Dla siatek kafelkowych rekomendowane są wielokrotności liczby <strong className="text-zinc-200">6</strong> (<code className="text-amber-300">6, 12, 18, 24, 36</code>), aby zachować pełne rzędy w układzie 2- i 3-kolumnowym.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleResetPaginationDefaults}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-950/80 hover:bg-zinc-800 border border-zinc-800 transition cursor-pointer shrink-0 self-start md:self-center"
+            title="Przywróć domyślne wartości (12 / 24 / 25)"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Domyślne (12 / 24 / 25)</span>
+          </button>
+        </div>
+
+        <form onSubmit={handleSavePaginationSettings} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* 1. homePageSize */}
+            <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <label htmlFor="homePageSizeInput" className="text-xs font-bold text-zinc-200">
+                    Strona Główna (<code className="text-amber-400 font-mono">homePageSize</code>)
+                  </label>
+                  <span className="text-[10px] font-mono text-zinc-500">domyślnie: 12</span>
+                </div>
+                <p className="text-[11px] text-zinc-400 mb-3">
+                  Liczba kart artykułów na stronę w głównym feedzie aktualności.
+                </p>
+
+                <input
+                  id="homePageSizeInput"
+                  type="number"
+                  min={1}
+                  max={500}
+                  step={1}
+                  value={homePageSizeInput}
+                  onChange={(e) => setHomePageSizeInput(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-400 rounded-xl px-3.5 py-2 text-sm font-bold text-zinc-100 focus:outline-none transition"
+                />
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-zinc-400">Rekomendowane (×6):</span>
+                  {isHomeMultipleOf6 ? (
+                    <span className="text-emerald-400 font-medium">✓ Pełne rzędy (2 i 3 kol.)</span>
+                  ) : (
+                    <span className="text-amber-400 font-medium">Zalecana wielokrotność 6</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {GRID_RECOMMENDED_MULTIPLES.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setHomePageSizeInput(String(preset))}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                        homeNum === preset
+                          ? 'bg-amber-400 text-zinc-950 border-amber-400 shadow-sm'
+                          : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:text-zinc-100'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 2. archivePageSize */}
+            <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <label htmlFor="archivePageSizeInput" className="text-xs font-bold text-zinc-200">
+                    Archiwum (<code className="text-amber-400 font-mono">archivePageSize</code>)
+                  </label>
+                  <span className="text-[10px] font-mono text-zinc-500">domyślnie: 24</span>
+                </div>
+                <p className="text-[11px] text-zinc-400 mb-3">
+                  Domyślny limit kart w siatce widoku publicznego Archiwum.
+                </p>
+
+                <input
+                  id="archivePageSizeInput"
+                  type="number"
+                  min={1}
+                  max={500}
+                  step={1}
+                  value={archivePageSizeInput}
+                  onChange={(e) => setArchivePageSizeInput(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-400 rounded-xl px-3.5 py-2 text-sm font-bold text-zinc-100 focus:outline-none transition"
+                />
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-zinc-400">Rekomendowane (×6):</span>
+                  {isArchiveMultipleOf6 ? (
+                    <span className="text-emerald-400 font-medium">✓ Pełne rzędy (2 i 3 kol.)</span>
+                  ) : (
+                    <span className="text-amber-400 font-medium">Zalecana wielokrotność 6</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {GRID_RECOMMENDED_MULTIPLES.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setArchivePageSizeInput(String(preset))}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                        archiveNum === preset
+                          ? 'bg-amber-400 text-zinc-950 border-amber-400 shadow-sm'
+                          : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:text-zinc-100'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 3. adminArchivePageSize */}
+            <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <label htmlFor="adminArchivePageSizeInput" className="text-xs font-bold text-zinc-200">
+                    Panel Archive (<code className="text-amber-400 font-mono">adminArchivePageSize</code>)
+                  </label>
+                  <span className="text-[10px] font-mono text-zinc-500">domyślnie: 25</span>
+                </div>
+                <p className="text-[11px] text-zinc-400 mb-3">
+                  Domyślna liczba wierszy tabeli w administracyjnym Panelu Archive.
+                </p>
+
+                <input
+                  id="adminArchivePageSizeInput"
+                  type="number"
+                  min={1}
+                  max={500}
+                  step={1}
+                  value={adminArchivePageSizeInput}
+                  onChange={(e) => setAdminArchivePageSizeInput(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-400 rounded-xl px-3.5 py-2 text-sm font-bold text-zinc-100 focus:outline-none transition"
+                />
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-zinc-400">Szybki wybór dla tabeli:</span>
+                  <span className="text-zinc-500 font-mono">aktualnie zapisane: {savedPagination.adminArchivePageSize}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {ADMIN_ARCHIVE_PAGE_SIZE_OPTIONS.map((preset) => {
+                    const admNum = parseInt(adminArchivePageSizeInput, 10);
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setAdminArchivePageSizeInput(String(preset))}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                          admNum === preset
+                            ? 'bg-amber-400 text-zinc-950 border-amber-400 shadow-sm'
+                            : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:text-zinc-100'
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Komunikaty walidacji lub zapisu */}
+          {!paginationValidation.valid && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <span>{paginationValidation.error}</span>
+            </div>
+          )}
+
+          {paginationFeedback && (
+            <div
+              className={`flex items-center justify-between gap-2 p-3 rounded-xl border text-xs ${
+                paginationFeedback.type === 'success'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {paginationFeedback.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                )}
+                <span>{paginationFeedback.message}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPaginationFeedback(null)}
+                className="text-zinc-400 hover:text-white p-0.5"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+            <div className="text-xs text-zinc-400 flex items-center gap-2">
+              <Sliders className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>
+                Aktualnie w pliku:{' '}
+                <strong className="text-zinc-200 font-mono">
+                  homePageSize={savedPagination.homePageSize}, archivePageSize={savedPagination.archivePageSize}, adminArchivePageSize={savedPagination.adminArchivePageSize}
+                </strong>
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={!paginationValidation.valid || isSavingPagination}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-400 hover:bg-amber-300 text-zinc-950 shadow-md shadow-amber-400/15 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer shrink-0"
+            >
+              {isSavingPagination ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Zapisywanie do config/sources.md...</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Zapisz ustawienia paginacji</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </section>
 
       {/* Toast powiadomienie */}
       {toast && (

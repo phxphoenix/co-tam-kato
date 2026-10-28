@@ -1,10 +1,13 @@
 import type { APIRoute } from 'astro';
 import {
   getAllSources,
+  getPaginationSettings,
   addSource,
   updateSource,
+  updatePaginationSettings,
   type AddSourceInput,
   type UpdateSourceInput,
+  type PaginationSettings,
 } from './sources-service';
 
 export const prerender = false;
@@ -66,7 +69,8 @@ async function getGitHubToken(request: Request): Promise<string | undefined> {
 export const GET: APIRoute = async () => {
   try {
     const sources = getAllSources();
-    return new Response(JSON.stringify({ success: true, sources }), {
+    const paginationSettings = getPaginationSettings();
+    return new Response(JSON.stringify({ success: true, sources, paginationSettings }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -163,7 +167,72 @@ export const PATCH: APIRoute = async ({ request }) => {
       );
     }
 
-    const body = (await request.json()) as UpdateSourceInput;
+    const body = (await request.json()) as UpdateSourceInput & {
+      paginationSettings?: Partial<PaginationSettings>;
+      homePageSize?: number;
+      archivePageSize?: number;
+      adminArchivePageSize?: number;
+    };
+
+    const isPaginationUpdate =
+      body.paginationSettings !== undefined ||
+      (!body.id &&
+        (body.homePageSize !== undefined ||
+          body.archivePageSize !== undefined ||
+          body.adminArchivePageSize !== undefined));
+
+    if (isPaginationUpdate) {
+      const settingsInput = body.paginationSettings || {
+        homePageSize: body.homePageSize,
+        archivePageSize: body.archivePageSize,
+        adminArchivePageSize: body.adminArchivePageSize,
+      };
+      const result = updatePaginationSettings(settingsInput);
+
+      if (!result.success) {
+        return new Response(JSON.stringify({ success: false, error: result.error }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      let persisted = 'fs';
+
+      if (result.readOnly && result.content) {
+        const token = await getGitHubToken(request);
+        if (token) {
+          try {
+            await commitToGitHub({
+              token,
+              repo: GITHUB_REPO,
+              path: 'config/sources.md',
+              content: result.content,
+              message: `chore(sources): update pagination settings in config/sources.md`,
+            });
+            persisted = 'github';
+          } catch (ghErr: any) {
+            console.warn('[Sources API] Ostrzeżenie zapisu do GitHub API:', ghErr?.message);
+            persisted = 'client';
+          }
+        } else {
+          persisted = 'client';
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          paginationSettings: result.paginationSettings,
+          sources: result.sources,
+          persisted,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     const result = updateSource(body);
 
     if (!result.success) {

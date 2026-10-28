@@ -12,6 +12,14 @@
 
 ---
 
+## Ustawienia wyświetlania i paginacji
+
+- `homePageSize`: 12
+- `archivePageSize`: 24
+- `adminArchivePageSize`: 25
+
+---
+
 ## Tabela Źródeł (Konfiguracja)
 
 | ID | Nazwa | Typ | URL | Kategoria | Status | Wskazówki dla agenta (Scraping Hints) |

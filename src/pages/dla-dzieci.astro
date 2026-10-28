@@ -2,7 +2,10 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { InteractiveFeed } from '../components/InteractiveFeed';
 import { getCollection } from 'astro:content';
-import { Smile, Sparkles, MapPin, Heart, Compass, Star } from 'lucide-react';
+import { getPaginationSettings } from '../server/sources-service';
+import { Smile, Star } from 'lucide-react';
+
+const { homePageSize } = getPaginationSettings();
 
 const allNews = (await getCollection('news')).filter(
   (item) => item.data.status !== 'deleted' && !item.data.archived
@@ -87,6 +90,12 @@ const serializedItems = sortedNews.map((item) => ({
 
   <!-- Feed Section dla Dzieci -->
   <section class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-    <InteractiveFeed client:load initialItems={serializedItems} defaultOnlyKids={true} defaultCategory="dla-dzieci" />
+    <InteractiveFeed
+      client:load
+      initialItems={serializedItems}
+      defaultOnlyKids={true}
+      defaultCategory="dla-dzieci"
+      homePageSize={homePageSize}
+    />
   </section>
 </BaseLayout>

@@ -1,6 +1,109 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+export const DEFAULT_PAGINATION_SETTINGS = {
+  homePageSize: 12,
+  archivePageSize: 24,
+  adminArchivePageSize: 25,
+};
+
+/**
+ * Parses pagination settings (homePageSize, archivePageSize, adminArchivePageSize)
+ * from config/sources.md content or file path.
+ *
+ * @param {string} [input] File path or raw markdown content. Defaults to 'config/sources.md'.
+ * @returns {{homePageSize: number, archivePageSize: number, adminArchivePageSize: number}}
+ */
+export function parsePaginationSettings(input = path.resolve('config/sources.md')) {
+  let content = input;
+  if (!input) {
+    const defaultPath = path.resolve('config/sources.md');
+    content = fs.existsSync(defaultPath) ? fs.readFileSync(defaultPath, 'utf8') : '';
+  } else if (!input.includes('\n') && fs.existsSync(input)) {
+    content = fs.readFileSync(input, 'utf8');
+  }
+
+  const result = { ...DEFAULT_PAGINATION_SETTINGS };
+  if (!content || typeof content !== 'string') return result;
+
+  const extractNumber = (key, fallback) => {
+    const regex = new RegExp(`(?:^|\\r?\\n)\\s*(?:[-*]\\s*)?\`?${key}\`?\\s*[:=|]\\s*(\\d+)`, 'i');
+    const match = content.match(regex);
+    if (match && match[1]) {
+      const parsed = parseInt(match[1], 10);
+      if (Number.isInteger(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
+    return fallback;
+  };
+
+  result.homePageSize = extractNumber('homePageSize', DEFAULT_PAGINATION_SETTINGS.homePageSize);
+  result.archivePageSize = extractNumber('archivePageSize', DEFAULT_PAGINATION_SETTINGS.archivePageSize);
+  result.adminArchivePageSize = extractNumber('adminArchivePageSize', DEFAULT_PAGINATION_SETTINGS.adminArchivePageSize);
+
+  return result;
+}
+
+/**
+ * Updates or inserts pagination settings inside markdown content while preserving the rest of the file.
+ *
+ * @param {string} originalContent
+ * @param {{homePageSize: number, archivePageSize: number, adminArchivePageSize: number}} settings
+ * @returns {string}
+ */
+export function serializePaginationSettingsInMarkdown(originalContent, settings) {
+  const lineEnding = originalContent && originalContent.includes('\r\n') ? '\r\n' : '\n';
+  const merged = {
+    homePageSize: Number(settings?.homePageSize) || DEFAULT_PAGINATION_SETTINGS.homePageSize,
+    archivePageSize: Number(settings?.archivePageSize) || DEFAULT_PAGINATION_SETTINGS.archivePageSize,
+    adminArchivePageSize: Number(settings?.adminArchivePageSize) || DEFAULT_PAGINATION_SETTINGS.adminArchivePageSize,
+  };
+
+  let updated = originalContent || '';
+  const hasHome = /(?:^|\r?\n)\s*(?:[-*]\s*)?`?homePageSize`?\s*[:=]\s*\d+/i.test(updated);
+  const hasArchive = /(?:^|\r?\n)\s*(?:[-*]\s*)?`?archivePageSize`?\s*[:=]\s*\d+/i.test(updated);
+  const hasAdmin = /(?:^|\r?\n)\s*(?:[-*]\s*)?`?adminArchivePageSize`?\s*[:=]\s*\d+/i.test(updated);
+
+  if (hasHome && hasArchive && hasAdmin) {
+    updated = updated.replace(
+      /(^|\r?\n)(\s*(?:[-*]\s*)?`?homePageSize`?\s*[:=]\s*)\d+/i,
+      `$1$2${merged.homePageSize}`
+    );
+    updated = updated.replace(
+      /(^|\r?\n)(\s*(?:[-*]\s*)?`?archivePageSize`?\s*[:=]\s*)\d+/i,
+      `$1$2${merged.archivePageSize}`
+    );
+    updated = updated.replace(
+      /(^|\r?\n)(\s*(?:[-*]\s*)?`?adminArchivePageSize`?\s*[:=]\s*)\d+/i,
+      `$1$2${merged.adminArchivePageSize}`
+    );
+    return updated;
+  }
+
+  const sectionBlock = [
+    '## Ustawienia wyświetlania i paginacji',
+    '',
+    `- \`homePageSize\`: ${merged.homePageSize}`,
+    `- \`archivePageSize\`: ${merged.archivePageSize}`,
+    `- \`adminArchivePageSize\`: ${merged.adminArchivePageSize}`,
+    '',
+    '---',
+    '',
+  ].join(lineEnding);
+
+  const tableHeadingIdx = updated.indexOf('## Tabela Źródeł');
+  if (tableHeadingIdx !== -1) {
+    return (
+      updated.slice(0, tableHeadingIdx) +
+      sectionBlock +
+      updated.slice(tableHeadingIdx)
+    );
+  }
+
+  return sectionBlock + updated;
+}
+
 /**
  * Parses markdown table from string or file into structured source objects.
  *
@@ -154,6 +257,14 @@ export function serializeSourcesMarkdown(sources, originalContent = '') {
       '',
       '---',
       '',
+      '## Ustawienia wyświetlania i paginacji',
+      '',
+      `- \`homePageSize\`: ${DEFAULT_PAGINATION_SETTINGS.homePageSize}`,
+      `- \`archivePageSize\`: ${DEFAULT_PAGINATION_SETTINGS.archivePageSize}`,
+      `- \`adminArchivePageSize\`: ${DEFAULT_PAGINATION_SETTINGS.adminArchivePageSize}`,
+      '',
+      '---',
+      '',
       '## Tabela Źródeł (Konfiguracja)',
       '',
       '| ID | Nazwa | Typ | URL | Kategoria | Status | Wskazówki dla agenta (Scraping Hints) |',
@@ -175,4 +286,3 @@ export function serializeSourcesMarkdown(sources, originalContent = '') {
 
   return preamble + rows.join(lineEnding) + lineEnding;
 }
-

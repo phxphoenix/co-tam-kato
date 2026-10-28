@@ -3,13 +3,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArchiveAdminDashboard from '../../components/admin/ArchiveAdminDashboard';
 import { getCollection } from 'astro:content';
 import { getArchiveSettings } from '../../server/archive-settings-service';
+import { getPaginationSettings } from '../../server/sources-service';
 
 const rawBase = import.meta.env.BASE_URL || '/';
 const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 
-// Pobranie bieżących ustawień
+// Pobranie bieżących ustawień archiwizacji oraz paginacji z config/sources.md
 const settings = getArchiveSettings();
 const initialDays = settings.archiveAfterDays || 10;
+const { adminArchivePageSize } = getPaginationSettings();
 
 // Pobranie wszystkich artykułów z kolekcji news (opublikowane, szkice, archiwa)
 const allNews = await getCollection('news');
@@ -41,6 +43,7 @@ const articles = sortedNews.map((item) => ({
       client:load
       initialDays={initialDays}
       initialArticles={articles}
+      adminArchivePageSize={adminArchivePageSize}
       baseUrl={base}
     />
   </main>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Archive,
   Play,
@@ -17,6 +17,15 @@ import {
 } from 'lucide-react';
 import { validateArchivePeriod } from '../../lib/archive-validation';
 import AdminHeaderNav from './AdminHeaderNav';
+import { PaginationBar } from '../PaginationBar';
+import {
+  ADMIN_ARCHIVE_PAGE_SIZE_OPTIONS,
+  PAGINATION_STORAGE_KEYS,
+  buildPageSizeOptions,
+  getPaginationMeta,
+  readStoredPageSize,
+  writeStoredPageSize,
+} from '../../lib/pagination';
 
 export interface AdminArticleItem {
   slug: string;
@@ -51,12 +60,14 @@ export interface ArchiveWorkerResult {
 interface ArchiveAdminDashboardProps {
   initialDays: number;
   initialArticles: AdminArticleItem[];
+  adminArchivePageSize?: number;
   baseUrl?: string;
 }
 
 export default function ArchiveAdminDashboard({
   initialDays = 10,
   initialArticles = [],
+  adminArchivePageSize = 25,
   baseUrl = '/',
 }: ArchiveAdminDashboardProps) {
   // Stan konfiguracji
@@ -75,6 +86,31 @@ export default function ArchiveAdminDashboard({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'archived' | 'active' | 'override'>('all');
   const [actionLoadingSlug, setActionLoadingSlug] = useState<string | null>(null);
+
+  // Stan paginacji
+  const [pageSize, setPageSize] = useState<number>(adminArchivePageSize);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const articlesContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Inicjalizacja wybranego przez użytkownika limitu z localStorage (z fallbackiem do adminArchivePageSize z config/sources.md)
+  useEffect(() => {
+    const stored = readStoredPageSize(
+      PAGINATION_STORAGE_KEYS.ADMIN_ARCHIVE_PAGE_SIZE,
+      adminArchivePageSize
+    );
+    setPageSize(stored);
+  }, [adminArchivePageSize]);
+
+  const adminPageSizeOptions = useMemo(
+    () => buildPageSizeOptions(ADMIN_ARCHIVE_PAGE_SIZE_OPTIONS, adminArchivePageSize),
+    [adminArchivePageSize]
+  );
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+    writeStoredPageSize(PAGINATION_STORAGE_KEYS.ADMIN_ARCHIVE_PAGE_SIZE, newSize);
+  };
 
   // Walidacja pola okresu archiwizacji w locie
   const validation = useMemo(() => {
@@ -230,6 +266,42 @@ export default function ArchiveAdminDashboard({
       return true;
     });
   }, [articles, statusFilter, searchQuery]);
+
+  // Reset strony do 1 przy każdej zmianie filtra wyszukiwania, statusu lub limitu na stronę
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, pageSize]);
+
+  // Obliczenie parametrów paginacji
+  const paginationMeta = useMemo(
+    () => getPaginationMeta(currentPage, pageSize, filteredArticles.length),
+    [currentPage, pageSize, filteredArticles.length]
+  );
+
+  // Auto-korekta strony: gdy po usunięciu, przywróceniu lub przefiltrowaniu artykułów currentPage > totalPages
+  useEffect(() => {
+    if (currentPage > paginationMeta.totalPages) {
+      setCurrentPage(Math.max(1, paginationMeta.totalPages));
+    }
+  }, [currentPage, paginationMeta.totalPages]);
+
+  // Artykuły widoczne na aktualnej stronie
+  const paginatedArticles = useMemo(() => {
+    return filteredArticles.slice(paginationMeta.startIndex, paginationMeta.endIndex);
+  }, [filteredArticles, paginationMeta.startIndex, paginationMeta.endIndex]);
+
+  // Przejście na inną stronę ze Scroll-to-Top
+  const handlePageChange = (newPage: number) => {
+    const targetPage = Math.max(1, Math.min(newPage, paginationMeta.totalPages));
+    if (targetPage === paginationMeta.safeCurrentPage) return;
+    setCurrentPage(targetPage);
+    if (
+      articlesContainerRef.current &&
+      typeof articlesContainerRef.current.scrollIntoView === 'function'
+    ) {
+      articlesContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -533,9 +605,12 @@ export default function ArchiveAdminDashboard({
         </div>
       )}
 
-      {/* Lista artykułów z kolumną / flagą Archived (True / False) */}
-      <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 sm:p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-800 mb-4">
+      {/* Lista artykułów z kolumną / flagą Archived (True / False) oraz paskami paginacji na górze i na dole */}
+      <div
+        ref={articlesContainerRef}
+        className="scroll-mt-24 bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-4"
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
           <div>
             <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
               <span>Status Archiwizacji Artykułów</span>
@@ -611,6 +686,18 @@ export default function ArchiveAdminDashboard({
           </div>
         </div>
 
+        {/* Górny pasek sterowania paginacją */}
+        <PaginationBar
+          position="top"
+          compact={true}
+          currentPage={paginationMeta.safeCurrentPage}
+          pageSize={pageSize}
+          totalItems={filteredArticles.length}
+          onPageChange={handlePageChange}
+          pageSizeOptions={adminPageSizeOptions}
+          onPageSizeChange={handlePageSizeChange}
+        />
+
         {/* Tabela artykułów */}
         <div className="overflow-x-auto rounded-xl border border-zinc-800">
           <table className="w-full text-left text-xs text-zinc-300">
@@ -628,14 +715,14 @@ export default function ArchiveAdminDashboard({
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/60 font-medium">
-              {filteredArticles.length === 0 ? (
+              {paginatedArticles.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-zinc-400">
                     Brak artykułów spełniających wybrane kryteria filtrowania.
                   </td>
                 </tr>
               ) : (
-                filteredArticles.map((art) => {
+                paginatedArticles.map((art) => {
                   const isActionLoading = actionLoadingSlug === art.slug;
                   const publishedDateFormatted = (art.publishedDate || '').slice(0, 10);
                   const eventDateFormatted = art.eventDate ? art.eventDate.slice(0, 10) : null;
@@ -754,6 +841,18 @@ export default function ArchiveAdminDashboard({
             </tbody>
           </table>
         </div>
+
+        {/* Dolny pasek sterowania paginacją */}
+        <PaginationBar
+          position="bottom"
+          compact={true}
+          currentPage={paginationMeta.safeCurrentPage}
+          pageSize={pageSize}
+          totalItems={filteredArticles.length}
+          onPageChange={handlePageChange}
+          pageSizeOptions={adminPageSizeOptions}
+          onPageSizeChange={handlePageSizeChange}
+        />
       </div>
     </div>
   );

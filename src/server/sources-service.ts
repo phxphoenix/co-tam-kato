@@ -33,7 +33,196 @@ export interface UpdateSourceInput {
   status?: SourceStatus;
 }
 
+export interface PaginationSettings {
+  homePageSize: number;
+  archivePageSize: number;
+  adminArchivePageSize: number;
+}
+
+export const DEFAULT_PAGINATION_SETTINGS: PaginationSettings = {
+  homePageSize: 12,
+  archivePageSize: 24,
+  adminArchivePageSize: 25,
+};
+
 const SOURCES_FILE = path.resolve(process.cwd(), 'config', 'sources.md');
+
+/**
+ * Parses pagination settings (homePageSize, archivePageSize, adminArchivePageSize)
+ * from config/sources.md content or file path.
+ */
+export function parsePaginationSettings(contentOrPath?: string): PaginationSettings {
+  let content = contentOrPath;
+  if (!content) {
+    if (!fs.existsSync(SOURCES_FILE)) return { ...DEFAULT_PAGINATION_SETTINGS };
+    content = fs.readFileSync(SOURCES_FILE, 'utf8');
+  } else if (!content.includes('\n') && fs.existsSync(content)) {
+    content = fs.readFileSync(content, 'utf8');
+  }
+
+  const result: PaginationSettings = { ...DEFAULT_PAGINATION_SETTINGS };
+  if (!content || typeof content !== 'string') return result;
+
+  const extractNumber = (key: keyof PaginationSettings, fallback: number): number => {
+    const regex = new RegExp(`(?:^|\\r?\\n)\\s*(?:[-*]\\s*)?\`?${key}\`?\\s*[:=|]\\s*(\\d+)`, 'i');
+    const match = content!.match(regex);
+    if (match && match[1]) {
+      const parsed = parseInt(match[1], 10);
+      if (Number.isInteger(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
+    return fallback;
+  };
+
+  result.homePageSize = extractNumber('homePageSize', DEFAULT_PAGINATION_SETTINGS.homePageSize);
+  result.archivePageSize = extractNumber('archivePageSize', DEFAULT_PAGINATION_SETTINGS.archivePageSize);
+  result.adminArchivePageSize = extractNumber(
+    'adminArchivePageSize',
+    DEFAULT_PAGINATION_SETTINGS.adminArchivePageSize
+  );
+
+  return result;
+}
+
+/**
+ * Returns the current pagination settings from config/sources.md (with defaults fallback).
+ */
+export function getPaginationSettings(): PaginationSettings {
+  return parsePaginationSettings();
+}
+
+/**
+ * Validates pagination settings input.
+ */
+export function validatePaginationSettings(
+  input: Partial<PaginationSettings>
+): { valid: boolean; settings?: PaginationSettings; error?: string } {
+  const current = getPaginationSettings();
+  const merged: PaginationSettings = {
+    homePageSize:
+      input.homePageSize !== undefined ? Number(input.homePageSize) : current.homePageSize,
+    archivePageSize:
+      input.archivePageSize !== undefined ? Number(input.archivePageSize) : current.archivePageSize,
+    adminArchivePageSize:
+      input.adminArchivePageSize !== undefined
+        ? Number(input.adminArchivePageSize)
+        : current.adminArchivePageSize,
+  };
+
+  const fields: Array<{ key: keyof PaginationSettings; label: string }> = [
+    { key: 'homePageSize', label: 'Rozmiar strony głównej (homePageSize)' },
+    { key: 'archivePageSize', label: 'Rozmiar strony archiwum (archivePageSize)' },
+    { key: 'adminArchivePageSize', label: 'Rozmiar strony Panelu Archive (adminArchivePageSize)' },
+  ];
+
+  for (const field of fields) {
+    const val = merged[field.key];
+    if (!Number.isInteger(val) || val < 1 || val > 500) {
+      return {
+        valid: false,
+        error: `${field.label} musi być liczbą całkowitą z przedziału od 1 do 500.`,
+      };
+    }
+  }
+
+  return { valid: true, settings: merged };
+}
+
+/**
+ * Updates or inserts pagination settings inside markdown content while preserving the rest of the file.
+ */
+export function serializePaginationSettingsInMarkdown(
+  originalContent: string,
+  settings: PaginationSettings
+): string {
+  const lineEnding = originalContent && originalContent.includes('\r\n') ? '\r\n' : '\n';
+  const merged: PaginationSettings = {
+    homePageSize: Number(settings?.homePageSize) || DEFAULT_PAGINATION_SETTINGS.homePageSize,
+    archivePageSize: Number(settings?.archivePageSize) || DEFAULT_PAGINATION_SETTINGS.archivePageSize,
+    adminArchivePageSize:
+      Number(settings?.adminArchivePageSize) || DEFAULT_PAGINATION_SETTINGS.adminArchivePageSize,
+  };
+
+  let updated = originalContent || '';
+  const hasHome = /(?:^|\r?\n)\s*(?:[-*]\s*)?`?homePageSize`?\s*[:=]\s*\d+/i.test(updated);
+  const hasArchive = /(?:^|\r?\n)\s*(?:[-*]\s*)?`?archivePageSize`?\s*[:=]\s*\d+/i.test(updated);
+  const hasAdmin = /(?:^|\r?\n)\s*(?:[-*]\s*)?`?adminArchivePageSize`?\s*[:=]\s*\d+/i.test(updated);
+
+  if (hasHome && hasArchive && hasAdmin) {
+    updated = updated.replace(
+      /(^|\r?\n)(\s*(?:[-*]\s*)?`?homePageSize`?\s*[:=]\s*)\d+/i,
+      `$1$2${merged.homePageSize}`
+    );
+    updated = updated.replace(
+      /(^|\r?\n)(\s*(?:[-*]\s*)?`?archivePageSize`?\s*[:=]\s*)\d+/i,
+      `$1$2${merged.archivePageSize}`
+    );
+    updated = updated.replace(
+      /(^|\r?\n)(\s*(?:[-*]\s*)?`?adminArchivePageSize`?\s*[:=]\s*)\d+/i,
+      `$1$2${merged.adminArchivePageSize}`
+    );
+    return updated;
+  }
+
+  const sectionBlock = [
+    '## Ustawienia wyświetlania i paginacji',
+    '',
+    `- \`homePageSize\`: ${merged.homePageSize}`,
+    `- \`archivePageSize\`: ${merged.archivePageSize}`,
+    `- \`adminArchivePageSize\`: ${merged.adminArchivePageSize}`,
+    '',
+    '---',
+    '',
+  ].join(lineEnding);
+
+  const tableHeadingIdx = updated.indexOf('## Tabela Źródeł');
+  if (tableHeadingIdx !== -1) {
+    return updated.slice(0, tableHeadingIdx) + sectionBlock + updated.slice(tableHeadingIdx);
+  }
+
+  return sectionBlock + updated;
+}
+
+/**
+ * Updates pagination settings in config/sources.md.
+ */
+export function updatePaginationSettings(input: Partial<PaginationSettings>): {
+  success: boolean;
+  paginationSettings?: PaginationSettings;
+  sources?: EventSourceItem[];
+  readOnly?: boolean;
+  content?: string;
+  error?: string;
+} {
+  const validation = validatePaginationSettings(input);
+  if (!validation.valid || !validation.settings) {
+    return { success: false, error: validation.error };
+  }
+
+  let originalContent = '';
+  if (fs.existsSync(SOURCES_FILE)) {
+    originalContent = fs.readFileSync(SOURCES_FILE, 'utf8');
+  } else {
+    originalContent = serializeSourcesMarkdown([], '');
+  }
+
+  const newContent = serializePaginationSettingsInMarkdown(originalContent, validation.settings);
+  const writeRes = writeSourcesToFile(newContent);
+
+  if (!writeRes.success) {
+    return { success: false, error: writeRes.error };
+  }
+
+  const sources = parseSourcesMarkdown(newContent);
+  return {
+    success: true,
+    paginationSettings: validation.settings,
+    sources,
+    readOnly: writeRes.readOnly,
+    content: writeRes.content,
+  };
+}
 
 /**
  * Escapes characters in a markdown table cell value.
@@ -140,6 +329,7 @@ export function parseSourcesMarkdown(contentOrPath?: string): EventSourceItem[] 
  */
 export function serializeSourcesMarkdown(sources: EventSourceItem[], originalContent = ''): string {
   let preamble = '';
+  const lineEnding = originalContent && originalContent.includes('\r\n') ? '\r\n' : '\n';
 
   if (originalContent) {
     const lines = originalContent.split(/\r?\n/);
@@ -155,7 +345,7 @@ export function serializeSourcesMarkdown(sources: EventSourceItem[], originalCon
       }
     }
     if (sepIdx !== -1) {
-      preamble = lines.slice(0, sepIdx + 1).join('\n') + '\n';
+      preamble = lines.slice(0, sepIdx + 1).join(lineEnding) + lineEnding;
     }
   }
 
@@ -175,12 +365,20 @@ export function serializeSourcesMarkdown(sources: EventSourceItem[], originalCon
       '',
       '---',
       '',
+      '## Ustawienia wyświetlania i paginacji',
+      '',
+      `- \`homePageSize\`: ${DEFAULT_PAGINATION_SETTINGS.homePageSize}`,
+      `- \`archivePageSize\`: ${DEFAULT_PAGINATION_SETTINGS.archivePageSize}`,
+      `- \`adminArchivePageSize\`: ${DEFAULT_PAGINATION_SETTINGS.adminArchivePageSize}`,
+      '',
+      '---',
+      '',
       '## Tabela Źródeł (Konfiguracja)',
       '',
       '| ID | Nazwa | Typ | URL | Kategoria | Status | Wskazówki dla agenta (Scraping Hints) |',
       '|---|---|---|---|---|---|---|',
       '',
-    ].join('\n');
+    ].join(lineEnding);
   }
 
   const rows = sources.map((s) => {
@@ -194,7 +392,7 @@ export function serializeSourcesMarkdown(sources: EventSourceItem[], originalCon
     return `| ${id} | ${name} | ${type} | ${url} | ${category} | ${status} | ${hints} |`;
   });
 
-  return preamble + rows.join('\n') + '\n';
+  return preamble + rows.join(lineEnding) + lineEnding;
 }
 
 /**
