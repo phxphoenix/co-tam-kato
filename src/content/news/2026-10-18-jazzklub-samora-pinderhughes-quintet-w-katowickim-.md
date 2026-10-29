@@ -10,7 +10,7 @@ location: "NOSPR, Sala kameralna"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/jazzklub-samora-pinderhughes-quintet"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Narodowa Orkiestra Symfoniczna Polskiego Radia zaprasza miłośników współczesnego jazzu na koncert w ramach uznanego cyklu JazzKLUB. W środę, 21 października 2026 roku o godzinie 19:30, w Sali Kameralnej NOSPR zagra Samora Pinderhughes Quintet.

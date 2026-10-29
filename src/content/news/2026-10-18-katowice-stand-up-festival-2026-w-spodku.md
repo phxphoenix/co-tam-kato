@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/katowice-stand-up-festival-2026,3846.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowicki Spodek pod koniec października wypełni się śmiechem za sprawą kolejnej edycji Katowice Stand-up Festival™. Impreza odbędzie się w sobotę, 31 października 2026 roku, gromadząc na jednej scenie czołowych polskich komików.

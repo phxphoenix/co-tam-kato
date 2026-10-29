@@ -10,7 +10,7 @@ location: "Muzeum Miejskie im. Maksymiliana Chroboka w Rudzie Śląskiej"
 isAlert: false
 sourceUrl: "https://slaskie.travel/event/1031288/wystawa-skarby-rudzkiego-muzeum"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Muzeum Miejskie im. Maksymiliana Chroboka w Rudzie Śląskiej świętuje okrągły jubileusz półwiecza swojej działalności. Z tej okazji przygotowano wystawę czasową zatytułowaną „Skarby rudzkiego muzeum”, którą mieszkańcy regionu mogą oglądać do 30 października 2026 roku.

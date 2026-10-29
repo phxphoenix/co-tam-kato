@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/behemoth-dimmu-borgir-dark-funeral,4016.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W niedzielę, 25 października 2026 roku, katowicki Spodek stanie się sceną wielkiego święta muzyki metalowej. W ramach wspólnej trasy koncertowej wystąpią trzej uznani reprezentanci gatunku: polska formacja Behemoth, norweski Dimmu Borgir oraz szwedzka grupa Dark Funeral.

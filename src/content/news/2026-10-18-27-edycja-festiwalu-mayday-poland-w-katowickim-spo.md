@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/27-mayday-poland,3971.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Do katowickiego Spodka powraca jedno z najważniejszych wydarzeń sceny muzyki klubowej w Europie Centralnej. 10 listopada 2026 roku pod kopułą obiektu odbędzie się 27. edycja festiwalu MAYDAY Poland.
