@@ -14,7 +14,7 @@
 
 ## Ustawienia wyświetlania i paginacji
 
-- `homePageSize`: 12
+- `homePageSize`: 36
 - `archivePageSize`: 24
 - `adminArchivePageSize`: 25
 
