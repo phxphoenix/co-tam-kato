@@ -10,7 +10,8 @@ location: "Gliwice"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/zielone-gliwice/jak-beda-wygladaly-bulwary-klodnicy-trwa-konkurs-na-koncepcje"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Miasto Gliwice oraz Biuro Urbanisty Miasta zapraszają architektów i projektantów krajobrazu do wzięcia udziału w konkursie na koncepcję zagospodarowania Bulwarów Kłodnicy. Głównym celem inicjatywy jest przywrócenie rzeki mieszkańcom i przekształcenie jej w zieloną oś rekreacyjną.
