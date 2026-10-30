@@ -10,7 +10,8 @@ location: "ul. Katowicka i ul. Racławicka, Chorzów"
 isAlert: true
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/rusza-remont-dwoch-zatok-autobusowych-w-chorzowie-beda-zmiany-dla-kierowcow-i-pasazerow"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W Chorzowie ruszyły prace związane z modernizacją dwóch kluczowych zatok autobusowych. Roboty obejmują rejon ul. Katowickiej (w pobliżu ul. Nowej) oraz ul. Racławicką. Celem inwestycji jest poprawa infrastruktury przystankowej oraz komfortu pasażerów komunikacji miejskiej.
