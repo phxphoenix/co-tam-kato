@@ -10,7 +10,8 @@ location: "Schronisko dla Zwierząt w Gliwicach"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/dzieje-sie/ruszyly-zapisy-na-pazdziernikowy-bieg-na-6-lap"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Jesień to doskonały czas na aktywność na świeżym powietrzu, którą można połączyć z pomaganiem potrzebującym zwierzętom. Schronisko dla Zwierząt w Gliwicach ogłosiło zapisy na październikową odsłonę popularnego wydarzenia „Bieg na 6 łap”, które odbędzie się w sobotę, 31 października.
