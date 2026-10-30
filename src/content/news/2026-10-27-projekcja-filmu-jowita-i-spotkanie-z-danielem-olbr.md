@@ -10,7 +10,8 @@ location: "Teatr Old Timers Garage"
 isAlert: false
 sourceUrl: "https://www.biletomat.pl/wydarzenia/jowita-projekcja-filmu-i-spotkanie-z-danielem-olbrychskim-33226?eventId=353339"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Miłośnicy polskiego kina mają wyjątkową okazję do spędzenia wieczoru z legendą polskiego ekranu. W piątek, 6 listopada 2026 roku o godzinie 19:00, w katowickim Teatrze Old Timers Garage zaplanowano specjalne wydarzenie filmowe.
