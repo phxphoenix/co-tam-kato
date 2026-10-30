@@ -10,7 +10,8 @@ location: "Cmentarz Mater Dolorosa, ul. Piekarska 71, Bytom"
 isAlert: false
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/bytomianie-uczcza-pamiec-obroncow-lwowa-i-ofiar-oun-upa"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W piątek, 30 października 2026 roku o godzinie 15:00, pod Memoriałem Pamięci na cmentarzu Mater Dolorosa przy ul. Piekarskiej 71 w Bytomiu zorganizowane zostaną miejskie uroczystości upamiętniające obrońców Lwowa i polskie ofiary OUN-UPA.
