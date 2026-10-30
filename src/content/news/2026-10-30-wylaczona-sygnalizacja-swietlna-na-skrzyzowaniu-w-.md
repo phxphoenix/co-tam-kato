@@ -10,7 +10,8 @@ location: "Skrzyżowanie ul. Strzelców Bytomskich i Al. Legionów, Bytom"
 isAlert: true
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/uwaga-kierowcy-w-bytomiu-sygnalizacja-na-waznym-skrzyzowaniu-bedzie-wylaczona"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Kierowców poruszających się po Śródmieściu Bytomia czekają czasowe utrudnienia. W sobotę, 31 października 2026 roku, w godzinach od 6:00 do 14:00 wyłączona zostanie sygnalizacja świetlna na skrzyżowaniu ulicy Strzelców Bytomskich z Aleją Legionów.
