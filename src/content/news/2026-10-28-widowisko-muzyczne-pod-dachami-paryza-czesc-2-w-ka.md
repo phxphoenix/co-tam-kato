@@ -10,7 +10,8 @@ location: "Katowice Miasto Ogrodów"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/pod-dachami-paryza-wielkie-widowisko-muzyczne-juz-13-listopada-w-katowicach"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Już 13 listopada 2026 roku w Katowicach zagości widowisko muzyczne „Pod Dachami Paryża – część 2”. Wydarzenie odbędzie się w sali Katowice Miasto Ogrodów, przenosząc publiczność w świat francuskiej elegancji, romantyzmu i najsłynniejszych melodii znad Sekwany.
