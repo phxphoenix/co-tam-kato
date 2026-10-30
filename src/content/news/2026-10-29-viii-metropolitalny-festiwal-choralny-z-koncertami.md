@@ -10,7 +10,8 @@ location: "Różne lokalizacje (Tychy, Gliwice, Sosnowiec, Katowice)"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/dzieje-sie/400-wykonawcow-5-koncertow-przed-nami-viii-metropolitalny-festiwal-choralny"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Rozpoczyna się ósma edycja Metropolitalnego Festiwalu Chóralnego, która zgromadzi blisko 400 wykonawców w ramach pięciu wyjątkowych koncertów muzyki dawnej, sakralnej i a cappella. Wydarzenie potrwa od 31 października do 14 listopada 2026 roku.
