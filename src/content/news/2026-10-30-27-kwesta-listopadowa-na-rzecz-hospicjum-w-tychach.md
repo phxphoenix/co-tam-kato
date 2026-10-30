@@ -10,7 +10,8 @@ location: "Cmentarze w Tychach"
 isAlert: false
 sourceUrl: "https://mojetychy.pl/artykuly/artykul/27-kwesta-listopadowa-na-rzecz-hospicjum-w-tychach-2026-gdzie-spotkamy-wolontariuszy"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W nadchodzący weekend, 31 października oraz 1 listopada 2026 roku, na cmentarzach w Tychach i okolicznych miejscowościach przeprowadzona zostanie 27. Kwesta Listopadowa na rzecz tyskiego hospicjum.
