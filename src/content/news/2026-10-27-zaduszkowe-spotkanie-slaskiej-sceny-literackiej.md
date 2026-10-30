@@ -10,7 +10,8 @@ location: "Katowice Miasto Ogrodów"
 isAlert: false
 sourceUrl: "https://miasto-ogrodow.eu/news/view/id/1866"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Instytucja Kultury Katowice Miasto Ogrodów zaprasza na kolejne wydarzenie z cyklu Śląska Scena Literacka, które odbędzie się w poniedziałek, 2 listopada 2026 roku.
