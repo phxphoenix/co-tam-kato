@@ -10,7 +10,8 @@ location: "Pomnik Niepodległości w Tychach"
 isAlert: false
 sourceUrl: "https://mojetychy.pl/artykuly/artykul/swieto-niepodleglosci-w-tychach-2026-program-obchodow-11-listopada"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W środę, 11 listopada 2026 roku, Tychy uczczą 108. rocznicę odzyskania przez Polskę niepodległości. Władze miasta przygotowały bogaty program oficjalnych obchodów oraz towarzyszących wydarzeń kulturalnych dla mieszkańców w różnym wieku.
