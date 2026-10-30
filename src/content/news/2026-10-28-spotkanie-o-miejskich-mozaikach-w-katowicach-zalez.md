@@ -10,7 +10,8 @@ location: "Filia nr 3 Miejskiej Biblioteki Publicznej w Katowicach, ul. Gliwicka
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/katowice-w-kawalkach-w-zalezu-porozmawiaja-o-nowej-miejskiej-mozaice"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Miejska Biblioteka Publiczna w Katowicach zaprasza na spotkanie pt. „Katowice w kawałkach – mozaiki w mieście”. Wydarzenie odbędzie się w środę, 4 listopada 2026 roku o godzinie 17:00 w Filii nr 3 przy ul. Gliwickiej 93 na Załężu.
