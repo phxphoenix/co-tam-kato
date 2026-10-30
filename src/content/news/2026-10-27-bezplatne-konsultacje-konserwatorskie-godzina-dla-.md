@@ -10,7 +10,8 @@ location: "Starochorzowski Dom Kultury, Chorzów"
 isAlert: false
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/godzina-dla-zabytku-wraca-do-chorzowa-tym-razem-spotkanie-poza-urzedem"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Mieszkańcy Chorzowa planujący prace remontowe lub konserwatorskie w obiektach zabytkowych będą mieli okazję skorzystać z indywidualnych porad eksperckich. Kolejna edycja cyklu „Godzina dla zabytku” odbędzie się we wtorek, 3 listopada 2026 roku.
