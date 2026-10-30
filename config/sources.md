@@ -16,7 +16,7 @@
 
 - `homePageSize`: 36
 - `archivePageSize`: 24
-- `adminArchivePageSize`: 25
+- `adminArchivePageSize`: 100
 
 ---
 
