@@ -12,7 +12,8 @@ isForKids: true
 ageRange: "dla całych rodzin"
 sourceUrl: "https://pik.katowice.pl/teatr-magii-macieja-pola-slask/"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Już 13 listopada 2026 roku o godzinie 12:00 w Katowicach zagości widowisko przygotowane z myślą o dzieciach i ich opiekunach – Teatr Magii Macieja Pola.
