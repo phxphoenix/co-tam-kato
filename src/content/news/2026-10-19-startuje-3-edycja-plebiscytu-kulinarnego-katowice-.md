@@ -10,7 +10,7 @@ location: "Katowice"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/ktore-dania-podbija-katowice-startuje-iii-edycja-konkursu-katowice-na-talerzu"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Ruszyła trzecia edycja miejskiego plebiscytu kulinarnie promującego stolicę Górnego Śląska – „Katowice na talerzu”. W szranki mogą stanąć lokalne restauracje, kawiarnie, piekarnie, cukiernie oraz lodziarnie, które chcą zaprezentować mieszkańcom swoje autorskie dania i wypieki. Zgłoszenia przyjmowane są do 15 listopada 2026 roku.

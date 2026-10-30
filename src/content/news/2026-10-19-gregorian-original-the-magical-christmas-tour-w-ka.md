@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/gregorian-original-the-magical-christmas-tour,4043.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowicki Spodek przygotowuje się na niezwykłe wydarzenie muzyczne. W ramach trasy „The Magical Christmas Tour” wystąpi grupa Gregorian, znana ze swoich unikalnych interpretacji popularnych utworów w stylizacji chorałowej.

@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/the-magic-of-disco-festiwal-90-s,4084.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Miłośnicy muzyki tanecznej z lat 90. będą mieli okazję do wspólnej zabawy w katowickim Spodku. Zaplanowany na listopad 2027 roku festiwal „The Magic of Disco” zgromadzi na jednej scenie czołowych wykonawców tamtego okresu.

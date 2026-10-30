@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/kult-pomaranczowa-trasa-2026,3803.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Jesień tradycyjnie należy do zespołu KULT i kultowej Pomarańczowej Trasy. W sobotę, 14 listopada 2026 roku, formacja prowadzona przez Kazika Staszewskiego wystąpi przed śląską publicznością w katowickim Spodku.

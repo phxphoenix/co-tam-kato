@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/papa-roach-landmvrks-i-sleep-theory,4026.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Legendarna amerykańska grupa Papa Roach zawita do stolicy Górnego Śląska. Koncert odbędzie się 16 listopada 2026 roku w katowickim Spodku i będzie częścią międzynarodowej trasy koncertowej formacji znanej m.in. z hitu „Last Resort”.
