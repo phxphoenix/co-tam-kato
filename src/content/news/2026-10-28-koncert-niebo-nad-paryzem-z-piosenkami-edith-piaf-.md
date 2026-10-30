@@ -10,7 +10,8 @@ location: "Centrum Integracji Międzypokoleniowej w Chorzowie"
 isAlert: false
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/niebo-nad-paryzem-w-chorzowie-elzbieta-okupska-zaspiewa-utwory-edith-piaf"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Centrum Integracji Międzypokoleniowej w Chorzowie zaprasza mieszkańców na wyjątkowy wieczór z muzyką francuską. 6 listopada 2026 roku odbędzie się koncert „Niebo nad Paryżem”, podczas którego publiczność usłyszy najsłynniejsze utwory Edith Piaf.
