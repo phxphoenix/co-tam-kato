@@ -10,7 +10,8 @@ location: "Muzeum Śląskie w Katowicach"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/kukuczka-potega-marzen-nowa-wystawa-w-muzeum-slaskim"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W Muzeum Śląskim w Katowicach udostępniono dla zwiedzających nową ekspozycję czasową zatytułowaną „Kukuczka. Potęga marzeń”. Wystawa powstała we współpracy z Fundacją Wielki Człowiek i przybliża postać jednego z najważniejszych polskich alpinistów.
