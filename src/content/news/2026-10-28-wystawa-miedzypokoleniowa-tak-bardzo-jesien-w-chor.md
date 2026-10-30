@@ -10,7 +10,8 @@ location: "Chorzowskie Centrum Kultury, Galeria Antresola"
 isAlert: false
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/seniorzy-uczniowie-i-mieszkancy-dps-ow-stworzyli-wspolna-wystawe-zobaczymy-ja-w-chck"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Chorzowskie Centrum Kultury zaprasza na oficjalny wernisaż międzypokoleniowej wystawy prac plastycznych pt. „Tak bardzo jesień…”. Uroczyste otwarcie ekspozycji nastąpi we wtorek, 3 listopada 2026 roku o godzinie 12:00 w Galerii Antresola.
