@@ -10,7 +10,8 @@ location: "Rejon cmentarzy w Chorzowie"
 isAlert: true
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/zmiany-w-ruchu-na-wszystkich-swietych-te-ulice-w-chorzowie-beda-zamkniete"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W związku ze zbliżającym się dniem Wszystkich Świętych w Chorzowie wprowadzone zostaną czasowe zmiany w organizacji ruchu drogowego. Nowe zasady będą obowiązywać od 30 października do 2 listopada 2026 roku w rejonie trzech chorzowskich cmentarzy.
