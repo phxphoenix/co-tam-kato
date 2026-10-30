@@ -10,7 +10,8 @@ location: "Szkolne komisje wyborcze i Urząd Miejski w Gliwicach"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/unicef/kto-bedzie-glosem-mlodych-gliwiczan-wybory-juz-6-listopada"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Miejska Komisja Wyborcza w Gliwicach zarejestrowała 29 kandydatów, którzy zmierzą się w nadchodzących wyborach do Młodzieżowej Rady Miasta. Głosowanie odbędzie się 6 listopada w 33 szkołach ponadpodstawowych.
