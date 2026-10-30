@@ -10,7 +10,8 @@ location: "MDK Batory, Chorzów"
 isAlert: false
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/o-kinie-z-jednym-z-najbardziej-znanych-krytykow-tomasz-raczek-w-mdk-batory"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Jeden z najbardziej rozpoznawalnych polskich krytyków filmowych, publicysta i teatrolog Tomasz Raczek odwiedzi Miejski Dom Kultury Batory w Chorzowie. Wyjątkowe spotkanie poświęcone kulturze i sztuce filmowej odbędzie się w czwartek, 29 października 2026 roku o godzinie 18:00.
