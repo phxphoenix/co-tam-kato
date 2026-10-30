@@ -10,7 +10,8 @@ location: "Międzynarodowe Centrum Kongresowe w Katowicach"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/mlodzi-fotografowie-pokaza-katowice-wernisaz-miedzy-nami-a-slaskiem-w-mck"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Przez cały wrzesień młodzi twórcy przemierzali ulice Katowic, uwieczniając na zdjęciach swoje autorskie spojrzenie na miasto i Górny Śląsk. Efekty ich pracy będzie można podziwiać podczas wystawy fotograficznej zatytułowanej „Między nami a Śląskiem”.
