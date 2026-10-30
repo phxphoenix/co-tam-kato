@@ -10,7 +10,8 @@ location: "ul. Franciszkańska, Katowice"
 isAlert: true
 sourceUrl: "https://silesion.pl/budowa-kanalizacji-ul-franciszkanska-katowice-ligota/?utm_source=rss&utm_medium=rss&utm_campaign=budowa-kanalizacji-ul-franciszkanska-katowice-ligota"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Od poniedziałku, 2 listopada 2026 roku, w katowickiej Ligocie rozpoczynają się poważne prace drogowe. Na ulicy Franciszkańskiej rusza budowa nowej kanalizacji sanitarnej oraz deszczowej.
