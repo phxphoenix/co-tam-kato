@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "Bez ograniczeń"
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/the-harlem-globetrotters,3776.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Miłośnicy sportu i familijnej rozrywki mają powody do radości. Słynna na całym świecie ekipa koszykarskich artystów i akrobatów, The Harlem Globetrotters, powraca do Polski i zagra swój pokazowy mecz w Katowicach.

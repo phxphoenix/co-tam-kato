@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/festiwal-i-love-italia-al-bano,4149.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowicki Spodek zaprasza na wyjątkowe wydarzenie dla miłośników słonecznej Italii. Festiwal „I Love Italia” odbędzie się 11 marca 2028 roku, a główną atrakcją wieczoru będzie występ legendarnego wokalisty Al Bano, który wykona swoje największe przeboje.

@@ -10,7 +10,7 @@ location: "Teatr Śląski im. St. Wyspiańskiego"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/hamlet/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Śląski im. Stanisława Wyspiańskiego w Katowicach zaprasza na pokaz spektaklu „Tragedyjo Hamleta, ksiyncia Dynymarku”. Przedstawienie zaplanowano na sobotę, 7 listopada 2026 roku.

@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/chronicles-celebration-of-league-of-legends-music,4057.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowicki Spodek stanie się areną wyjątkowego wydarzenia dla entuzjastów gier komputerowych oraz muzyki symfonicznej i nowoczesnej. W sobotę, 21 listopada 2026 roku, odbędzie się widowisko „CHRONICLES: Celebration of League of Legends Music”.

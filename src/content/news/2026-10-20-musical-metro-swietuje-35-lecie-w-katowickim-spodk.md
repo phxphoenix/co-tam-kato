@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/musical-metro-35-lat,3935.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Kultowy polski musical „Metro” obchodzi jubileusz 35-lecia istnienia na scenie. Z tej okazji wyjątkowy spektakl zostanie wystawiony w katowickim Spodku, dając fanom z Górnego Śląska szansę na ponowne przeżycie emocji związanych z tym dziełem.
