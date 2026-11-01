@@ -10,7 +10,8 @@ location: "Chorzów"
 isAlert: true
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/podatek-nieruchomosci-w-gore-radni-zaglosowali-za"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Podczas sesji Rady Miasta w Chorzowie radni podjęli decyzję o uchwaleniu nowych, wyższych stawek podatku od nieruchomości. Nowe regulacje obejmą zarówno osoby prywatne posiadające lokale mieszkalne, jak i lokalnych przedsiębiorców.
