@@ -3,7 +3,7 @@ title: "Ogólnopolskie Mistrzostwa Szkół i Przedszkoli w szachach 2026 w Spodk
 publishedDate: 2026-10-11
 eventDate: 2026-10-27
 city: "katowice"
-category: "dla-dzieci"
+category: spodek
 status: "published"
 summary: "27 października w katowickim Spodku odbędą się Ogólnopolskie Mistrzostwa Szkół i Przedszkoli w szachach."
 location: "Spodek Katowice, al. Korfantego 35"

@@ -3,7 +3,7 @@ title: "The Legend of Rock Symphonic z Brucem Dickinsonem w Spodku"
 publishedDate: 2026-10-21
 eventDate: 2027-01-30
 city: "katowice"
-category: "kultura"
+category: spodek
 status: "published"
 summary: "30 stycznia 2027 r. w katowickim Spodku odbędzie się koncert „The Legend of Rock Symphonic”. Na scenie z orkiestrą wystąpi Bruce Dickinson, frontman legendarnego Iron Maiden."
 location: "Spodek Katowice"

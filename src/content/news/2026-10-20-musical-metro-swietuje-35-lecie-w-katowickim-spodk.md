@@ -3,7 +3,7 @@ title: "Musical Metro świętuje 35-lecie w katowickim Spodku"
 publishedDate: 2026-10-20
 eventDate: 2027-02-20
 city: "katowice"
-category: "kultura"
+category: spodek
 status: "published"
 summary: "Kultowy musical „Metro” w reżyserii Janusza Józefowicza i z muzyką Komedy zawita w lutym 2027 roku do Spodka."
 location: "Spodek Katowice"

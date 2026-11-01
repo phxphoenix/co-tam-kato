@@ -3,7 +3,7 @@ title: "27. edycja festiwalu MAYDAY Poland w katowickim Spodku"
 publishedDate: 2026-10-18
 eventDate: 2026-11-10
 city: "katowice"
-category: "wydarzenia"
+category: spodek
 status: "published"
 summary: "Legendarne święto muzyki elektronicznej powraca do Katowic. 27. edycja MAYDAY Poland odbędzie się 10 listopada."
 location: "Spodek Katowice"

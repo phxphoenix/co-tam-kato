@@ -3,7 +3,7 @@ title: "Jean-Michel Jarre | Oxygene & Beyond Tour w Spodku"
 publishedDate: 2026-10-21
 eventDate: 2027-09-21
 city: "katowice"
-category: "kultura"
+category: spodek
 status: "published"
 summary: "Legenda muzyki elektronicznej, Jean-Michel Jarre, wystąpi w katowickim Spodku w ramach trasy „Oxygene & Beyond Tour”."
 location: "Spodek Katowice"

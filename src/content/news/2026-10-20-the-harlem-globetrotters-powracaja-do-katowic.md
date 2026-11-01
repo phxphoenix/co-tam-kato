@@ -3,7 +3,7 @@ title: "THE HARLEM GLOBETROTTERS powracają do Katowic"
 publishedDate: 2026-10-20
 eventDate: 2027-05-20
 city: "katowice"
-category: "sport"
+category: spodek
 status: "published"
 summary: "Słynna drużyna koszykarskich akrobatów The Harlem Globetrotters wystąpi w maju 2027 roku w katowickim Spodku."
 location: "Spodek Katowice"

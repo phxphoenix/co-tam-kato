@@ -24,6 +24,9 @@ export const CATEGORY_VALUES = [
   'gastro',
   'sport',
   'alerty',
+  'nospr',
+  'spodek',
+  'teatr-rozrywki',
 ] as const;
 
 export const STATUS_VALUES = ['published', 'draft', 'deleted'] as const;

@@ -3,7 +3,7 @@ title: "Festiwal I Love Italia z udziałem Al Bano w Spodku"
 publishedDate: 2026-10-20
 eventDate: 2028-03-11
 city: "katowice"
-category: "kultura"
+category: spodek
 status: "published"
 summary: "Już w marcu 2028 roku katowicki Spodek wypełni się włoską muzyką. Gwiazdą wieczoru będzie legendarny Al Bano."
 location: "Spodek Katowice"

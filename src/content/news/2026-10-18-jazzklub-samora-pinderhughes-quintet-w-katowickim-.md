@@ -3,7 +3,7 @@ title: "JazzKLUB: Samora Pinderhughes Quintet w katowickim NOSPR"
 publishedDate: 2026-10-18
 eventDate: 2026-10-21
 city: "katowice"
-category: "kultura"
+category: nospr
 status: "published"
 summary: "W ramach cyklu JazzKLUB w Sali Kameralnej NOSPR wystąpi Samora Pinderhughes Quintet z gościnnym udziałem Eleny Pinderhughes."
 location: "NOSPR, Sala kameralna"

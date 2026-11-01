@@ -3,7 +3,7 @@ title: "Gala Muzyki Filmowej na Walentynki „Silesia in Love” w Spodku"
 publishedDate: 2026-10-25
 eventDate: 2027-02-14
 city: "katowice"
-category: "kultura"
+category: spodek
 status: "published"
 summary: "Katowicki Spodek zaprasza na walentynkowy koncert widowiskowy „Silesia in Love” prezentujący najpiękniejsze utwory muzyki filmowej."
 location: "Spodek Katowice"

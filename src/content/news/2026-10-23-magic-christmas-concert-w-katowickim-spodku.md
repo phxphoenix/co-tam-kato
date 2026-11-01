@@ -3,7 +3,7 @@ title: "Magic Christmas Concert w katowickim Spodku"
 publishedDate: 2026-10-23
 eventDate: 2026-12-27
 city: "katowice"
-category: "wydarzenia"
+category: spodek
 status: "published"
 summary: "Magiczny, świąteczny koncert zagości w katowickim Spodku tuż po Bożym Narodzeniu. Dostępne są już wejściówki na to wydarzenie."
 location: "Spodek Katowice"

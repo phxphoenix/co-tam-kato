@@ -3,7 +3,7 @@ title: "Koncert Behemoth, Dimmu Borgir i Dark Funeral w Spodku"
 publishedDate: 2026-10-18
 eventDate: 2026-10-25
 city: "katowice"
-category: "kultura"
+category: spodek
 status: "published"
 summary: "25 października w katowickim Spodku wystąpią ikony muzyki ekstremalnej: zespoły Behemoth, Dimmu Borgir oraz Dark Funeral."
 location: "Spodek Katowice"

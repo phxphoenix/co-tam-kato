@@ -3,7 +3,7 @@ title: "K-POP FEVER zagości w katowickim Spodku"
 publishedDate: 2026-10-25
 eventDate: 2027-01-27
 city: "katowice"
-category: "kultura"
+category: spodek
 status: "published"
 summary: "Wielkie święto koreańskiej popkultury nadchodzi do Katowic. W Spodku odbędzie się widowisko K-POP FEVER, a bilety trafiły do sprzedaży."
 location: "Spodek Katowice"

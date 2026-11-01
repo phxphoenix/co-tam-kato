@@ -3,7 +3,7 @@ title: "The Magic of Disco Festiwal 90’s w Spodku"
 publishedDate: 2026-10-19
 eventDate: 2027-11-20
 city: "katowice"
-category: "wydarzenia"
+category: spodek
 status: "published"
 summary: "Wielki festiwal muzyki lat 90. powraca do katowickiego Spodka. Na scenie pojawią się gwiazdy minionych dekad."
 location: "Spodek Katowice"

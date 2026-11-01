@@ -124,4 +124,19 @@ export const CATEGORIES: Record<string, CategoryInfo> = {
     iconName: 'AlertTriangle',
     badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
   },
+  nospr: {
+    name: 'NOSPR',
+    iconName: 'Music',
+    badgeClass: 'bg-violet-500/20 text-violet-300 border-violet-500/40',
+  },
+  spodek: {
+    name: 'Spodek',
+    iconName: 'Ticket',
+    badgeClass: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40',
+  },
+  'teatr-rozrywki': {
+    name: 'Teatr Rozrywki',
+    iconName: 'Drama',
+    badgeClass: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/40',
+  },
 };

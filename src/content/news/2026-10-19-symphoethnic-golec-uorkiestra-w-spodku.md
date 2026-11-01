@@ -3,7 +3,7 @@ title: "SYMPHOETHNIC Golec uOrkiestra w Spodku"
 publishedDate: 2026-10-19
 eventDate: 2027-03-13
 city: "katowice"
-category: "wydarzenia"
+category: spodek
 status: "published"
 summary: "Golec uOrkiestra wystąpi w Katowicach z wyjątkowym projektem Symphoethnic. Połączenie muzyki folkowej z symfonicznym brzmieniem."
 location: "Spodek Katowice"

@@ -3,7 +3,7 @@ title: "Jubileuszowy koncert Palucha „O MÓJ BORZE” w katowickim Spodku"
 publishedDate: 2026-10-15
 eventDate: 2026-10-17
 city: "katowice"
-category: "kultura"
+category: spodek
 status: "published"
 summary: "W katowickim Spodku odbędzie się jubileuszowy występ poznańskiego rapera Palucha pod hasłem „O MÓJ BORZE”."
 location: "Katowice, Spodek, al. Korfantego 35"

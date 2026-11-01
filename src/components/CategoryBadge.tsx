@@ -1,6 +1,6 @@
 import React from 'react';
 import { CATEGORIES } from '../lib/constants';
-import { Sparkles, Car, Palette, Utensils, Activity, AlertTriangle, Smile, Tag } from 'lucide-react';
+import { Sparkles, Car, Palette, Utensils, Activity, AlertTriangle, Smile, Tag, Music, Ticket, Drama } from 'lucide-react';
 
 interface CategoryBadgeProps {
   category: string;
@@ -14,6 +14,9 @@ const ICONS_MAP: Record<string, React.ReactNode> = {
   gastro: <Utensils className="w-3.5 h-3.5" />,
   sport: <Activity className="w-3.5 h-3.5" />,
   alerty: <AlertTriangle className="w-3.5 h-3.5" />,
+  nospr: <Music className="w-3.5 h-3.5" />,
+  spodek: <Ticket className="w-3.5 h-3.5" />,
+  'teatr-rozrywki': <Drama className="w-3.5 h-3.5" />,
 };
 
 export const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category }) => {

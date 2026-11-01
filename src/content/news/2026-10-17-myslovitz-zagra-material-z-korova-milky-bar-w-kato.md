@@ -3,7 +3,7 @@ title: "Myslovitz zagra materiał z „Korova Milky Bar” w katowickim Spodku"
 publishedDate: 2026-10-17
 eventDate: 2026-11-15
 city: "katowice"
-category: "kultura"
+category: spodek
 status: "published"
 summary: "Zespół Myslovitz zaprezentuje kultowy album „Korova Milky Bar” na koncercie w Spodku 15 listopada 2026 roku."
 location: "Katowice, Spodek"

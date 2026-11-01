@@ -3,7 +3,7 @@ title: "GREGORIAN ORIGINAL | The Magical Christmas Tour w Katowicach"
 publishedDate: 2026-10-19
 eventDate: 2027-12-11
 city: "katowice"
-category: "wydarzenia"
+category: spodek
 status: "published"
 summary: "Wyjątkowy świąteczny koncert formacji Gregorian w katowickim Spodku. Grupa zaprezentuje nastrojowy repertuar w unikalnych aranżacjach."
 location: "Spodek Katowice"

@@ -3,7 +3,7 @@ title: "KULT w Spodku w ramach Pomarańczowej Trasy 2026"
 publishedDate: 2026-10-19
 eventDate: 2026-11-14
 city: "katowice"
-category: "kultura"
+category: spodek
 status: "published"
 summary: "Legendarna grupa Kazika Staszewskiego zagra w katowickim Spodku 14 listopada 2026 roku. Bilety na koncert Pomarańczowej Trasy są dostępne od 146 zł."
 location: "Spodek Katowice"

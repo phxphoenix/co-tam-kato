@@ -3,7 +3,7 @@ title: "CHRONICLES: Celebration of League of Legends Music w Spodku"
 publishedDate: 2026-10-20
 eventDate: 2026-11-21
 city: "katowice"
-category: "wydarzenia"
+category: spodek
 status: "published"
 summary: "21 listopada 2026 roku w katowickim Spodku odbędzie się koncertowe widowisko CHRONICLES dedykowane muzyce ze świata League of Legends. Bilety trafiły już do sprzedaży."
 location: "Spodek Katowice"

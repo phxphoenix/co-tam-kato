@@ -3,7 +3,7 @@ title: "Koncert symfoniczny „Niegasnące opowieści” w katowickim NOSPR"
 publishedDate: 2026-10-26
 eventDate: 2026-10-29
 city: "katowice"
-category: "kultura"
+category: nospr
 status: "published"
 summary: "W czwartek, 29 października, w NOSPR odbędzie się koncert orkiestrowy pod dyrekcją Antony'ego Hermusa. Solistą wieczoru będzie wybitny klarnecista Martin Fröst."
 location: "NOSPR, Sala Koncertowa"

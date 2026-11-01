@@ -3,7 +3,7 @@ title: "Katowice Stand-up Festival™ 2026 w Spodku"
 publishedDate: 2026-10-18
 eventDate: 2026-10-31
 city: "katowice"
-category: "wydarzenia"
+category: spodek
 status: "published"
 summary: "W katowickim Spodku 31 października 2026 r. wystąpi czołówka polskiej sceny komediowej w ramach Katowice Stand-up Festival™. Bilety są dostępne w cenach od 129 zł."
 location: "Spodek Katowice"

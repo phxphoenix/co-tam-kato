@@ -3,7 +3,7 @@ title: "Papa Roach zagra w katowickim Spodku"
 publishedDate: 2026-10-19
 eventDate: 2026-11-16
 city: "katowice"
-category: "wydarzenia"
+category: spodek
 status: "published"
 summary: "Rockowa formacja Papa Roach wystąpi 16 listopada 2026 roku w Spodku. Zespołowi towarzyszyć będą goście specjalni: Landmvrks oraz Sleep Theory."
 location: "Spodek Katowice"

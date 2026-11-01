@@ -3,7 +3,7 @@ title: "Gala Muzyki Filmowej z orkiestrą i chórem w katowickim Spodku"
 publishedDate: 2026-10-11
 eventDate: 2026-10-24
 city: "katowice"
-category: "kultura"
+category: spodek
 status: "published"
 summary: "24 października w Spodku odbędzie się koncert muzyki filmowej z udziałem orkiestry symfonicznej oraz chóru."
 location: "Spodek Katowice, al. Korfantego 35"

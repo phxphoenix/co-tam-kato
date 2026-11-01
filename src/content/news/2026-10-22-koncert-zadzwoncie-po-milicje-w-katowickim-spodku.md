@@ -3,7 +3,7 @@ title: "Koncert „Zadzwońcie po Milicję!” w katowickim Spodku"
 publishedDate: 2026-10-22
 eventDate: 2026-11-20
 city: "katowice"
-category: "kultura"
+category: spodek
 status: "published"
 summary: "W katowickim Spodku zaplanowano widowisko muzyczne „Zadzwońcie po Milicję!”. Koncert odbędzie się 20 listopada 2026 roku, a wejściówki są dostępne od 143 zł."
 location: "Spodek Katowice"

@@ -3,7 +3,7 @@ title: "Jubileuszowy koncert „Królowie Życia” Skawińskiego i Tkaczyka w S
 publishedDate: 2026-10-16
 eventDate: 2026-10-18
 city: "katowice"
-category: "wydarzenia"
+category: spodek
 status: "published"
 summary: "Grzegorz Skawiński i Waldemar Tkaczyk świętują 50 lat na scenie. Jubileuszowy koncert odbędzie się 18 października w katowickim Spodku."
 location: "Spodek, Katowice"

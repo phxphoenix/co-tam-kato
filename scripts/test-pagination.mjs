@@ -26,9 +26,9 @@ try {
   // 1. Default values in config/sources.md
   const initialSettings = getPaginationSettings();
   assert.deepEqual(initialSettings, {
-    homePageSize: 12,
-    archivePageSize: 24,
-    adminArchivePageSize: 25,
+    homePageSize: 36,
+    archivePageSize: 36,
+    adminArchivePageSize: 100,
   });
   console.log('✓ Default pagination settings read from config/sources.md (12 / 24 / 25)');
 

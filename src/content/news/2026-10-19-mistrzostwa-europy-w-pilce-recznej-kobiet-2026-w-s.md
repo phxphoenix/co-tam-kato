@@ -3,7 +3,7 @@ title: "Mistrzostwa Europy w Piłce Ręcznej Kobiet 2026 w Spodku"
 publishedDate: 2026-10-19
 eventDate: 2026-12-03
 city: "katowice"
-category: "sport"
+category: spodek
 status: "published"
 summary: "W grudniu 2026 roku katowicki Spodek ugości najlepsze europejskie szczypiornistki w ramach Women’s EHF EURO 2026. Ceny biletów rozpoczynają się od 89 zł."
 location: "Spodek Katowice"

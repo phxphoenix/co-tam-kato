@@ -3,7 +3,7 @@ title: "Taneczny Spodek powróci do Katowic na początku 2027 roku"
 publishedDate: 2026-10-25
 eventDate: 2027-02-06
 city: "katowice"
-category: "wydarzenia"
+category: spodek
 status: "published"
 summary: "W katowickim Spodku zaplanowano kolejną odsłonę widowiska Taneczny Spodek 2027. Dostępne są już wejściówki na tę imprezę."
 location: "Spodek Katowice"
