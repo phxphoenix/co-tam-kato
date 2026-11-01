@@ -10,7 +10,7 @@ location: "Hala na Skarpie, Bytom"
 isAlert: false
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/ligowy-boks-wraca-do-bytomia-wielkie-emocje-w-hali-na-skarpie-30-pazdziernika"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Miłośnicy sportów walki mają powody do radości. W piątek, 30 października, ligowy boks oficjalnie powraca do Bytomia. W Hali na Skarpie odbędzie się starcie w ramach 12. kolejki Polskiej Ligi Boksu, w którym drużyna Concordia Knurów – skupiająca utalentowanych pięściarzy z Górnego Śląska – zmierzy się z zespołem z Torunia.

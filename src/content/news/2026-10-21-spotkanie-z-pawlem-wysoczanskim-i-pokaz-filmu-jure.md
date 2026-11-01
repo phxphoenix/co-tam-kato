@@ -10,7 +10,7 @@ location: "Teatr Old Timers Garage"
 isAlert: false
 sourceUrl: "https://www.biletomat.pl/wydarzenia/jurek--spotkanie-z-pawlem-wysoczanskim-32976?eventId=352028"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W sobotę, 24 października 2026 roku o godzinie 19:00 na scenie Teatru Old Timers Garage w Katowicach zaplanowano wieczór filmowo-dyskusyjny poświęcony postaci legendarnego himalaisty Jerzego Kukuczki. Głównym punktem programu będzie projekcja nagradzanego filmu dokumentalnego „Jurek”.

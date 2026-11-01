@@ -6,7 +6,7 @@ city: katowice
 category: kultura
 isForKids: false
 status: published
-archived: false
+archived: true
 manualOverride: false
 summary: >-
   Kolejna odsłona koncertu Ani Laíns w Katowicach. Wydarzenie skierowane do

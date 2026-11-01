@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/jean-michel-jarre-oxygene-beyond-tour,4151.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowicki Spodek przygotowuje się na wyjątkowe wydarzenie muzyczne. Już 21 września 2027 roku w legendarnej hali wystąpi Jean-Michel Jarre, jeden z pionierów i najbardziej znanych twórców muzyki elektronicznej na świecie. Artysta zaprezentuje swój program w ramach trasy koncertowej „Oxygene & Beyond Tour”.

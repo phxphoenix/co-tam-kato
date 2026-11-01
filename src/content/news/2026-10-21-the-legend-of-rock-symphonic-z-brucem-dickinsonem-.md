@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/the-legend-of-rock-symphonic-bruce-dickinson,3781.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 30 stycznia 2027 roku w Spodku odbędzie się widowisko muzyczne „The Legend of Rock Symphonic”. Główną gwiazdą tego symfoniczno-rockowego projektu będzie Bruce Dickinson, charyzmatyczny wokalista formacji Iron Maiden.

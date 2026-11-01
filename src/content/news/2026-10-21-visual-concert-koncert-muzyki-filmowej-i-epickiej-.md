@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/visual-concert-koncert-muzyki-filmowej-i-epickiej,4146.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowicki Spodek zaprasza na „VISUAL CONCERT”, czyli niezwykłe widowisko łączące potęgę muzyki filmowej i epickiej z nowoczesnymi multimediami. Wydarzenie zaplanowano na 6 marca 2027 roku. Na scenie pojawią się artyści wykonujący największe motywy z kinowych hitów.
