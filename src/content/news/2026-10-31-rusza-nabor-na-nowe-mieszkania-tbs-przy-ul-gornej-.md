@@ -10,7 +10,8 @@ location: "ul. Górna 8, Gliwice"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/nowe-mieszkania/nowe-tbs-y-na-wynajem-przy-gornej-8-rusza-nabor-na-mieszkania"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Od poniedziałku 2 listopada do 18 listopada ZBM I TBS będzie przyjmować wnioski o najem 11 mieszkań wykończonych pod klucz w nowym budynku przy ul. Górnej 8 w Gliwicach. Do dyspozycji najemców będą lokale dwu- i trzypokojowe z komórkami lokatorskimi oraz miejscami parkingowymi.
