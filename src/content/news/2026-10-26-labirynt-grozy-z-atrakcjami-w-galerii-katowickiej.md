@@ -10,7 +10,8 @@ location: "Galeria Katowicka"
 isAlert: false
 sourceUrl: "https://silesion.pl/labirynt-grozy-galeria-katowicka/?utm_source=rss&utm_medium=rss&utm_campaign=labirynt-grozy-galeria-katowicka"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Dla miłośników dreszczyku emocji w Galerii Katowickiej przygotowano specjalny interaktywny Labirynt Grozy. Przestrzeń wypełniona mrocznymi korytarzami, efektami dźwiękowymi oraz scenograficznymi angażuje aktorów wciągających odwiedzających w tajemniczą fabułę.
