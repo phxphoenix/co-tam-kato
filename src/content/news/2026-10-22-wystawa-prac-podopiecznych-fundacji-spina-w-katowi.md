@@ -10,7 +10,8 @@ location: "Uniwersytet SWPS w Katowicach"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/wyjatkowa-wystawa-w-katowicach-swoje-prace-zaprezentuja-podopieczni-fundacji-spina"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W niedzielę, 25 października, w Katowicach odbędzie się wyjątkowy wernisaż prac artystycznych przygotowany przez podopiecznych Fundacji Spina. Wydarzenie organizowane jest z okazji Międzynarodowego Dnia Spina Bifida.
