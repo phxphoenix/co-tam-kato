@@ -10,7 +10,8 @@ location: "Katowice"
 isAlert: false
 sourceUrl: "https://silesion.pl/parkingi-przy-cmentarzach-w-katowicach-1-listopada/?utm_source=rss&utm_medium=rss&utm_campaign=parkingi-przy-cmentarzach-w-katowicach-1-listopada"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Przed dniem Wszystkich Świętych w Katowicach udostępniono rozwiązanie ułatwiające kierowcom dojazd do cmentarzy. Dzięki bezpłatnej aplikacji mobilnej ParkujTutaj mieszkańcy mogą wcześniej zweryfikować listę i lokalizację parkingów przy nekropoliach.
