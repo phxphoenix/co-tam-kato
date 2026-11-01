@@ -12,7 +12,8 @@ isForKids: true
 ageRange: "dla wszystkich"
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/slaskie-zoo-w-listopadzie-godziny-otwarcia-1-2-i-11-listopada"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Śląski Ogród Zoologiczny w Chorzowie poinformował o specjalnych godzinach otwarcia w nadchodzące dni świąteczne. W Dzień Wszystkich Świętych, 1 listopada, placówka będzie całkowicie zamknięta dla odwiedzających.
