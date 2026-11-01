@@ -10,7 +10,8 @@ location: "Park Naukowo-Technologiczny Technopark Gliwice"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/dzieje-sie/od-ai-po-sztuke-techgliwice-po-raz-trzeci"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 We wtorek, 27 października, o godzinie 16:30 w Parku Naukowo-Technologicznym „Technopark Gliwice” (ul. Konarskiego 18c) odbędzie się trzecia odsłona spotkania TechGliwice. Wydarzenie gromadzi ekspertów IT, naukowców i przedsiębiorców.
