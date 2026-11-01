@@ -10,7 +10,8 @@ location: "Ruinie Teatru Victoria oraz inne lokalizacje w Gliwicach"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/dzieje-sie/swieto-niepodleglosci-w-gliwicach-natalia-kukulska-na-final-obchodow"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Gliwice szykują wyjątkowe obchody Narodowego Święta Niepodległości, które odbędą się 11 listopada 2026 roku. Mieszkańcy będą mogli wziąć udział w licznych wydarzeniach o charakterze patriotycznym, historycznym i kulturalnym.
