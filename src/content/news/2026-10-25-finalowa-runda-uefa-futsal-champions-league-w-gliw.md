@@ -10,7 +10,8 @@ location: "PreZero Arena Gliwice"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/podsumowanie-tygodnia/podsumowanie-tygodnia-19-24-pazdziernika"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 PreZero Arena Gliwice po raz kolejny stanie się areną międzynarodowych zmagań futsalowych na najwyższym poziomie. Mistrzowie Polski, Piast Gliwice Futsal, wywalczyli prawo organizacji finałowej rundy UEFA Futsal Champions League, w której powalczą o awans do grona 16 najlepszych drużyn Europy.
