@@ -12,7 +12,8 @@ isForKids: true
 ageRange: "5-10 lat"
 sourceUrl: "https://ateneumteatr.pl/pan-tom-buduje-dom/"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Śląski Teatr Lalki i Aktora Ateneum przygotował dla swojej publiczności kolejne wyjątkowe pokazy spektaklu „Pan Tom buduje dom”. Przedstawienia odbędą się w listopadzie na scenie Domu Kultury na osiedlu Witosa, stanowiąc doskonałą propozycję na kulturalne spędzenie weekendu z dziećmi.
