@@ -10,7 +10,8 @@ location: "Kościół pw. Chrystusa Króla w Gliwicach"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/dzieje-sie/final-xxxii-miedzynarodowego-festiwalu-organowego-w-gliwicach-zagra"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Miłośnicy muzyki organowej będą mieli okazję wziąć udział w finale XXXII Międzynarodowego Festiwalu Organowego im. Wojciecha Różaka w Gliwicach. W sobotni wieczór przy instrumentach zasiądzie Władysław Szymański.
