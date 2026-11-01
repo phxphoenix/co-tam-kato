@@ -10,7 +10,8 @@ location: "NOSPR, Sala Koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/nospr-s1-hermus-frost"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Narodowa Orkiestra Symfoniczna Polskiego Radia w Katowicach zaprasza na wyjątkowy wieczór muzyki klasycznej w ramach abonamentu S1. W czwartek, 29 października 2026 roku o godzinie 19:30, w Sali Koncertowej wystąpi NOSPR pod batutą Antony'ego Hermusa.
