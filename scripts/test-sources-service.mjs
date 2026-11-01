@@ -19,13 +19,13 @@ const originalSourcesMd = fs.readFileSync('config/sources.md', 'utf8');
 try {
   // 1. Get all sources
   const sources = getAllSources();
-  assert.equal(sources.length, 29, `Expected 29 sources, got ${sources.length}`);
-  console.log('✓ getAllSources returned 29 sources');
+  assert.equal(sources.length, 30, `Expected 30 sources, got ${sources.length}`);
+  console.log('✓ getAllSources returned 30 sources');
 
   // 2. Next ID
   const nextId = getNextSourceId(sources);
-  assert.equal(nextId, '30');
-  console.log('✓ getNextSourceId returned 30');
+  assert.equal(nextId, '31');
+  console.log('✓ getNextSourceId returned 31');
 
   // 3. URL Validation
   assert.ok(validateUrl('https://nospr.org.pl').valid);
@@ -63,7 +63,7 @@ try {
   assert.equal(item1v2.hints, 'Nowe wskazówki z pipe | oraz opis');
   console.log('✓ Edited fields of source #1 and verified pipe handling');
 
-  // 6. Add a new source (ID 30)
+  // 6. Add a new source (ID 31)
   const addRes = addSource({
     name: 'Nowe Źródło Testowe',
     type: 'DYNAMIC_WEB',
@@ -73,16 +73,16 @@ try {
     hints: 'Testowe wskazówki z | pipe',
   });
   assert.ok(addRes.success);
-  assert.equal(addRes.source.id, '30');
+  assert.equal(addRes.source.id, '31');
   assert.equal(addRes.source.type, 'DYNAMIC_WEB');
 
   const reloaded3 = getAllSources();
-  assert.equal(reloaded3.length, 30);
-  const item30 = reloaded3.find((s) => s.id === '30');
+  assert.equal(reloaded3.length, 31);
+  const item30 = reloaded3.find((s) => s.id === '31');
   assert.ok(item30);
   assert.equal(item30.name, 'Nowe Źródło Testowe');
   assert.equal(item30.hints, 'Testowe wskazówki z | pipe');
-  console.log('✓ Successfully added new source #30 to table');
+  console.log('✓ Successfully added new source #31 to table');
 
   // Verify preamble in file is intact
   const currentMd = fs.readFileSync('config/sources.md', 'utf8');

@@ -14,7 +14,7 @@ async function runTests() {
     const getData = await getRes.json();
     assert.ok(getData.success, 'GET response should have success: true');
     assert.ok(Array.isArray(getData.sources), 'sources should be an array');
-    assert.equal(getData.sources.length, 29, `Expected 29 sources, got ${getData.sources.length}`);
+    assert.equal(getData.sources.length, 30, `Expected 30 sources, got ${getData.sources.length}`);
     console.log(`✓ GET /api/sources returned ${getData.sources.length} sources`);
 
     // 2. PATCH /api/sources (Toggle status of #2)
@@ -45,13 +45,13 @@ async function runTests() {
     assert.equal(postRes.status, 201);
     const postData = await postRes.json();
     assert.ok(postData.success);
-    assert.equal(postData.source.id, '30');
+    assert.equal(postData.source.id, '31');
     assert.equal(postData.source.name, 'Klub Muzyczny Gwarek');
-    console.log('✓ POST /api/sources successfully added new source #30');
+    console.log('✓ POST /api/sources successfully added new source #31');
 
     // 4. Verify file content after API operations
     const fileAfterPost = fs.readFileSync('config/sources.md', 'utf8');
-    assert.ok(fileAfterPost.includes('| 30 | Klub Muzyczny Gwarek | WEB | https://gwarek.gliwice.pl | Muzyka / Koncerty | ACTIVE | Pobieraj koncerty klubowe \\| bilety |'));
+    assert.ok(fileAfterPost.includes('| 31 | Klub Muzyczny Gwarek | WEB | https://gwarek.gliwice.pl | Muzyka / Koncerty | ACTIVE | Pobieraj koncerty klubowe \\| bilety |'));
     assert.ok(fileAfterPost.includes('# Baza Źródeł Wydarzeń – Katowice i Metropolia GZM'));
     console.log('✓ Verified config/sources.md updated with correct row and escaped pipe');
 

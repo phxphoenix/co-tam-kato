@@ -6,12 +6,12 @@ console.log('Testing parseSourcesMarkdown...');
 
 // 1. Test parsing real config/sources.md
 const allSources = parseSourcesMarkdown();
-assert.ok(allSources.length >= 29, `Expected at least 29 sources, got ${allSources.length}`);
+assert.ok(allSources.length >= 30, `Expected at least 30 sources, got ${allSources.length}`);
 console.log(`✓ Parsed ${allSources.length} total sources from config/sources.md`);
 
 // 2. Test loading ACTIVE sources
 const activeSources = loadActiveSources();
-assert.ok(activeSources.length >= 29, `Expected at least 29 active sources, got ${activeSources.length}`);
+assert.ok(activeSources.length >= 30, `Expected at least 30 active sources, got ${activeSources.length}`);
 assert.ok(activeSources.every((s) => s.status === 'ACTIVE'), 'All sources must have status ACTIVE');
 console.log(`✓ Loaded ${activeSources.length} ACTIVE sources`);
 
@@ -57,7 +57,7 @@ console.log('✓ Serialization roundtrip preserves config/sources.md 100% exactl
 
 // 5. Test pipe escaping during serialization and parsing
 const sourceWithPipe = {
-  id: '30',
+  id: '31',
   name: 'Klub Muzyczny A|B',
   type: 'WEB',
   url: 'https://klub.pl',
@@ -67,8 +67,8 @@ const sourceWithPipe = {
 };
 const tableWithPipes = serializeSourcesMarkdown([...allSources, sourceWithPipe], originalSourcesMd);
 const parsedAgain = parseSourcesMarkdown(tableWithPipes);
-const found = parsedAgain.find((s) => s.id === '30');
-assert.ok(found, 'Added source #30 must be found');
+const found = parsedAgain.find((s) => s.id === '31');
+assert.ok(found, 'Added source #31 must be found');
 assert.equal(found.name, 'Klub Muzyczny A|B');
 assert.equal(found.category, 'Kluby | Muzyka');
 assert.equal(found.hints, 'Spodek | NOSPR | MCK Katowice');

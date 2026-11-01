@@ -58,9 +58,9 @@ try {
 
   const allSourcesAfterUpdate = getAllSources();
   const activeSourcesAfterUpdate = loadActiveSources();
-  assert.equal(allSourcesAfterUpdate.length, 29);
-  assert.equal(activeSourcesAfterUpdate.length, 29);
-  console.log('✓ Updating pagination settings in config/sources.md preserves all 29 sources');
+  assert.equal(allSourcesAfterUpdate.length, 30);
+  assert.equal(activeSourcesAfterUpdate.length, 30);
+  console.log('✓ Updating pagination settings in config/sources.md preserves all 30 sources');
 
   // 3. Validation tests
   assert.ok(!validatePaginationSettings({ homePageSize: 0 }).valid);
