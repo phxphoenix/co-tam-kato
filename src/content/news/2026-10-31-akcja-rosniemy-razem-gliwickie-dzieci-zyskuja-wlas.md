@@ -10,7 +10,8 @@ location: "Skwer przy ul. Nowy Świat w Gliwicach"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/karta-mieszkanca/15-dzieci-ma-juz-swoje-drzewa-ruszyla-miejska-akcja-rosniemy-razem"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Gliwicka inicjatywa „Rośniemy Razem – Drzewa Rocznika 2025” wchodzi w kolejną fazę. Po październikowych nasadzeniach, miasto zaprasza na kolejne uroczystości, które odbędą się 13 listopada na skwerze przy ul. Nowy Świat w Śródmieściu.
