@@ -10,7 +10,8 @@ location: "Cmentarze w Chorzowie"
 isAlert: false
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/dwa-cmentarze-wiele-historii-listopadowe-spacery-historyczne-po-nekropoliach-chorzowa"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Listopad to czas refleksji oraz powrotu do historii ludzi, którzy tworzyli tożsamość regionu. Muzeum Hutnictwa w Chorzowie przygotowało dla mieszkańców wyjątkową ofertę edukacyjną w postaci dwóch spacerów historycznych zatytułowanych „Pamięć miasta”.
