@@ -10,7 +10,8 @@ location: "Katowice"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/zmiana-czasu-na-zimowy-2026-pospimy-godzine-dluzej-ue-podala-daty-az-do-2031-roku"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Już w najbliższy weekend mieszkańcy aglomeracji katowickiej będą mogli pospać godzinę dłużej. W nocy z soboty, 24 października, na niedzielę, 25 października 2026 roku, nastąpi tradycyjna zmiana czasu z letniego na zimowy.
