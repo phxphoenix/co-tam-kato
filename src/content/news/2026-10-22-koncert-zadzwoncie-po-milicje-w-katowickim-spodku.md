@@ -10,7 +10,8 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/zadzwoncie-po-milicje,3886.html"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 Do katowickiego Spodka zawita projekt muzyczny „Zadzwońcie po Milicję!”. Koncert przypominający utwory z okresu polskiego rocka lat 80. odbędzie się w piątek, 20 listopada 2026 roku.
