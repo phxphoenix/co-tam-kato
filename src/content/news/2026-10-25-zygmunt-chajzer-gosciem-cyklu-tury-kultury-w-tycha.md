@@ -10,7 +10,7 @@ location: "Mediateka Tychy"
 isAlert: false
 sourceUrl: "https://mojetychy.pl/artykuly/artykul/zygmunt-chajzer-przyjedzie-do-tychow-spotkanie-z-legenda-telewizji-juz-4-listopada"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Mieszkańcy Tychów i okolic będą mieli okazję spotkać się z jedną z najpopularniejszych postaci polskiej telewizji i radia. Zygmunt Chajzer, znany m.in. z kultowego teleturnieju „Idź na całość”, będzie gościem Miejskiej Biblioteki Publicznej.

@@ -10,7 +10,7 @@ location: "Bielsko-Biała"
 isAlert: false
 sourceUrl: "https://pik.katowice.pl/pawel-domagala-koncert-slask/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Paweł Domagała zaprasza wszystkich miłośników dobrej muzyki na swoją najnowszą trasę koncertową zatytułowaną „Nadzieja”. Wydarzenie to jest okazją do usłyszenia na żywo zarówno dobrze znanych przebojów, jak i premierowych utworów z nadchodzącego albumu.

@@ -10,7 +10,7 @@ location: "Cmentarze w całej aglomeracji GZM"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/transport-gzm-ze-specjalnymi-liniami-i-wiekszymi-autobusami-na-wszystkich-swietych-zmiany-w-komunikacji-ztm"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W związku ze zbliżającym się dniem Wszystkich Świętych pasażerowie korzystający z Transportu GZM mogą liczyć na duże ułatwienia w podróżowaniu po aglomeracji. Od 24 października do 2 listopada ZTM uruchamia specjalne połączenia.

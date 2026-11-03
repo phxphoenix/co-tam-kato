@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "3-6 lat"
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/ogrod-malych-odkrywcow-w-bytomiu-dzieci-beda-poznawac-ekologie-w-praktyce"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Najmłodsi mieszkańcy Bytomia zyskali wyjątkowe miejsce łączące edukację z przyrodą. Przy Przedszkolu Miejskim nr 14 w dzielnicy Rozbark oficjalnie otwarto Ogród Małych Odkrywców, w którym przedszkolaki mogą uczyć się ekologii poprzez codzienne, praktyczne doświadczenia.
