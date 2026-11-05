@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/gala-muzyki-filmowej-na-walentynki-silesia-in-love,4142.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W katowickim Spodku odbędzie się wyjątkowe widowisko muzyczne poświęcone najsłynniejszym motywom romantycznym kina. Święto zakochanych uczci specjalna edycja Gali Muzyki Filmowej pod szyldem „Silesia in Love”.

@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/k-pop-fever,4059.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowicki Spodek otworzy swoje podwoje dla miłośników koreańskiej muzyki popularnej. W środę, 27 stycznia 2027 roku, w legendarnej hali odbędzie się wydarzenie K-POP FEVER, będące dynamicznym widowiskiem dedykowanym fanom k-popu i związanej z nim kultury estradowej.

@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "6-12 lat"
 sourceUrl: "https://pik.katowice.pl/ktoredy-do-yellowstone-spektakl-slask/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Gry i Ludzie zaprasza młodych widzów wraz z rodzicami na sceniczne widowisko inspirowane Bestsellerową książką i komiksem autorstwa Aleksandry i Daniela Mizielińskich. Spektakl „Którędy do Yellowstone?” to edukacyjna podróż pełna humoru i przyrodniczych ciekawostek.

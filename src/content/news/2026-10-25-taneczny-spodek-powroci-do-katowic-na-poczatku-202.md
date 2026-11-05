@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/taneczny-spodek-2027,4056.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Kolejna odsłona tanecznego show w stolicy Górnego Śląska została zaplanowana na 6 lutego 2027 roku. Tego dnia w Spodku odbędzie się „Taneczny Spodek 2027”, gromadzący entuzjastów tańca, zróżnicowanych rytmów i wspólnej zabawy.
