@@ -10,7 +10,7 @@ location: "Lokale wyborcze w Katowicach"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/wybory-do-rad-dzielnic-w-katowicach-8-listopada-mieszkancy-pojda-do-urn"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już w niedzielę, 8 listopada 2026 roku, mieszkańcy piętnastu katowickich dzielnic będą mieli okazję zdecydować o tym, kto będzie ich reprezentował w lokalnych strukturach samorządowych. Tego dnia odbędą się wybory do Rad Dzielnic.
