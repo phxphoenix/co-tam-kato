@@ -18,6 +18,7 @@ import { CityBadge } from './CityBadge';
 import { CategoryBadge } from './CategoryBadge';
 import { useFavorites } from '../lib/favorites';
 import { ArchiveButton, ArchiveAIcon } from './ArchiveButton';
+import { ShareButton } from './ShareButton';
 import { useArchive, SYNC_RESULT_EVENT, type ArchiveState, type ArchiveSyncResult } from '../lib/archive';
 import { PaginationBar } from './PaginationBar';
 import {
@@ -897,6 +898,14 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
                             {item.ageRange || 'Dzieci 4-10 lat'}
                           </span>
                         )}
+
+                        {/* Przycisk udostępniania linku do artykułu */}
+                        <ShareButton
+                          slug={item.slug}
+                          title={item.title}
+                          summary={item.summary}
+                          size="sm"
+                        />
 
                         {/* Dedykowany przycisk archiwizacji z literą „A” (AC 1, AC 3, AC 5) */}
                         <ArchiveButton

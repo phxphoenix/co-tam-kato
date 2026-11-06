@@ -5,6 +5,7 @@ import { CityBadge } from '../../components/CityBadge';
 import { CategoryBadge } from '../../components/CategoryBadge';
 import { FavoriteButton } from '../../components/FavoriteButton';
 import { ArchiveButton } from '../../components/ArchiveButton';
+import { ShareButton } from '../../components/ShareButton';
 import { Calendar, MapPin, ExternalLink, ArrowLeft, Bot, AlertTriangle, Sparkles, Smile, Archive } from 'lucide-react';
 
 export async function getStaticPaths() {
@@ -48,6 +49,7 @@ const relatedNews = allNews
 <BaseLayout
   title={`${entry.data.title} | Co Tam KATO`}
   description={entry.data.summary}
+  ogType="article"
 >
   <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10">
     <!-- Przycisk powrotu -->
@@ -91,8 +93,16 @@ const relatedNews = allNews
           )}
         </div>
 
-        {/* Przyciski Archiwum oraz Ulubione u góry artykułu */}
-        <div class="flex items-center gap-2.5">
+        {/* Przyciski Udostępnij, Archiwum oraz Ulubione u góry artykułu */}
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <ShareButton
+            client:load
+            slug={slug}
+            title={entry.data.title}
+            summary={entry.data.summary}
+            showLabel={true}
+            size="md"
+          />
           <ArchiveButton
             client:load
             slug={slug}
@@ -157,6 +167,14 @@ const relatedNews = allNews
         )}
 
         <div class="flex items-center gap-3 flex-wrap">
+          <ShareButton
+            client:load
+            slug={slug}
+            title={entry.data.title}
+            summary={entry.data.summary}
+            showLabel={true}
+            size="sm"
+          />
           <ArchiveButton
             client:load
             slug={slug}
@@ -192,19 +210,33 @@ const relatedNews = allNews
           Zobacz również z tej samej okolicy
         </h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {relatedNews.map((item) => (
-            <a
-              href={`${base}wpis/${item.id.replace(/\.(md|mdx)$/, '')}`}
-              class="block p-5 rounded-2xl bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 transition-all group"
-            >
-              <h4 class="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors line-clamp-1 mb-2 text-sm">
-                {item.data.title}
-              </h4>
-              <p class="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
-                {item.data.summary}
-              </p>
-            </a>
-          ))}
+          {relatedNews.map((item) => {
+            const relatedSlug = item.id.replace(/\.(md|mdx)$/, '');
+            return (
+              <article class="relative p-5 rounded-2xl bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 transition-all group flex flex-col justify-between">
+                <div class="flex items-start justify-between gap-3 mb-2">
+                  <h4 class="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors line-clamp-1 text-sm">
+                    <a href={`${base}wpis/${relatedSlug}`} class="hover:underline">
+                      {item.data.title}
+                    </a>
+                  </h4>
+                  <ShareButton
+                    client:load
+                    slug={relatedSlug}
+                    title={item.data.title}
+                    summary={item.data.summary}
+                    size="sm"
+                    className="flex-shrink-0"
+                  />
+                </div>
+                <a href={`${base}wpis/${relatedSlug}`} class="block">
+                  <p class="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                    {item.data.summary}
+                  </p>
+                </a>
+              </article>
+            );
+          })}
         </div>
       </div>
     )}

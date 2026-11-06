@@ -7,6 +7,7 @@ import '../styles/global.css';
 interface Props {
   title?: string;
   description?: string;
+  ogType?: 'website' | 'article';
   alerts?: Array<{
     id: string;
     title: string;
@@ -19,11 +20,13 @@ interface Props {
 const {
   title = 'Co Tam KATO | Codzienne wydarzenia i aktualności Katowice i okolica',
   description = 'Najświeższe informacje z Katowic, Chorzowa, Sosnowca, Siemianowic i miast ościennych. Wydarzenia, koncerty, utrudnienia drogowe, alerty i kulinaria.',
+  ogType = 'website',
   alerts = [],
 } = Astro.props;
 
 const rawBase = import.meta.env.BASE_URL || '/';
 const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+const canonicalUrl = Astro.url ? Astro.url.href : undefined;
 ---
 
 <!doctype html>
@@ -37,9 +40,11 @@ const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
     <!-- SEO Meta Tags -->
     <title>{title}</title>
     <meta name="description" content={description} />
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
     <meta property="og:locale" content="pl_PL" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
