@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "dla dzieci, młodzieży i dorosłych"
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/bezplatny-tenis-stolowy-w-katowicach-zajecia-dla-dzieci-mlodziezy-i-doroslych"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Integracyjny Klub Sportowy Akademia Tenisa Stołowego Katowice we współpracy ze Śląskim Związkiem Tenisa Stołowego organizuje bezpłatne zajęcia z tenisa stołowego dla mieszkańców miasta. Oferta skierowana jest zarówno do stawiania pierwszych kroków przy stole, jak i doskonalenia techniki gry.

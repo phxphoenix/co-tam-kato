@@ -10,7 +10,7 @@ location: "Katowice (Kostuchna)"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/tramwaj-na-poludnie-w-katowicach-coraz-blizej-wybrano-wykonawce"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Władze Katowic dokonały wyboru wykonawcy strategicznej inwestycji transportowej w mieście. Firma Budimex S.A., składając ofertę opiewającą na 356,8 mln zł, została wyznaczona do realizacji tzw. Tramwaju na Południe.
