@@ -10,7 +10,7 @@ location: "ul. Frycza Modrzewskiego, Bytom-Szombierki"
 isAlert: false
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/nowy-parking-w-szombierkach-juz-gotowy-skorzystaja-odwiedzajacy-cmentarz"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Zakończyła się budowa nowego parkingu przy cmentarzu parafialnym przy ul. Frycza Modrzewskiego w Bytomiu-Szombierkach. Inwestycja kosztowała prawie 370 tys. zł i została zrealizowana w ramach Bytomskiego Budżetu Obywatelskiego.

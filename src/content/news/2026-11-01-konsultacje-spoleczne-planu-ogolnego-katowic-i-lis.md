@@ -10,7 +10,7 @@ location: "Katowice"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/plan-ogolny-katowic-w-listopadzie-kolejne-spotkania-z-mieszkancami-znamy-terminy"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Urząd Miasta Katowice przypomina o trwających konsultacjach społecznych dotyczących projektu nowego Planu Ogólnego Miasta. Dokument ten zdefiniuje przyszłe kierunki zagospodarowania przestrzennego poszczególnych dzielnic.

@@ -10,7 +10,7 @@ location: "Katowice-Bogucice, osiedle Wajdy"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/paktofonika-wraca-do-bogucic-jestes-bogiem-na-wyjatkowym-muralu-w-katowicach"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Na osiedlu Wajdy w katowickich Bogucicach odsłonięto wyjątkowy mural nawiązujący do legendarnej grupy hip-hopowej Paktofonika oraz filmu „Jesteś Bogiem”. Dzieło stworzył katowicki artysta Karol Gawroński w ramach projektu Śląskiego Szlaku Filmowego.
