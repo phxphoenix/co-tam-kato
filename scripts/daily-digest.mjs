@@ -805,6 +805,224 @@ export function parsePikDzieci(html, baseUrl = 'https://pik.katowice.pl/dzieci/'
   return items;
 }
 
+function cleanAteneumShowTitle(rawTitle = '') {
+  return stripHtml(String(rawTitle || ''))
+    .replace(/^\d{1,2}:\d{2}\s*[-–—]\s*/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Parser dla Teatru Ateneum w Katowicach (https://ateneumteatr.pl/events/ oraz strona główna).
+ * Wyodrębnia nadchodzące spektakle familijne i lalkowe z datą, godziną i adresem sceny,
+ * odrzuca wydarzenia przeszłe oraz komunikaty techniczne (np. "Widownia w remoncie") i grupuje powtórki.
+ */
+export function parseTeatrAteneum(htmlPages, baseUrl = 'https://ateneumteatr.pl/events/', options = {}) {
+  const {
+    now = new Date(),
+    defaultCity = 'katowice',
+  } = options;
+
+  const pages = Array.isArray(htmlPages) ? htmlPages : [htmlPages];
+  const validPages = pages.filter((p) => typeof p === 'string' && p.length > 0);
+  if (validPages.length === 0) return [];
+
+  const nowTs = now instanceof Date ? now.getTime() : Date.now();
+  const todayIso = toIsoDate(now) || new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(new Date(nowTs));
+
+  const tooltipByUrl = new Map();
+  const rawPerformances = [];
+
+  for (const html of validPages) {
+    // 1. Zbierz dodatkowe opisy i autorów z tooltipów kart tribe_events (dopasowanie po URL)
+    const tooltips = [...html.matchAll(/<div\b[^>]*class=["'][^"']*tribe-events-calendar-month__calendar-event-tooltip\b[^"']*["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/gi)];
+    for (const [, tooltipBody] of tooltips) {
+      const btnHref = tooltipBody.match(/<a\b[^>]*href=["']([^"']+)["'][^>]*class=["'][^"']*tooltip-button/i)?.[1]
+        || tooltipBody.match(/class=["'][^"']*tooltip-button[^"']*["'][^>]*href=["']([^"']+)["']/i)?.[1];
+      const titleHref = tooltipBody.match(/<h5\b[^>]*class=["'][^"']*tooltip-title[^"']*["'][^>]*>\s*<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i);
+      const artist = tooltipBody.match(/<h6\b[^>]*class=["'][^"']*tooltip-artist[^"']*["'][^>]*>([\s\S]*?)<\/h6>/i)?.[1];
+      const dateText = tooltipBody.match(/<time\b[^>]*class=["'][^"']*tooltip-date[^"']*["'][^>]*>([\s\S]*?)<\/time>/i)?.[1];
+      const place = tooltipBody.match(/<span\b[^>]*class=["'][^"']*tooltip-place[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1];
+      const excerpt = tooltipBody.match(/<div\b[^>]*class=["'][^"']*tooltip-excerpt[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1];
+
+      const keyUrl = btnHref || titleHref?.[1];
+      if (keyUrl) {
+        const normKey = normalizeSourceUrl(keyUrl);
+        if (normKey) {
+          tooltipByUrl.set(normKey, {
+            artist: artist ? stripHtml(artist) : '',
+            cleanTitle: titleHref ? cleanAteneumShowTitle(titleHref[2]) : '',
+            dateText: dateText ? stripHtml(dateText) : '',
+            place: place ? stripHtml(place) : '',
+            excerpt: excerpt ? stripHtml(excerpt) : '',
+          });
+        }
+      }
+    }
+
+    // 2. Ekstrakcja ze strukturalnego JSON-LD (tribe_events)
+    let foundJsonLd = false;
+    for (const ldMatch of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+      let parsed;
+      try {
+        parsed = JSON.parse(ldMatch[1].trim());
+      } catch {
+        continue;
+      }
+      const list = Array.isArray(parsed) ? parsed : [parsed];
+      for (const ev of list) {
+        if (!ev || ev['@type'] !== 'Event' || !ev.url || !ev.startDate) continue;
+        foundJsonLd = true;
+
+        const rawName = stripHtml(String(ev.name || ''));
+        if (/widownia\s+w\s+remoncie|przerwa\s+techniczna|nieczynne/i.test(rawName)) continue;
+
+        const startIso = String(ev.startDate).slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(startIso) || startIso < todayIso) continue;
+
+        const timeMatch = String(ev.startDate).match(/T(\d{2}:\d{2})/);
+        const timeStr = timeMatch ? timeMatch[1] : '';
+        if (!ev.location?.name && timeStr === '00:00') continue;
+
+        let fullLink;
+        try {
+          fullLink = String(ev.url).startsWith('http') ? String(ev.url) : new URL(String(ev.url), baseUrl).toString();
+        } catch {
+          continue;
+        }
+
+        const normLink = normalizeSourceUrl(fullLink);
+        const tooltip = tooltipByUrl.get(normLink) || {};
+        const title = cleanAteneumShowTitle(rawName) || tooltip.cleanTitle;
+        if (!title) continue;
+
+        const sceneName = stripHtml(String(ev.location?.name || tooltip.place || 'Scena Ateneum'));
+        const street = stripHtml(String(ev.location?.address?.streetAddress || ''));
+        const venueLabel = street && !sceneName.toLowerCase().includes(street.toLowerCase())
+          ? `${sceneName} (${street})`
+          : sceneName;
+
+        const excerpt = stripHtml(String(ev.description || tooltip.excerpt || ''));
+        const artist = tooltip.artist || '';
+
+        rawPerformances.push({
+          title,
+          link: fullLink,
+          eventDate: startIso,
+          timeStr,
+          venueLabel,
+          excerpt,
+          artist,
+        });
+      }
+    }
+
+    // 3. Fallback: karty tribe_events HTML lub slider na stronie głównej (.carousel-item)
+    if (!foundJsonLd) {
+      for (const cardMatch of html.matchAll(/<article\b[^>]*class=["'][^"']*tribe-events-calendar-month__calendar-event\b[^"']*["'][^>]*>([\s\S]*?)<\/article>/gi)) {
+        const body = cardMatch[1];
+        const titleLink = body.match(/<a\b[^>]*href=["']([^"']+)["'][^>]*class=["'][^"']*tribe-events-calendar-month__calendar-event-title-link/i);
+        const tooltipDate = body.match(/<time\b[^>]*class=["'][^"']*tooltip-date[^"']*["'][^>]*>([\s\S]*?)<\/time>/i)?.[1];
+        const tooltipPlace = body.match(/<span\b[^>]*class=["'][^"']*tooltip-place[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1];
+        const tooltipExcerpt = body.match(/<div\b[^>]*class=["'][^"']*tooltip-excerpt[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1];
+        const href = titleLink?.[1];
+        const rawTitle = titleLink ? body.match(/class=["'][^"']*tribe-events-calendar-month__calendar-event-title-link[^"']*["'][^>]*>([\s\S]*?)<\/a>/i)?.[1] : '';
+        const title = cleanAteneumShowTitle(rawTitle);
+        const dateStr = tooltipDate ? stripHtml(tooltipDate) : '';
+        const isoDate = extractPolishDateFromText(dateStr);
+        if (!href || !title || !isoDate || isoDate < todayIso) continue;
+        const timeStr = dateStr.match(/\b(\d{1,2}:\d{2})\b/)?.[1] || '';
+        const fullLink = href.startsWith('http') ? href : new URL(href, baseUrl).toString();
+        rawPerformances.push({
+          title,
+          link: fullLink,
+          eventDate: isoDate,
+          timeStr,
+          venueLabel: tooltipPlace ? stripHtml(tooltipPlace) : 'Teatr Ateneum, Katowice',
+          excerpt: tooltipExcerpt ? stripHtml(tooltipExcerpt) : '',
+          artist: '',
+        });
+      }
+
+      if (rawPerformances.length === 0) {
+        for (const slideMatch of html.matchAll(/<div\b[^>]*class=["'][^"']*\bcarousel-item\b[^"']*["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>/gi)) {
+          const slide = slideMatch[1];
+          const titleLink = slide.match(/<div\b[^>]*class=["'][^"']*carousel-title[^"']*["'][^>]*>\s*<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i);
+          const place = slide.match(/<p\b[^>]*class=["'][^"']*carousel-place[^"']*["'][^>]*>([\s\S]*?)<\/p>/i)?.[1];
+          const dt = slide.match(/<p\b[^>]*class=["'][^"']*carousel-date-time[^"']*["'][^>]*>([\s\S]*?)<\/p>/i)?.[1];
+          if (!titleLink || !dt) continue;
+          const dtText = stripHtml(dt);
+          const isoDate = extractPolishDateFromText(dtText);
+          if (!isoDate || isoDate < todayIso) continue;
+          const timeStr = dtText.match(/\b(\d{1,2}:\d{2})\b/)?.[1] || '';
+          const fullLink = titleLink[1].startsWith('http') ? titleLink[1] : new URL(titleLink[1], baseUrl).toString();
+          rawPerformances.push({
+            title: cleanAteneumShowTitle(titleLink[2]),
+            link: fullLink,
+            eventDate: isoDate,
+            timeStr,
+            venueLabel: place ? stripHtml(place) : 'Teatr Ateneum, Katowice',
+            excerpt: '',
+            artist: '',
+          });
+        }
+      }
+    }
+  }
+
+  const grouped = new Map();
+  const seenOccurrenceKeys = new Set();
+
+  rawPerformances.sort((a, b) => a.eventDate.localeCompare(b.eventDate) || a.timeStr.localeCompare(b.timeStr));
+
+  for (const perf of rawPerformances) {
+    const occKey = `${normalizeTitle(perf.title)}::${perf.eventDate}::${perf.timeStr}`;
+    if (seenOccurrenceKeys.has(occKey)) continue;
+    seenOccurrenceKeys.add(occKey);
+
+    const groupKey = `${normalizeTitle(perf.title)}::${normalizeTitle(perf.venueLabel)}`;
+    if (!grouped.has(groupKey)) {
+      grouped.set(groupKey, {
+        ...perf,
+        extraSlots: [],
+      });
+    } else {
+      const entry = grouped.get(groupKey);
+      entry.extraSlots.push(perf.timeStr ? `${perf.eventDate} (${perf.timeStr})` : perf.eventDate);
+      if (!entry.excerpt && perf.excerpt) entry.excerpt = perf.excerpt;
+      if (!entry.artist && perf.artist) entry.artist = perf.artist;
+    }
+  }
+
+  const items = [];
+  for (const entry of grouped.values()) {
+    const slotText = entry.timeStr ? `${entry.eventDate}, godz. ${entry.timeStr}` : entry.eventDate;
+    const extraText = entry.extraSlots.length > 0
+      ? ` Pozostałe terminy: ${entry.extraSlots.slice(0, 6).join(', ')}.`
+      : '';
+    const artistText = entry.artist ? ` Autor/twórca: ${entry.artist}.` : '';
+    const excerptText = entry.excerpt ? ` ${entry.excerpt}` : '';
+    const ageRange = extractAgeRange(`${entry.title} ${entry.excerpt}`);
+    const ageText = ageRange ? ` Wiek uczestników: ${ageRange}.` : '';
+
+    items.push({
+      title: entry.title,
+      link: entry.link,
+      description: `Spektakl familijny w Śląskim Teatrze Lalki i Aktora Ateneum w Katowicach: ${entry.title}. Najbliższy termin: ${slotText}. Miejsce: ${entry.venueLabel}.${artistText}${excerptText}${ageText}${extraText}`.replace(/\s+/g, ' ').trim(),
+      eventDate: entry.eventDate,
+      pubDate: undefined,
+      defaultCity,
+      defaultCategory: 'dla-dzieci',
+      isForKids: true,
+      ...(ageRange ? { ageRange } : {}),
+      isEvent: true,
+    });
+  }
+
+  items.sort((a, b) => a.eventDate.localeCompare(b.eventDate));
+  return items;
+}
+
 export function parseSpodekOrMck(html, baseUrl, defaultCity = 'katowice') {
   const eventItems = [...html.matchAll(/<li\b[^>]*>\s*<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>\s*<\/li>/gi)];
   const items = [];
@@ -1678,6 +1896,10 @@ export async function processSource(source) {
     const isPikDzieci =
       source.id === '14' ||
       lowerUrl.includes('pik.katowice.pl/dzieci');
+    const isTeatrAteneum =
+      source.id === '15' ||
+      lowerName.includes('ateneum') ||
+      lowerUrl.includes('ateneumteatr.pl');
 
     if (isPikDzieci) {
       const now = new Date();
@@ -1700,6 +1922,54 @@ export async function processSource(source) {
         }));
       }
       console.warn(`  [${source.id}] parsePikDzieci zwrócił 0 pozycji – przełączam na tryb ogólny.`);
+    }
+
+    if (isTeatrAteneum) {
+      const now = new Date();
+      const targetMonths = getUpcomingWarsawMonths(now, 2);
+      const origin = new URL(source.url).origin;
+      const eventsUrls = [
+        `${origin}/events/`,
+        `${origin}/events/${targetMonths[1]}/`,
+      ];
+
+      const settled = await Promise.allSettled(
+        eventsUrls.map(async (pageUrl) => {
+          const r = await fetchWithTlsAia(pageUrl, {
+            headers: { 'User-Agent': BOT_USER_AGENT, 'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8' },
+            signal: AbortSignal.timeout(12000),
+          });
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.text();
+        })
+      );
+
+      let htmlPages = settled
+        .filter((res) => res.status === 'fulfilled' && res.value)
+        .map((res) => res.value);
+
+      if (htmlPages.length === 0) {
+        const homeRes = await fetchWithTlsAia(source.url, {
+          headers: { 'User-Agent': BOT_USER_AGENT, 'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8' },
+          signal: AbortSignal.timeout(12000),
+        });
+        if (!homeRes.ok) throw new Error(`HTTP ${homeRes.status}`);
+        htmlPages = [await homeRes.text()];
+      }
+
+      prefetchedHtml = htmlPages[0];
+      const items = parseTeatrAteneum(htmlPages, eventsUrls[0], { now, defaultCity: city });
+      if (items.length > 0) {
+        return items.map((item) => ({
+          ...item,
+          sourceId: source.id,
+          sourceName: source.name,
+          sourceType: 'WEB',
+          sourceCategory: source.category,
+          parsingHints: source.hints,
+        }));
+      }
+      console.warn(`  [${source.id}] parseTeatrAteneum zwrócił 0 pozycji – przełączam na tryb ogólny.`);
     }
 
     if (isNosprKalendarz) {
