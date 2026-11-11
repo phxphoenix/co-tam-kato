@@ -1,15 +1,21 @@
 import assert from 'node:assert/strict';
 import {
   MAX_ARTICLES,
+  MAX_CANDIDATES,
   MAX_PROMPT_ITEMS,
   getUpcomingWarsawMonths,
   parseNosprKalendarz,
   parseNosprAktualnosci,
   parseTeatrSlaski,
   parseTeatrRozrywki,
+  isTicketedVenueItem,
+  isHighPriorityItem,
   isHighPriorityTicketSource,
+  extractCycleName,
   interleaveWebItems,
   selectPromptItems,
+  buildDigestPrompt,
+  computeBalanceBudget,
   getVenueGroup,
   validateArticle,
 } from './daily-digest.mjs';
@@ -410,17 +416,71 @@ console.log('\n--- 5. Parser parseTeatrRozrywki (Teatr Rozrywki Chorzów) ---');
 console.log('✅ parseTeatrRozrywki poprawnie pomija minione daty i pokazy z "Brak miejsc" oraz grupuje wielokrotne terminy spektakli.');
 
 // ---------------------------------------------------------------------------
-// 6. Priorytetyzacja w selectPromptItems i interleaveWebItems (NOSPR, Spodek, Teatr Śląski, Teatr Rozrywki)
+// 6. Priorytetyzacja w selectPromptItems i interleaveWebItems (§5.2 i §5.3)
 // ---------------------------------------------------------------------------
-console.log('\n--- 6. Priorytetyzacja NOSPR, Spodka, Teatru Śląskiego i Teatru Rozrywki w selectPromptItems ---');
+console.log('\n--- 6. Selektywne highPriority (§5.2) i limit lead w selectPromptItems (§5.3) ---');
 
 {
+  // isTicketedVenueItem bada przynależność do grupy biletowanej (4 instytucje)
+  assert.equal(isTicketedVenueItem({ sourceId: '7', sourceName: 'NOSPR (Kalendarz)' }), true);
+  assert.equal(isTicketedVenueItem({ sourceId: '30', sourceName: 'NOSPR – Aktualności' }), true);
+  assert.equal(isTicketedVenueItem({ sourceId: '5', sourceName: 'Spodek Katowice' }), true);
+  assert.equal(isTicketedVenueItem({ sourceId: '10', sourceName: 'Teatr Śląski' }), true);
+  assert.equal(isTicketedVenueItem({ sourceId: '11', sourceName: 'Teatr Rozrywki Chorzów' }), true);
+  assert.equal(isTicketedVenueItem({ sourceId: '6', sourceName: 'MCK Katowice' }), false);
   assert.equal(isHighPriorityTicketSource({ sourceId: '7', sourceName: 'NOSPR (Kalendarz)' }), true);
-  assert.equal(isHighPriorityTicketSource({ sourceId: '30', sourceName: 'NOSPR – Aktualności' }), true);
-  assert.equal(isHighPriorityTicketSource({ sourceId: '5', sourceName: 'Spodek Katowice' }), true);
-  assert.equal(isHighPriorityTicketSource({ sourceId: '10', sourceName: 'Teatr Śląski' }), true);
-  assert.equal(isHighPriorityTicketSource({ sourceId: '11', sourceName: 'Teatr Rozrywki Chorzów' }), true);
   assert.equal(isHighPriorityTicketSource({ sourceId: '6', sourceName: 'MCK Katowice' }), false);
+
+  // isHighPriorityItem ustawia highPriority: true wyłącznie dla wyjątkowych pozycji (§5.2)
+  assert.equal(
+    isHighPriorityItem({
+      sourceId: '7',
+      sourceName: 'NOSPR (Kalendarz)',
+      title: 'Zwykły koncert symfoniczny',
+      ticketStatus: 'Bilety w sprzedaży',
+    }),
+    false,
+    'Zwykły koncert repertuarowy nie może mieć highPriority: true'
+  );
+  assert.equal(
+    isHighPriorityItem({
+      sourceId: '7',
+      sourceName: 'NOSPR (Kalendarz)',
+      title: 'Koncert kameralny',
+      ticketStatus: 'Ostatnie bilety w sprzedaży',
+    }),
+    true,
+    'Status "Ostatnie bilety" musi dawać highPriority: true'
+  );
+  assert.equal(
+    isHighPriorityItem({
+      sourceId: '11',
+      sourceName: 'Teatr Rozrywki Chorzów',
+      title: 'Koty',
+      ticketStatus: 'Ostatnie wolne miejsca w sprzedaży',
+    }),
+    true,
+    'Status "Ostatnie wolne miejsca" musi dawać highPriority: true'
+  );
+  assert.equal(
+    isHighPriorityItem({
+      sourceId: '10',
+      sourceName: 'Teatr Śląski',
+      title: 'Premiera: Nowy spektakl',
+      ticketStatus: 'Bilety w sprzedaży',
+    }),
+    true,
+    'Słowo kluczowe "Premiera" musi dawać highPriority: true'
+  );
+  assert.equal(
+    isHighPriorityItem({
+      sourceId: '30',
+      sourceName: 'NOSPR – Aktualności',
+      title: 'Ogłoszenie o nowym cyklu koncertowym i sprzedaży biletów',
+    }),
+    true,
+    'Aktualność NOSPR (ID 30) o sprzedaży biletów/sezonie musi dawać highPriority: true'
+  );
 
   const existingArticles = [
     {
@@ -456,7 +516,7 @@ console.log('\n--- 6. Priorytetyzacja NOSPR, Spodka, Teatru Śląskiego i Teatru
       sourceName: 'Teatr Ateneum',
       sourceType: 'WEB',
     })),
-    // Źródła priorytetowe (NOSPR, Spodek, Teatr Śląski, Teatr Rozrywki)
+    // Źródła biletowane (NOSPR, Spodek, Teatr Śląski, Teatr Rozrywki) – mieszanka highPriority i zwykłych
     {
       title: 'Już opisany koncert w NOSPR z pierwszego tygodnia',
       link: 'https://nospr.org.pl/pl/kalendarz/juz-opisany-koncert',
@@ -464,14 +524,25 @@ console.log('\n--- 6. Priorytetyzacja NOSPR, Spodka, Teatru Śląskiego i Teatru
       sourceName: 'NOSPR (Kalendarz)',
       sourceType: 'WEB',
       eventDate: '2026-11-05',
+      ticketStatus: 'Ostatnie bilety w sprzedaży',
     },
-    ...Array.from({ length: 5 }, (_, i) => ({
+    {
+      title: 'Koncert finałowy w NOSPR – ostatnie bilety',
+      link: 'https://nospr.org.pl/pl/kalendarz/koncert-finalowy',
+      sourceId: '7',
+      sourceName: 'NOSPR (Kalendarz)',
+      sourceType: 'WEB',
+      eventDate: '2026-12-20',
+      ticketStatus: 'Ostatnie bilety w sprzedaży',
+    },
+    ...Array.from({ length: 4 }, (_, i) => ({
       title: `Koncert w NOSPR w odległym miesiącu nr ${i + 1}`,
       link: `https://nospr.org.pl/pl/kalendarz/odlegly-koncert-${i + 1}`,
       sourceId: '7',
       sourceName: 'NOSPR (Kalendarz)',
       sourceType: 'WEB',
       eventDate: `2027-01-1${i}`,
+      ticketStatus: 'Bilety w sprzedaży',
     })),
     {
       title: 'Ogłoszenie o nowym cyklu koncertowym',
@@ -481,29 +552,59 @@ console.log('\n--- 6. Priorytetyzacja NOSPR, Spodka, Teatru Śląskiego i Teatru
       sourceType: 'WEB',
       pubDate: '2026-10-31',
     },
-    ...Array.from({ length: 4 }, (_, i) => ({
+    {
+      title: 'Wielka Gala Sylwestrowa w Spodku',
+      link: 'https://www.spodekkatowice.pl/pl/wydarzenia/gala-sylwestrowa,499.html',
+      sourceId: '5',
+      sourceName: 'Spodek Katowice',
+      sourceType: 'WEB',
+      eventDate: '2026-12-31',
+      ticketStatus: 'Bilety w sprzedaży',
+    },
+    ...Array.from({ length: 3 }, (_, i) => ({
       title: `Duży koncert w Spodku nr ${i + 1}`,
       link: `https://www.spodekkatowice.pl/pl/wydarzenia/koncert-${i + 1},${500 + i}.html`,
       sourceId: '5',
       sourceName: 'Spodek Katowice',
       sourceType: 'WEB',
       eventDate: `2027-02-1${i}`,
+      ticketStatus: 'Bilety w sprzedaży',
     })),
-    ...Array.from({ length: 4 }, (_, i) => ({
+    ...Array.from({ length: 2 }, (_, i) => ({
       title: `Premiera w Teatrze Śląskim nr ${i + 1}`,
       link: `https://teatrslaski.art.pl/repertuar/premiera-${i + 1}/`,
       sourceId: '10',
       sourceName: 'Teatr Śląski',
       sourceType: 'WEB',
       eventDate: `2026-12-1${i}`,
+      ticketStatus: 'Bilety w sprzedaży',
     })),
-    ...Array.from({ length: 4 }, (_, i) => ({
+    ...Array.from({ length: 2 }, (_, i) => ({
+      title: `Spektakl repertuarowy w Teatrze Śląskim nr ${i + 1}`,
+      link: `https://teatrslaski.art.pl/repertuar/spektakl-${i + 1}/`,
+      sourceId: '10',
+      sourceName: 'Teatr Śląski',
+      sourceType: 'WEB',
+      eventDate: `2026-12-2${i}`,
+      ticketStatus: 'Bilety w sprzedaży',
+    })),
+    {
+      title: 'Musical w Teatrze Rozrywki – ostatnie wolne miejsca',
+      link: 'https://teatr-rozrywki.pl/repertuar/musical-ostatnie.html?view=event',
+      sourceId: '11',
+      sourceName: 'Teatr Rozrywki Chorzów',
+      sourceType: 'WEB',
+      eventDate: '2027-01-15',
+      ticketStatus: 'Ostatnie wolne miejsca w sprzedaży',
+    },
+    ...Array.from({ length: 3 }, (_, i) => ({
       title: `Musical w Teatrze Rozrywki nr ${i + 1}`,
       link: `https://teatr-rozrywki.pl/repertuar/musical-${i + 1}.html?view=event`,
       sourceId: '11',
       sourceName: 'Teatr Rozrywki Chorzów',
       sourceType: 'WEB',
       eventDate: `2027-01-2${i}`,
+      ticketStatus: 'Bilety w sprzedaży',
     })),
     // Źródła RSS (35 artykułów)
     ...Array.from({ length: 35 }, (_, i) => ({
@@ -516,7 +617,10 @@ console.log('\n--- 6. Priorytetyzacja NOSPR, Spodka, Teatru Śląskiego i Teatru
     })),
   ];
 
-  const selected = selectPromptItems(candidatePool, existingArticles, { maxItems: MAX_PROMPT_ITEMS });
+  const selected = selectPromptItems(candidatePool, existingArticles, {
+    maxItems: MAX_PROMPT_ITEMS,
+    now: new Date('2026-11-01T12:00:00Z'),
+  });
   assert.equal(selected.length, 60, 'Łączna pula promptItems musi wynosić 60 pozycji');
 
   const rssInSelected = selected.filter((i) => i.sourceType === 'RSS');
@@ -528,18 +632,36 @@ console.log('\n--- 6. Priorytetyzacja NOSPR, Spodka, Teatru Śląskiego i Teatru
   assert.equal(
     webInSelected.some((i) => i.link.includes('juz-opisany-koncert')),
     false,
-    'Już opublikowany koncert w NOSPR musi zostać odfiltrowany po URL, robiąc miejsce koncertom z dalszych miesięcy'
+    'Już opublikowany koncert w NOSPR musi zostać odfiltrowany po URL'
   );
 
   // Pierwsze 5 pozycji w puli WEB to dokładnie: [7] NOSPR, [30] NOSPR Aktualności, [5] Spodek, [10] Teatr Śląski, [11] Teatr Rozrywki
   assert.deepEqual(
     webInSelected.slice(0, 5).map((i) => i.sourceId),
     ['7', '30', '5', '10', '11'],
-    'Na czele puli WEB muszą znaleźć się kolejno: NOSPR (Kalendarz), NOSPR – Aktualności, Spodek Katowice, Teatr Śląski i Teatr Rozrywki'
+    'Na czele puli WEB muszą znaleźć się kolejno pozycje highPriority z: NOSPR (Kalendarz), NOSPR – Aktualności, Spodek Katowice, Teatr Śląski i Teatr Rozrywki'
   );
+  // 6. pozycja w lead to druga premiera z [10] Teatr Śląski (maxPriorityLeadItems = min(6, 30/4) = 6)
+  assert.equal(webInSelected[5].sourceId, '10', '6. pozycja lead to kolejna pozycja highPriority (Premiera nr 2 z Teatru Śląskiego)');
   assert.ok(
-    webInSelected.slice(0, 5).every((i) => i.highPriority === true),
-    'Pozycje priorytetowe muszą posiadać flagę highPriority: true'
+    webInSelected.slice(0, 6).every((i) => i.highPriority === true),
+    'Wszystkie pozycje w fazie lead (maks. 6) muszą posiadać flagę highPriority: true'
+  );
+  // 7. pozycja w puli WEB należy już do fazy 2 round-robin (standardowe źródło WEB [6] MCK), bo zwykłe koncerty biletowane mają highPriority: false
+  assert.equal(
+    webInSelected[6].sourceId,
+    '6',
+    'Po fazie lead (maks. 6 pozycji highPriority) do głosu dochodzą standardowe źródła WEB (MCK)'
+  );
+
+  // Zwykłe pozycje repertuarowe z NOSPR/Spodka/Teatru mają highPriority: false
+  const regularNosprInSelected = webInSelected.filter(
+    (i) => i.sourceId === '7' && i.title.startsWith('Koncert w NOSPR w odległym miesiącu')
+  );
+  assert.ok(regularNosprInSelected.length > 0, 'Zwykłe koncerty NOSPR nadal wchodzą do puli w fazie round-robin');
+  assert.ok(
+    regularNosprInSelected.every((i) => i.highPriority === false),
+    'Zwykłe koncerty repertuarowe muszą mieć highPriority: false'
   );
 
   // Jednocześnie pozostałe źródła WEB (6 MCK, 15 Teatr Ateneum, 21 Stadion Śląski) są obecne w puli 30 WEB
@@ -550,7 +672,7 @@ console.log('\n--- 6. Priorytetyzacja NOSPR, Spodka, Teatru Śląskiego i Teatru
     );
   }
 }
-console.log('✅ Priorytetyzacja w selectPromptItems (NOSPR -> Spodek -> Teatr Śląski -> Teatr Rozrywki) oraz ochrona pozostałych źródeł działają bezbłędnie.');
+console.log('✅ Selektywne highPriority (§5.2) i faza lead min(6, quota/4) w selectPromptItems (§5.3) działają bezbłędnie.');
 
 // ---------------------------------------------------------------------------
 // 7. Automatyczne wymuszenie kategorii w validateArticle (nospr, spodek, teatr-rozrywki, teatr-slaski)
@@ -823,5 +945,312 @@ console.log('\n--- 8. Testy jednostkowe getVenueGroup ---');
   assert.equal(getVenueGroup(undefined), 'other');
 }
 console.log('✅ getVenueGroup poprawnie klasyfikuje obiekty oraz zachowuje kolejność reguł i wykluczenia.');
+
+// ---------------------------------------------------------------------------
+// 9. Dynamiczny prompt równowagi w buildDigestPrompt (§5.1)
+// ---------------------------------------------------------------------------
+console.log('\n--- 9. Dynamiczny prompt w buildDigestPrompt (§5.1: brak "co najmniej 1–2", blok RÓWNOWAGA) ---');
+
+{
+  const now = new Date('2026-11-11T12:00:00Z');
+  const existingEmpty = [];
+  const budgetFloor = computeBalanceBudget(existingEmpty, undefined, now);
+  assert.equal(budgetFloor.floorRequired, true);
+  assert.equal(budgetFloor.ticketedAllowed, 2);
+  assert.equal(budgetFloor.nosprAllowed, 1);
+
+  const promptFloor = buildDigestPrompt([], existingEmpty, {
+    now,
+    budget: budgetFloor,
+    maxCandidates: MAX_CANDIDATES,
+  });
+
+  assert.equal(
+    promptFloor.includes('co najmniej 1–2'),
+    false,
+    'Prompt nie może zawierać dawnej instrukcji "co najmniej 1–2"'
+  );
+  assert.equal(
+    promptFloor.includes('PRIORYTET REDAKCYJNY – WCZESNE OSTRZEGANIE O BILETACH'),
+    false,
+    'Prompt nie może zawierać usuniętego bloku PRIORYTET REDAKCYJNY'
+  );
+  assert.equal(
+    promptFloor.includes('Najwyższy priorytet spośród instytucji kultury ma'),
+    false,
+    'Prompt nie może zawierać sztywnego priorytetu NOSPR'
+  );
+  assert.ok(
+    promptFloor.includes('wydarzenia biletowane z dostępnymi biletami warto zapowiadać z wyprzedzeniem, w ramach limitu z bloku RÓWNOWAGA'),
+    'Prompt musi zawierać łagodną zasadę wczesnego informowania o biletach w ramach limitu RÓWNOWAGA'
+  );
+  assert.ok(
+    promptFloor.includes('RÓWNOWAGA TEMATYCZNA (dane z systemu, obowiązujące):'),
+    'Prompt musi zawierać nagłówek bloku RÓWNOWAGA TEMATYCZNA'
+  );
+  assert.ok(
+    promptFloor.includes('w tym cyklu system przyjmie maks. 2 (NOSPR maks. 1). Dziś nie było jeszcze żadnego – umieść co najmniej 1 taki kandydat wysoko w rankingu (najlepiej z „Ostatnimi biletami”).'),
+    'Prompt przy floorRequired=true musi informować o brakującym dzisiejszym wpisie ticketed'
+  );
+
+  // Scenariusz z wyczerpanym budżetem dziennym (2 wpisy ticketed dzisiaj, w tym 1 NOSPR)
+  const existingFull = [
+    {
+      title: 'Koncert symfoniczny w NOSPR',
+      category: 'nospr',
+      sourceUrl: 'https://nospr.org.pl/pl/kalendarz/k1',
+      addedDate: '2026-11-11',
+      publishedDate: '2026-11-11',
+      aiGenerated: true,
+      status: 'published',
+    },
+    {
+      title: 'Premiera w Teatrze Śląskim',
+      category: 'teatr-slaski',
+      sourceUrl: 'https://teatrslaski.art.pl/repertuar/s1',
+      addedDate: '2026-11-11',
+      publishedDate: '2026-11-11',
+      aiGenerated: true,
+      status: 'published',
+    },
+    {
+      title: 'Remont ulicy w Katowicach',
+      category: 'drogi-komunikacja',
+      sourceUrl: 'https://mojekatowice.pl/d1',
+      addedDate: '2026-11-10',
+      publishedDate: '2026-11-10',
+      aiGenerated: true,
+      status: 'published',
+    },
+    {
+      title: 'Koncert w Spodku',
+      category: 'spodek',
+      sourceUrl: 'https://spodekkatowice.pl/s1',
+      addedDate: '2026-11-10',
+      publishedDate: '2026-11-10',
+      aiGenerated: true,
+      status: 'published',
+    },
+  ];
+  const budgetZero = computeBalanceBudget(existingFull, undefined, now);
+  assert.equal(budgetZero.ticketedAllowed, 0);
+  assert.equal(budgetZero.nosprAllowed, 0);
+  assert.equal(budgetZero.floorRequired, false);
+
+  const promptZero = buildDigestPrompt([], existingFull, {
+    now,
+    budget: budgetZero,
+  });
+
+  assert.ok(
+    promptZero.includes('w tym cyklu system przyjmie maks. 0 (NOSPR maks. 0).'),
+    'Prompt przy wyczerpanym budżecie musi podawać maks. 0 (NOSPR maks. 0)'
+  );
+  assert.equal(
+    promptZero.includes('Dziś nie było jeszcze żadnego'),
+    false,
+    'Prompt przy floorRequired=false nie może zawierać dopisku o braku dzisiejszego wpisu'
+  );
+  assert.ok(
+    promptZero.includes(JSON.stringify(budgetZero.stats.byCategory3d)),
+    'Prompt musi zawierać statystyki kategorii z ostatnich 3 dni'
+  );
+}
+console.log('✅ buildDigestPrompt generuje dynamiczny blok RÓWNOWAGA TEMATYCZNA z poprawnymi liczbami i bez sztywnego "co najmniej 1–2".');
+
+// ---------------------------------------------------------------------------
+// 10. Limit pozycji na źródło biletowane, sortowanie i redukcja przy ticketedAllowed=0 (§5.3)
+// ---------------------------------------------------------------------------
+console.log('\n--- 10. Limit pozycji na źródło biletowane, sortowanie urgent->highPriority->data i redukcja do 2 (§5.3) ---');
+
+{
+  const now = new Date('2026-11-01T12:00:00Z');
+  const nosprItems = [
+    // Zwykły odległy
+    {
+      title: 'Koncert symfoniczny późny',
+      link: 'https://nospr.org.pl/pl/kalendarz/pozny',
+      sourceId: '7',
+      sourceName: 'NOSPR (Kalendarz)',
+      sourceType: 'WEB',
+      eventDate: '2027-01-25',
+      ticketStatus: 'Bilety w sprzedaży',
+    },
+    // Zwykły wcześniejszy
+    {
+      title: 'Koncert symfoniczny wcześniejszy',
+      link: 'https://nospr.org.pl/pl/kalendarz/wczesny',
+      sourceId: '7',
+      sourceName: 'NOSPR (Kalendarz)',
+      sourceType: 'WEB',
+      eventDate: '2026-12-05',
+      ticketStatus: 'Bilety w sprzedaży',
+    },
+    // HighPriority (nie-urgent, bo za >14 dni)
+    {
+      title: 'Wielka Gala Sylwestrowa',
+      link: 'https://nospr.org.pl/pl/kalendarz/gala',
+      sourceId: '7',
+      sourceName: 'NOSPR (Kalendarz)',
+      sourceType: 'WEB',
+      eventDate: '2026-12-31',
+      ticketStatus: 'Bilety w sprzedaży',
+    },
+    // Urgent (Ostatnie bilety + <=14 dni)
+    {
+      title: 'Recital mistrzowski – ostatnie bilety',
+      link: 'https://nospr.org.pl/pl/kalendarz/urgent-recital',
+      sourceId: '7',
+      sourceName: 'NOSPR (Kalendarz)',
+      sourceType: 'WEB',
+      eventDate: '2026-11-08',
+      ticketStatus: 'Ostatnie bilety w sprzedaży',
+    },
+    ...Array.from({ length: 5 }, (_, i) => ({
+      title: `Dodatkowy koncert w NOSPR nr ${i + 1}`,
+      link: `https://nospr.org.pl/pl/kalendarz/dodatkowy-${i + 1}`,
+      sourceId: '7',
+      sourceName: 'NOSPR (Kalendarz)',
+      sourceType: 'WEB',
+      eventDate: `2027-01-1${i}`,
+      ticketStatus: 'Bilety w sprzedaży',
+    })),
+  ];
+
+  // 1) Przy normalnym budżecie (ticketedAllowed > 0): maks. 5 pozycji z jednego źródła biletowanego,
+  // posortowane: urgent -> highPriority -> najbliższa data.
+  const interleavedNormal = interleaveWebItems(nosprItems, {
+    now,
+    budget: { ticketedAllowed: 1, nosprAllowed: 1 },
+  });
+  assert.equal(
+    interleavedNormal.length,
+    5,
+    'Liczba pozycji z jednego źródła biletowanego musi być ograniczona do poolMaxItemsPerTicketedSource (5)'
+  );
+  assert.equal(interleavedNormal[0].link, 'https://nospr.org.pl/pl/kalendarz/urgent-recital', '1. pozycja: urgent');
+  assert.equal(interleavedNormal[1].link, 'https://nospr.org.pl/pl/kalendarz/gala', '2. pozycja: highPriority');
+  assert.equal(interleavedNormal[2].link, 'https://nospr.org.pl/pl/kalendarz/wczesny', '3. pozycja: najwcześniejsza data wśród zwykłych');
+
+  // 2) Gdy ticketedAllowed === 0 i brak urgent: redukcja do maks. 2 pozycji na źródło biletowane
+  const nonUrgentNospr = nosprItems.filter((i) => !i.link.includes('urgent-recital'));
+  const mckItems = Array.from({ length: 10 }, (_, i) => ({
+    title: `Wydarzenie w MCK nr ${i + 1}`,
+    link: `https://www.mckkatowice.pl/pl/wydarzenia/mck-${i + 1}.html`,
+    sourceId: '6',
+    sourceName: 'MCK Katowice',
+    sourceType: 'WEB',
+  }));
+
+  const interleavedZeroBudget = interleaveWebItems([...nonUrgentNospr, ...mckItems], {
+    now,
+    budget: { ticketedAllowed: 0, nosprAllowed: 0 },
+  });
+  const nosprInZeroBudget = interleavedZeroBudget.filter((i) => i.sourceId === '7');
+  assert.equal(
+    nosprInZeroBudget.length,
+    2,
+    'Gdy ticketedAllowed === 0 i brak urgent, liczba pozycji ze źródła biletowanego musi spaść do maks. 2'
+  );
+}
+console.log('✅ Limit na źródło biletowane (5), sortowanie (urgent -> highPriority -> data) i redukcja do 2 przy budżecie 0 działają poprawnie.');
+
+// ---------------------------------------------------------------------------
+// 11. Filtr cykli (cycleCooldownDays) oraz wyjątek urgent (§5.3 pkt 4)
+// ---------------------------------------------------------------------------
+console.log('\n--- 11. Filtr powtarzalnych cykli (cycleCooldownDays) z wyjątkiem dla urgent (§5.3) ---');
+
+{
+  const now = new Date('2026-11-11T12:00:00Z');
+
+  // Ekstrakcja nazwy cyklu z opisu parsera i z prefiksu tytułu przed ':' lub '/'
+  assert.equal(
+    extractCycleName({
+      title: 'Urban Jazz Night',
+      description: 'Wydarzenie w NOSPR: Urban Jazz Night. Cykl/kategoria: JazzKLUB. Status biletów: Bilety w sprzedaży.',
+    }),
+    'JazzKLUB'
+  );
+  assert.equal(extractCycleName({ title: 'JazzKLUB: Marcin Wasilewski Trio' }), 'JazzKLUB');
+  assert.equal(extractCycleName({ title: 'Czwartki organowe / Recital organowy' }), 'Czwartki organowe');
+  assert.equal(extractCycleName({ title: 'NOSPR kameralnie: Kwartet Śląski' }), 'NOSPR kameralnie');
+  assert.equal(extractCycleName({ title: 'Muzyka bez granic: Koncert wieczorny' }), 'Muzyka bez granic');
+  assert.equal(extractCycleName({ title: 'NOSPR / Requiem Mozarta' }), null, 'Sama nazwa obiektu przed "/" nie jest cyklem');
+
+  const recentArticles = [
+    {
+      title: 'JazzKLUB: Raphael Rogiński w katowickiej NOSPR',
+      summary: 'W ramach cyklu JazzKLUB wystąpi Raphael Rogiński.',
+      sourceUrl: 'https://nospr.org.pl/pl/kalendarz/jazzklub-raphael-roginski',
+      addedDate: '2026-11-08', // 3 dni temu (w oknie cycleCooldownDays = 7)
+      publishedDate: '2026-11-08',
+      status: 'published',
+      aiGenerated: true,
+    },
+    {
+      title: 'Czwartki organowe: Stary recital sprzed miesiąca',
+      sourceUrl: 'https://nospr.org.pl/pl/kalendarz/czwartki-organowe-stary',
+      addedDate: '2026-10-15', // > 7 dni temu (poza oknem cooldown)
+      publishedDate: '2026-10-15',
+      status: 'published',
+      aiGenerated: true,
+    },
+  ];
+
+  const poolWithCycles = [
+    // Kolejna odsłona cyklu JazzKLUB (nie-urgent, za 2 miesiące) -> powinna zostać pominięta!
+    {
+      title: 'Urban Jazz Night 2',
+      link: 'https://nospr.org.pl/pl/kalendarz/jazzklub-kolejny',
+      description: 'Wydarzenie w NOSPR: Urban Jazz Night 2. Cykl/kategoria: JazzKLUB. Status biletów: Bilety w sprzedaży.',
+      sourceId: '7',
+      sourceName: 'NOSPR (Kalendarz)',
+      sourceType: 'WEB',
+      eventDate: '2027-01-12',
+      ticketStatus: 'Bilety w sprzedaży',
+    },
+    // Kolejna odsłona cyklu Czwartki organowe (poprzedni wpis > 7 dni temu) -> powinna przejść!
+    {
+      title: 'Czwartki organowe: Listopadowy recital',
+      link: 'https://nospr.org.pl/pl/kalendarz/czwartki-organowe-listopad',
+      description: 'Wydarzenie w NOSPR. Cykl/kategoria: Czwartki organowe. Status biletów: Bilety w sprzedaży.',
+      sourceId: '7',
+      sourceName: 'NOSPR (Kalendarz)',
+      sourceType: 'WEB',
+      eventDate: '2026-12-10',
+      ticketStatus: 'Bilety w sprzedaży',
+    },
+    // Odsłona cyklu JazzKLUB, ale URGENT (Ostatnie bilety + eventDate <= 14 dni) -> wyjątek urgent, musi przejść!
+    {
+      title: 'JazzKLUB: Pilny koncert specjalny',
+      link: 'https://nospr.org.pl/pl/kalendarz/jazzklub-pilny',
+      description: 'Wydarzenie w NOSPR. Cykl/kategoria: JazzKLUB. Status biletów: Ostatnie bilety w sprzedaży.',
+      sourceId: '7',
+      sourceName: 'NOSPR (Kalendarz)',
+      sourceType: 'WEB',
+      eventDate: '2026-11-18',
+      ticketStatus: 'Ostatnie bilety w sprzedaży',
+    },
+  ];
+
+  const filteredPool = selectPromptItems(poolWithCycles, recentArticles, { now });
+
+  assert.equal(
+    filteredPool.some((i) => i.link.includes('jazzklub-kolejny')),
+    false,
+    'Zwykła odsłona cyklu JazzKLUB opublikowanego 3 dni temu musi zostać pominięta przez filtr cykli'
+  );
+  assert.equal(
+    filteredPool.some((i) => i.link.includes('czwartki-organowe-listopad')),
+    true,
+    'Cykl opublikowany ponad cycleCooldownDays (7) dni temu musi zostać dopuszczony'
+  );
+  assert.equal(
+    filteredPool.some((i) => i.link.includes('jazzklub-pilny')),
+    true,
+    'Pozycja urgent ("Ostatnie bilety" w ciągu <=14 dni) musi przejść mimo aktywnego cooldownu cyklu'
+  );
+}
+console.log('✅ Filtr cykli (cycleCooldownDays) oraz wyjątek dla pozycji urgent działają zgodnie ze specyfikacją.');
 
 console.log('\n🎉 Wszystkie testy w test-priority-venues.mjs zakończone pełnym sukcesem (100% PASS)!\n');

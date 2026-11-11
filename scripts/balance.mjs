@@ -21,8 +21,48 @@ export const TICKETED_VENUE_GROUPS = [
   'spodek',
 ];
 
+export const HIGH_PRIORITY_SOURCE_IDS = new Set(['7', '30', '5', '10', '11']);
+export const TICKETED_SOURCE_IDS = HIGH_PRIORITY_SOURCE_IDS;
+
 const TICKETED_VENUE_SET = new Set(TICKETED_VENUE_GROUPS);
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+const IGNORED_CYCLE_LABELS = new Set([
+  'nospr',
+  'nospr katowice',
+  'spodek',
+  'spodek katowice',
+  'teatr slaski',
+  'teatr slaski w katowicach',
+  'teatr rozrywki',
+  'teatr rozrywki w chorzowie',
+  'mck',
+  'mck katowice',
+  'katowice',
+  'chorzow',
+  'duza scena',
+  'mala scena',
+  'scena kameralna',
+  'scena w malarni',
+  'scena pod dachem',
+  'scena 200',
+  'sala koncertowa',
+  'sala kameralna',
+  'moj karnet',
+  'koncert',
+  'koncerty',
+  'spektakl',
+  'spektakle',
+  'wydarzenie',
+  'wydarzenia',
+  'wydarzenie w nospr',
+  'spektakl w teatrze slaskim',
+  'aktualnosc nospr katowice',
+  'premiera',
+  'prapremiera',
+  'repertuar',
+  'kalendarz',
+]);
 
 /**
  * Klasyfikuje artykuł lub element źródłowy do grupy obiektu widowiskowego (§1 specyfikacji).
@@ -87,6 +127,155 @@ export function resolveVenueGroup(articleOrItem, sourceItem = null) {
   }
 
   return 'other';
+}
+
+/**
+ * Sprawdza przynależność pozycji lub źródła do grupy obiektów biletowanych (§5.2: NOSPR, Spodek, Teatr Śląski, Teatr Rozrywki).
+ */
+export function isTicketedVenueItem(itemOrSource) {
+  if (!itemOrSource || typeof itemOrSource !== 'object') return false;
+  const id = String(itemOrSource.sourceId ?? itemOrSource.id ?? '').trim();
+  if (HIGH_PRIORITY_SOURCE_IDS.has(id)) return true;
+
+  const venue = resolveVenueGroup({
+    venueGroup: itemOrSource.venueGroup,
+    category: itemOrSource.category,
+    sourceUrl: itemOrSource.link ?? itemOrSource.url ?? itemOrSource.sourceUrl,
+    location: itemOrSource.location,
+    sourceName: itemOrSource.sourceName ?? itemOrSource.name,
+  });
+  return venue !== 'other';
+}
+
+/**
+ * Sprawdza, czy pozycja z grupy biletowanej jest wyjątkowa i zasługuje na highPriority: true (§5.2):
+ * - status biletów zawiera „Ostatnie bilety” lub „Ostatnie wolne miejsca”, LUB
+ * - tytuł/opis zawiera słowa kluczowe: premiera, prapremiera, start sprzedaży, ruszyła sprzedaż, sylwester, gala, festiwal, nowy sezon, LUB
+ * - pozycja pochodzi z NOSPR – Aktualności (ID 30) i dotyczy sprzedaży biletów / sezonu.
+ */
+export function isHighPriorityItem(item) {
+  if (!item || typeof item !== 'object') return false;
+  if (!isTicketedVenueItem(item)) return false;
+
+  const statusText = `${item.ticketStatus || ''} ${item.description || ''}`;
+  if (/ostatnie\s+(?:bilety|wolne\s+miejsca)/i.test(statusText)) {
+    return true;
+  }
+
+  const text = `${item.title || ''} ${item.description || ''}`;
+  if (
+    /\b(?:pra)?premier(?:a|y|ze|ę|ą|o|ach|ami|om|owy|owa|owe)\b/i.test(text) ||
+    /\bstart(?:uje|ował)?\s+sprzeda[żz][yi]?\b/i.test(text) ||
+    /\brusz(?:y[łl]a|a|ają)\s+sprzeda[żz]\b/i.test(text) ||
+    /\bsylwest(?:er|ra|row[aey]|rowym|rowe)\b/i.test(text) ||
+    /\bgal(?:a|i|ę|ą|o|owy|owa|owe)\b/i.test(text) ||
+    /\bfestiwal(?:u|em|owi|e|i|owy|owa|owe)?\b/i.test(text) ||
+    /\bnow(?:y|ego|ym|e)\s+sezon(?:u|ie|em)?\b/i.test(text)
+  ) {
+    return true;
+  }
+
+  const id = String(item.sourceId ?? item.id ?? '').trim();
+  const url = String(item.link ?? item.url ?? item.sourceUrl ?? '').toLowerCase();
+  const srcName = String(item.sourceName ?? item.name ?? '').toLowerCase();
+  const isNosprAktualnosci =
+    id === '30' ||
+    url.includes('nospr.org.pl/pl/aktualnosci') ||
+    (srcName.includes('nospr') && srcName.includes('aktualno'));
+
+  if (
+    isNosprAktualnosci &&
+    /(?:sprzeda[żz]|bilet|karnet|abonament|sezon|repertuar|program|cykl)/i.test(text)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Normalizuje nazwę cyklu do porównań (małe litery, bez diakrytyków).
+ */
+export function normalizeCycleKey(value = '') {
+  if (!value || typeof value !== 'string') return '';
+  return value
+    .toLocaleLowerCase('pl-PL')
+    .replace(/ł/g, 'l')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function cleanCycleLabel(raw = '') {
+  if (!raw || typeof raw !== 'string') return null;
+  let cleaned = raw
+    .trim()
+    .replace(/^[„”"'«»(\[\s]+|[„”"'«»)\]\s]+$/g, '')
+    .replace(/^(?:w\s+ramach\s+(?:uznanego\s+|popularnego\s+)?cyklu|cykl\s+koncert[oó]w|cykl)\s+/i, '')
+    .replace(/\s+w\s+(?:katowickiej\s+|katowickim\s+)?(?:nospr|katowicach|teatrze\s+[śs]l[ąa]skim|teatrze\s+rozrywki|chorzowie|spodku)$/i, '')
+    .replace(/^[„”"'«»\s]+|[„”"'«»\s]+$/g, '')
+    .trim();
+
+  if (!cleaned) return null;
+  const norm = normalizeCycleKey(cleaned);
+  if (!norm || norm.length < 3 || norm.length > 42) return null;
+  if (IGNORED_CYCLE_LABELS.has(norm)) return null;
+  if (/^(?:https?|202\d)\b/.test(norm)) return null;
+  return cleaned;
+}
+
+/**
+ * Wyciąga nazwę cyklu (§5.3 pkt 4) z opisu parsera („Cykl/kategoria: ...”, „Cykl/scena: ...”),
+ * jawnego pola cycle/cycleName, prefiksu tytułu przed „:” / „/” lub frazy „w ramach cyklu ...”.
+ */
+export function extractCycleName(itemOrArticle) {
+  if (!itemOrArticle || typeof itemOrArticle !== 'object') return null;
+
+  const explicit = itemOrArticle.cycle || itemOrArticle.cycleName;
+  if (typeof explicit === 'string' && explicit.trim()) {
+    const cleaned = cleanCycleLabel(explicit);
+    if (cleaned) return cleaned;
+  }
+
+  if (Array.isArray(itemOrArticle.categories) && itemOrArticle.categories.length > 0) {
+    for (const c of itemOrArticle.categories) {
+      const cleaned = cleanCycleLabel(c);
+      if (cleaned) return cleaned;
+    }
+  }
+
+  const desc = String(itemOrArticle.description || '');
+  const descMatch = desc.match(/Cykl\/(?:kategoria|scena):\s*([^.]+)\./i);
+  if (descMatch && descMatch[1]) {
+    const parts = descMatch[1].split(/\s*(?:\/|,)\s*/);
+    for (const part of parts) {
+      const cleaned = cleanCycleLabel(part);
+      if (cleaned) return cleaned;
+    }
+  }
+
+  const title = String(itemOrArticle.title || '').trim();
+  if (title) {
+    const prefixMatch = title.match(/^([^:/]{3,45}?)\s*[:/]\s+(.+)$/);
+    if (prefixMatch && prefixMatch[1]) {
+      const cleaned = cleanCycleLabel(prefixMatch[1]);
+      if (cleaned) return cleaned;
+    }
+  }
+
+  const bodyText = `${itemOrArticle.summary || ''} ${itemOrArticle.description || ''} ${itemOrArticle.content || ''}`;
+  const inTextMatch = bodyText.match(
+    /\bw\s+ramach\s+(?:uznanego\s+|popularnego\s+)?cyklu\s+[„"]([^”"]{3,40})[”"]|\bw\s+ramach\s+(?:uznanego\s+|popularnego\s+)?cyklu\s+([A-ZĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźż0-9-]*(?:\s+[A-Za-ząćęłńóśźż0-9-]+){0,2}?)(?=[,.;]|\s+(?:w|na|już|katowick|odbędzie|wystąpi|zaprasza|zagra)\b|$)/
+  );
+  if (inTextMatch) {
+    const candidate = inTextMatch[1] || inTextMatch[2];
+    const cleaned = cleanCycleLabel(candidate);
+    if (cleaned) return cleaned;
+  }
+
+  return null;
 }
 
 /**
