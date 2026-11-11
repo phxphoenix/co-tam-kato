@@ -1883,6 +1883,93 @@ export function parseTeatrRozrywki(htmlPages, baseUrl = 'https://teatr-rozrywki.
   return items;
 }
 
+const GENERIC_ANCHOR_LABEL_RE =
+  /^(?:czytaj\s+wi[eę]cej|wi[eę]cej|szczeg[oó][łl]y|zobacz(?:\s+(?:wi[eę]cej|wszystkie))?|kup\s+bilet|bilety|kalendarium|strona\s+g[łl][oó]wna|g[łl][oó]wna|zaloguj(?:\s+si[eę])?|zarejestruj(?:\s+si[eę])?|koszyk|polityk[aęi](?:\s+prywatno[śs]ci)?|regulamin|kontakt|cookies?|plik(?:i|[óo]w)?\s+cookies|consent|details|about|show\s+details|rozumiem(?:\s+i\s+akceptuj[eę])?|pomi[ńn]|dalej|wstecz|nast[ęe]pn[aey]|poprzedni[aey]|menu|aktualno[śs]ci|wydarzenia|repertuar|polecamy|o\s+nas|dodaj\s+wydarzenie|reklama|bileterie|wydania\s+elektroniczne)\b/i;
+
+const NON_EVENT_URL_RE =
+  /(?:wikipedia\.org|\/(?:polityka(?:-prywatnosci)?|cookies?|regulamin|rodo|logowanie|rejestracja|koszyk|oauth|kontakt|pomoc|faq|dodaj-wydarzenie|reklama|bileterie|wydania-elektroniczne)(?:\.html|\/|$|\?)|\/wydarzenia\/w\/[^/]+\/w\/|\/polska\/[^/]+\/[^/]+\/jest$|\/felietony\/index\/?$)/i;
+
+function isGenericAnchorLabel(label = '') {
+  const clean = String(label || '').replace(/\s+/g, ' ').trim();
+  if (clean.length < 8) return true;
+  if (clean.includes('">') || /czytaj\s+wi[eę]cej$/i.test(clean)) return true;
+  if (GENERIC_ANCHOR_LABEL_RE.test(clean)) return true;
+  if (/^\d[\d\s.,:-]*(?:pln|z[łl])?\b/i.test(clean) && /wa[żz]no[śs][ćc]/i.test(clean)) return true;
+  return false;
+}
+
+/**
+ * Builds up to maxItems (default 5) structured items from discoveredLinks with anchor labels,
+ * filtering out navigation/cookie/boilerplate links.
+ */
+export function buildItemsFromDiscoveredLinks(linkEntries = [], source = {}, defaultCity = 'katowice', contentText = '', maxItems = 5) {
+  if (!Array.isArray(linkEntries) || linkEntries.length === 0) return [];
+
+  const sourceNormUrl = normalizeSourceUrl(source?.url || '');
+  const seenUrls = new Set();
+  const seenLabels = new Set();
+  const items = [];
+
+  for (const entry of linkEntries) {
+    if (!entry || typeof entry !== 'object') continue;
+    const rawUrl = String(entry.url || '').trim();
+    const label = stripHtml(String(entry.label || '')).replace(/\s+/g, ' ').trim();
+    if (!rawUrl || !label) continue;
+    if (isGenericAnchorLabel(label)) continue;
+    if (NON_EVENT_URL_RE.test(rawUrl)) continue;
+
+    const normUrl = normalizeSourceUrl(rawUrl);
+    if (!normUrl || normUrl === sourceNormUrl || isGenericSourceUrl(normUrl)) continue;
+    if (sourceNormUrl && normUrl.startsWith(`${sourceNormUrl}/`) && /^\/\d+$/.test(normUrl.slice(sourceNormUrl.length))) continue;
+    if (seenUrls.has(normUrl)) continue;
+
+    const normLabel = normalizeTitle(label);
+    if (!normLabel || seenLabels.has(normLabel)) continue;
+
+    seenUrls.add(normUrl);
+    seenLabels.add(normLabel);
+
+    let contextSnippet = '';
+    if (contentText) {
+      const idx = contentText.indexOf(rawUrl);
+      if (idx !== -1) {
+        const windowText = contentText
+          .slice(Math.max(0, idx - 120), Math.min(contentText.length, idx + rawUrl.length + 220))
+          .replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '$1')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (windowText && windowText.length > label.length + 10) {
+          contextSnippet = windowText.slice(0, 280);
+        }
+      }
+    }
+
+    const maybeEventDate = extractPolishDateFromText(label);
+    const description = contextSnippet
+      ? `${label}. ${contextSnippet}`
+      : `${label} – zapowiedź ze źródła ${source?.name || 'WEB'} (${source?.url || rawUrl}).`;
+
+    items.push({
+      title: label,
+      link: rawUrl,
+      description,
+      pubDate: undefined,
+      eventDate: maybeEventDate || null,
+      isEvent: true,
+      sourceId: source.id,
+      sourceName: source.name,
+      sourceType: source.type,
+      sourceCategory: source.category,
+      parsingHints: source.hints,
+      defaultCity,
+    });
+
+    if (items.length >= maxItems) break;
+  }
+
+  return items;
+}
+
 function cleanHtmlToMarkdownAndLinks(html, baseUrl) {
   let cleaned = html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
@@ -1903,8 +1990,11 @@ function cleanHtmlToMarkdownAndLinks(html, baseUrl) {
     }
     try {
       const fullUrl = href.startsWith('http') ? href : new URL(href, baseUrl).toString();
-      if (cleanLabel.length >= 3 && !discoveredLinks.has(fullUrl)) {
-        discoveredLinks.set(fullUrl, cleanLabel);
+      if (cleanLabel.length >= 3) {
+        const existing = discoveredLinks.get(fullUrl);
+        if (!existing || (isGenericAnchorLabel(existing) && !isGenericAnchorLabel(cleanLabel))) {
+          discoveredLinks.set(fullUrl, cleanLabel);
+        }
       }
       return ` [${cleanLabel}](${fullUrl}) `;
     } catch {
@@ -1934,6 +2024,7 @@ function cleanHtmlToMarkdownAndLinks(html, baseUrl) {
   return {
     content: lines.join('\n').slice(0, 5000),
     links: Array.from(discoveredLinks.keys()),
+    linkEntries: Array.from(discoveredLinks.entries()).map(([url, label]) => ({ url, label })),
   };
 }
 
@@ -2447,6 +2538,7 @@ export async function processSource(source) {
 
     let contentText = '';
     let discoveredLinks = [];
+    let linkEntries = [];
 
     // Dla DYNAMIC_WEB: próba przez Jina Reader (renderowanie JS) z fallbackiem do direct fetch
     if (source.type === 'DYNAMIC_WEB') {
@@ -2460,6 +2552,7 @@ export async function processSource(source) {
           contentText = md.slice(0, 8000);
           const linkMatches = [...contentText.matchAll(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g)];
           discoveredLinks = linkMatches.map((m) => m[2]);
+          linkEntries = linkMatches.map((m) => ({ url: m[2], label: stripHtml(m[1]) }));
         }
       } catch (jinaError) {
         console.warn(`  [${source.id}] Jina Reader dla ${source.name} nie powiódł się: ${jinaError.message}. Próbuję pobrania bezpośredniego.`);
@@ -2480,7 +2573,7 @@ export async function processSource(source) {
           const altUrl = extractAlternativeUrl(source.hints, source.url);
           if (altUrl) {
             console.log(`  [${source.id}] Próba alternatywnego adresu ze wskazówek: ${altUrl}`);
-            const altRes = await fetch(altUrl, {
+            const altRes = await fetchWithTlsAia(altUrl, {
               headers: { 'User-Agent': BOT_USER_AGENT },
               signal: AbortSignal.timeout(12000),
             });
@@ -2519,27 +2612,34 @@ export async function processSource(source) {
       const cleaned = cleanHtmlToMarkdownAndLinks(html, source.url);
       contentText = cleaned.content;
       discoveredLinks = cleaned.links;
+      linkEntries = cleaned.linkEntries;
     }
 
-    const items = [{
-      title: `${source.name} – Nadchodzące wydarzenia`,
-      link: source.url,
-      description: contentText,
-      pubDate: undefined,
-      eventDate: null,
-      isEvent: true,
-      isSyntheticContainer: true,
-      sourceId: source.id,
-      sourceName: source.name,
-      sourceType: source.type,
-      sourceCategory: source.category,
-      parsingHints: source.hints,
-      defaultCity: city,
-      discoveredLinks,
-    }];
+    const linkBasedItems = buildItemsFromDiscoveredLinks(linkEntries, source, city, contentText, 5);
+    const items = linkBasedItems.length > 0
+      ? [...linkBasedItems]
+      : [{
+          title: `${source.name} – Nadchodzące wydarzenia`,
+          link: source.url,
+          description: contentText,
+          pubDate: undefined,
+          eventDate: null,
+          isEvent: true,
+          isSyntheticContainer: true,
+          sourceId: source.id,
+          sourceName: source.name,
+          sourceType: source.type,
+          sourceCategory: source.category,
+          parsingHints: source.hints,
+          defaultCity: city,
+          discoveredLinks,
+        }];
 
-    // Dodaj odkryte linki jako pozycje pomocnicze do walidatora URL
+    const coveredLinkSet = new Set(linkBasedItems.map((it) => normalizeSourceUrl(it.link)));
+
+    // Dodaj pozostałe odkryte linki jako pozycje pomocnicze do walidatora URL
     for (const linkUrl of discoveredLinks) {
+      if (coveredLinkSet.has(normalizeSourceUrl(linkUrl))) continue;
       items.push({
         title: `${source.name} – szczegóły`,
         link: linkUrl,
