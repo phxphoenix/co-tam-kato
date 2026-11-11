@@ -139,4 +139,9 @@ export const CATEGORIES: Record<string, CategoryInfo> = {
     iconName: 'Drama',
     badgeClass: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/40',
   },
+  'teatr-slaski': {
+    name: 'Teatr Śląski',
+    iconName: 'Theater',
+    badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+  },
 };

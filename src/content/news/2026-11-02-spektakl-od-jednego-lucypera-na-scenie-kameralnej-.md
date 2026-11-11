@@ -3,7 +3,7 @@ title: "Spektakl „Od jednego Lucypera” na Scenie Kameralnej Teatru Śląskie
 publishedDate: 2026-11-02
 eventDate: 2026-11-04
 city: "katowice"
-category: "kultura"
+category: "teatr-slaski"
 status: "published"
 summary: "Scena Kameralna Teatru Śląskiego zaprasza na listopadowe pokazy spektaklu „Od jednego Lucypera”. Bilety trafiły do sprzedaży."
 location: "Teatr Śląski – Scena Kameralna"

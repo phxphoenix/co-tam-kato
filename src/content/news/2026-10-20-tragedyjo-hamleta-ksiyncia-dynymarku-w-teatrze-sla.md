@@ -3,7 +3,7 @@ title: "„Tragedyjo Hamleta, ksiyncia Dynymarku” w Teatrze Śląskim"
 publishedDate: 2026-10-20
 eventDate: 2026-11-07
 city: "katowice"
-category: "kultura"
+category: "teatr-slaski"
 status: "published"
 summary: "W sobotę 7 listopada Teatr Śląski w Katowicach zaprezentuje głośny spektakl „Tragedyjo Hamleta, ksiyncia Dynymarku” – klasyczny dramat Szekspira w przekładzie na język śląski."
 location: "Teatr Śląski im. St. Wyspiańskiego"

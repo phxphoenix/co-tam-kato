@@ -3,7 +3,7 @@ title: "Spektakl operowy „Carmen” na Dużej Scenie Teatru Śląskiego"
 publishedDate: 2026-11-08
 eventDate: 2026-11-17
 city: "katowice"
-category: "kultura"
+category: "teatr-slaski"
 status: "published"
 summary: "Opera Śląska gościnnie na Dużej Scenie Teatru Śląskiego w Katowicach ze słynnym dziełem „Carmen”."
 location: "Teatr Śląski (Duża Scena), Katowice"

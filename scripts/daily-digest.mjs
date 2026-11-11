@@ -16,7 +16,7 @@ const ALLOWED_CITIES = new Set([
 ]);
 const ALLOWED_CATEGORIES = new Set([
   'dla-dzieci', 'wydarzenia', 'drogi-komunikacja', 'kultura', 'gastro', 'sport', 'alerty',
-  'nospr', 'spodek', 'teatr-rozrywki',
+  'nospr', 'spodek', 'teatr-rozrywki', 'teatr-slaski',
 ]);
 const EVENT_FUTURE_DAYS = 45;
 const BOT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 CoTamKato-Bot/1.0';
@@ -1819,7 +1819,7 @@ ZASADY DOTYCZĄCE TYPÓW ŹRÓDEŁ, ROZDZIELENIA DAT (publishedDate vs eventDate
 Zwróć wyłącznie poprawną tablicę JSON z obiektami o polach:
 - title: zwięzły, konkretny tytuł w języku polskim
 - city: dokładnie jeden z kodów: katowice | chorzow | siemianowice | sosnowiec | myslowice | ruda-slaska | tychy | czeladz | bytom | swietochlowice | dabrowa-gornicza | cala-okolica (nigdy po polsku, bez polskich znaków)
-- category: dokładnie jedna z: dla-dzieci | wydarzenia | drogi-komunikacja | kultura | gastro | sport | alerty | nospr | spodek | teatr-rozrywki (dla wydarzeń w NOSPR używaj kategorii "nospr", w Spodku "spodek", a w Teatrze Rozrywki "teatr-rozrywki")
+- category: dokładnie jedna z: dla-dzieci | wydarzenia | drogi-komunikacja | kultura | gastro | sport | alerty | nospr | spodek | teatr-rozrywki | teatr-slaski (dla wydarzeń w NOSPR używaj kategorii "nospr", w Spodku "spodek", w Teatrze Rozrywki "teatr-rozrywki", a w Teatrze Śląskim "teatr-slaski")
 - status: published | draft
 - eventDate: string w formacie "YYYY-MM-DD" (faktyczna data lub data rozpoczęcia wydarzenia, np. "2026-10-25") lub null, jeśli artykuł nie dotyczy konkretnego wydarzenia w czasie (nigdy nie wpisuj tu daty publikacji artykułu!)
 - summary: 1-2 zdania streszczenia (do 200 znaków)
@@ -2226,6 +2226,39 @@ export function resolveCandidateArticles(articles, existingArticles = [], source
   return acceptedArticles;
 }
 
+/**
+ * Klasyfikuje artykuł lub element źródłowy do grupy obiektu widowiskowego.
+ * Kolejność reguł (pierwsza pasująca wygrywa): nospr -> spodek -> teatr-rozrywki -> teatr-slaski -> other.
+ */
+export function getVenueGroup(articleOrItem) {
+  if (!articleOrItem || typeof articleOrItem !== 'object') return 'other';
+
+  const url = String(articleOrItem.sourceUrl || articleOrItem.link || '').toLowerCase();
+  const loc = String(articleOrItem.location || '').toLowerCase();
+  const srcName = String(articleOrItem.sourceName || '').toLowerCase();
+
+  if (url.includes('nospr.org.pl') || loc.includes('nospr') || srcName.includes('nospr')) {
+    return 'nospr';
+  }
+  if (url.includes('spodekkatowice.pl') || loc.includes('spodek') || srcName.includes('spodek')) {
+    return 'spodek';
+  }
+  if (url.includes('teatr-rozrywki.pl') || loc.includes('teatr rozrywki') || srcName.includes('teatr rozrywki')) {
+    return 'teatr-rozrywki';
+  }
+  if (
+    url.includes('teatrslaski.art.pl') ||
+    loc.includes('teatr śląski') ||
+    loc.includes('teatr slaski') ||
+    srcName.includes('teatr śląski') ||
+    srcName.includes('teatr slaski')
+  ) {
+    return 'teatr-slaski';
+  }
+
+  return 'other';
+}
+
 export function validateArticle(article, sourceItems, now = new Date()) {
   if (!article || typeof article !== 'object') throw new Error('Pozycja nie jest obiektem.');
   for (const field of ['title', 'summary', 'content', 'sourceUrl']) {
@@ -2244,15 +2277,10 @@ export function validateArticle(article, sourceItems, now = new Date()) {
   };
   if (typeof article.city === 'string') article.city = cityAliases[article.city.trim().toLocaleLowerCase('pl-PL')] || article.city;
   if (!ALLOWED_CITIES.has(article.city)) throw new Error(`Nieznane miasto: ${article.city}.`);
-  // Wymuszenie kategorii dedykowanych obiektom i instytucjom biletowanym (NOSPR, Spodek, Teatr Rozrywki)
-  const candidateUrl = String(article.sourceUrl || '').toLowerCase();
-  const candidateLoc = String(article.location || '').toLowerCase();
-  if (candidateUrl.includes('nospr.org.pl') || candidateLoc.includes('nospr')) {
-    article.category = 'nospr';
-  } else if (candidateUrl.includes('spodekkatowice.pl') || candidateLoc.includes('spodek')) {
-    article.category = 'spodek';
-  } else if (candidateUrl.includes('teatr-rozrywki.pl') || candidateLoc.includes('teatr rozrywki')) {
-    article.category = 'teatr-rozrywki';
+  // Wymuszenie kategorii dedykowanych obiektom i instytucjom biletowanym (NOSPR, Spodek, Teatr Rozrywki, Teatr Śląski)
+  const candidateVenue = getVenueGroup(article);
+  if (candidateVenue !== 'other') {
+    article.category = candidateVenue;
   }
 
   if (!ALLOWED_CATEGORIES.has(article.category)) throw new Error(`Nieznana kategoria: ${article.category}.`);
@@ -2303,15 +2331,13 @@ export function validateArticle(article, sourceItems, now = new Date()) {
   article.location = typeof article.location === 'string' ? article.location.trim() : '';
 
   // Weryfikacja kategorii na podstawie skojarzonego sourceItem (źródła)
-  const matchedSrcName = String(sourceItem?.sourceName || '').toLowerCase();
-  const resolvedLoc = article.location.toLowerCase();
-  const resolvedUrl = String(article.sourceUrl || '').toLowerCase();
-  if (resolvedUrl.includes('nospr.org.pl') || resolvedLoc.includes('nospr') || matchedSrcName.includes('nospr')) {
-    article.category = 'nospr';
-  } else if (resolvedUrl.includes('spodekkatowice.pl') || resolvedLoc.includes('spodek') || matchedSrcName.includes('spodek')) {
-    article.category = 'spodek';
-  } else if (resolvedUrl.includes('teatr-rozrywki.pl') || resolvedLoc.includes('teatr rozrywki') || matchedSrcName.includes('teatr rozrywki')) {
-    article.category = 'teatr-rozrywki';
+  const resolvedVenue = getVenueGroup({
+    sourceUrl: article.sourceUrl,
+    location: article.location,
+    sourceName: sourceItem?.sourceName || article.sourceName,
+  });
+  if (resolvedVenue !== 'other') {
+    article.category = resolvedVenue;
   }
 
   // 1. Wyznaczenie eventDate: zachowaj wcześniej wyodrębnione eventDate z parsera lub użyj doprecyzowanego przez AI

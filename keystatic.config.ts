@@ -67,6 +67,7 @@ export default config({
             { label: 'NOSPR', value: 'nospr' },
             { label: 'Spodek Katowice', value: 'spodek' },
             { label: 'Teatr Rozrywki Chorzów', value: 'teatr-rozrywki' },
+            { label: 'Teatr Śląski Katowice', value: 'teatr-slaski' },
           ],
           defaultValue: 'wydarzenia',
         }),

@@ -3,7 +3,7 @@ title: "Spektakl improwizowany „Impro Dziady” w Teatrze Śląskim"
 publishedDate: 2026-11-10
 eventDate: 2026-11-14
 city: "katowice"
-category: "kultura"
+category: "teatr-slaski"
 status: "published"
 summary: "Scena w Malarni Teatru Śląskiego zaprasza na unikalny wieczór z improwizacją teatralną inspirowaną dziełem Adama Mickiewicza."
 location: "Teatr Śląski, Scena w Malarni"

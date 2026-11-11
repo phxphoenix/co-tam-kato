@@ -3,7 +3,7 @@ title: "Spektakl komediowy „Boska!” na Dużej Scenie Teatru Śląskiego"
 publishedDate: 2026-11-09
 eventDate: 2026-11-19
 city: "katowice"
-category: "kultura"
+category: "teatr-slaski"
 status: "published"
 summary: "Teatr Śląski w Katowicach zaprasza na spektakl komediowy „Boska!”. Najbliższy pokaz zaplanowano na 19 listopada. Bilety są w sprzedaży."
 location: "Teatr Śląski, Duża Scena"

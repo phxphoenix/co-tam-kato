@@ -3,7 +3,7 @@ title: "Spektakl „Historia pewnego kłamstwa” na Scenie w Malarni Teatru Śl
 publishedDate: 2026-11-05
 eventDate: 2026-11-07
 city: "katowice"
-category: "kultura"
+category: "teatr-slaski"
 status: "published"
 summary: "Scena w Malarni Teatru Śląskiego zaprasza na spektakl dyplomowy Szkoły Aktorskiej. Najbliższa prezentacja odbędzie się 7 listopada w Katowicach."
 location: "Teatr Śląski – Scena w Malarni"

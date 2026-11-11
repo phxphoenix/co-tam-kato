@@ -3,7 +3,7 @@ title: "Spektakl „Miło cię było zobaczyć” na Scenie w Malarni Teatru Śl
 publishedDate: 2026-11-09
 eventDate: 2026-11-20
 city: "katowice"
-category: "kultura"
+category: "teatr-slaski"
 status: "published"
 summary: "Teatr Śląski zaprasza na spektakl „Miło cię było zobaczyć”. Pierwszy termin jesiennej serii zaplanowano na 20 listopada."
 location: "Teatr Śląski – Scena w Malarni"

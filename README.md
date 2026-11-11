@@ -61,7 +61,7 @@ title: "Tytuł Twojego nowego wydarzenia"
 publishedDate: 2026-09-26
 eventDate: 2026-10-18 # opcjonalne (lub null), jeśli artykuł dotyczy konkretnego wydarzenia
 city: "katowice" # katowice, chorzow, sosnowiec, siemianowice, etc.
-category: "wydarzenia" # wydarzenia, drogi-komunikacja, kultura, gastro, sport, alerty
+category: "wydarzenia" # dla-dzieci, wydarzenia, drogi-komunikacja, kultura, gastro, sport, alerty, nospr, spodek, teatr-rozrywki, teatr-slaski
 status: "published" # 'published' lub 'draft'
 summary: "Krótka zajawka na listę wiadomości."
 location: "Spodek, al. Korfantego 35"

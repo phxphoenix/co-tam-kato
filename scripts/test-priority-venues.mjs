@@ -10,6 +10,7 @@ import {
   isHighPriorityTicketSource,
   interleaveWebItems,
   selectPromptItems,
+  getVenueGroup,
   validateArticle,
 } from './daily-digest.mjs';
 
@@ -552,7 +553,7 @@ console.log('\n--- 6. Priorytetyzacja NOSPR, Spodka, Teatru Śląskiego i Teatru
 console.log('✅ Priorytetyzacja w selectPromptItems (NOSPR -> Spodek -> Teatr Śląski -> Teatr Rozrywki) oraz ochrona pozostałych źródeł działają bezbłędnie.');
 
 // ---------------------------------------------------------------------------
-// 7. Automatyczne wymuszenie kategorii w validateArticle (nospr, spodek, teatr-rozrywki)
+// 7. Automatyczne wymuszenie kategorii w validateArticle (nospr, spodek, teatr-rozrywki, teatr-slaski)
 // ---------------------------------------------------------------------------
 console.log('\n--- 7. Automatyczne wymuszenie kategorii w validateArticle ---');
 
@@ -578,6 +579,27 @@ console.log('\n--- 7. Automatyczne wymuszenie kategorii w validateArticle ---');
       link: 'https://teatr-rozrywki.pl/repertuar/musical-premierowy.html?view=event',
       pubDate: '2026-10-18',
       eventDate: '2026-12-10',
+    },
+    {
+      sourceId: '10',
+      sourceName: 'Teatr Śląski Katowice',
+      link: 'https://teatrslaski.art.pl/repertuar/hamlet/',
+      pubDate: '2026-10-20',
+      eventDate: '2026-12-15',
+    },
+    {
+      sourceId: '21',
+      sourceName: 'Stadion Śląski',
+      link: 'https://stadionslaski.pl/wydarzenia/mecz-reprezentacji',
+      pubDate: '2026-10-28',
+      eventDate: '2026-11-18',
+    },
+    {
+      sourceId: '23',
+      sourceName: 'Muzeum Śląskie',
+      link: 'https://muzeumslaskie.pl/pl/wystawy/nowa-wystawa',
+      pubDate: '2026-10-29',
+      eventDate: '2026-12-01',
     },
     {
       sourceId: '22',
@@ -642,7 +664,94 @@ console.log('\n--- 7. Automatyczne wymuszenie kategorii w validateArticle ---');
   );
   assert.equal(trArticle.category, 'teatr-rozrywki', 'Artykuł z Teatru Rozrywki musi otrzymać kategorię "teatr-rozrywki"');
 
-  // 4. Artykuł standardowy (mojeKatowice.pl) zachowuje przypisaną kategorię
+  // 4. Artykuł z Teatru Śląskiego: mimo category: 'kultura', validateArticle wymusza 'teatr-slaski'
+  const tsArticle = validateArticle(
+    {
+      title: 'Spektakl „Hamlet” w Teatrze Śląskim',
+      city: 'katowice',
+      category: 'kultura',
+      status: 'published',
+      isAlert: false,
+      summary: 'Klasyczny dramat na Dużej Scenie Teatru Śląskiego.',
+      content: 'Akapit pierwszy.\n\nAkapit drugi.',
+      sourceUrl: 'https://teatrslaski.art.pl/repertuar/hamlet/',
+      location: 'Teatr Śląski – Duża Scena',
+    },
+    sourceItems,
+    new Date('2026-11-01T12:00:00Z')
+  );
+  assert.equal(tsArticle.category, 'teatr-slaski', 'Artykuł z Teatru Śląskiego musi otrzymać kategorię "teatr-slaski"');
+
+  const tsByLocArticle = validateArticle(
+    {
+      title: 'Wydarzenie gościnne w Teatrze Śląskim',
+      city: 'katowice',
+      category: 'wydarzenia',
+      status: 'published',
+      isAlert: false,
+      summary: 'Zaproszenie na spektakl na Scenie Kameralnej.',
+      content: 'Akapit pierwszy.\n\nAkapit drugi.',
+      sourceUrl: 'https://mojekatowice.pl/artykul-remont',
+      location: 'Teatr Slaski – Scena Kameralna',
+    },
+    sourceItems,
+    new Date('2026-11-01T12:00:00Z')
+  );
+  assert.equal(tsByLocArticle.category, 'teatr-slaski', 'Dopasowanie po location ("Teatr Slaski") musi wymusić "teatr-slaski"');
+
+  const tsBySourceNameArticle = validateArticle(
+    {
+      title: 'Kameralna premiera w Katowicach',
+      city: 'katowice',
+      category: 'kultura',
+      status: 'published',
+      isAlert: false,
+      summary: 'Nowość repertuarowa na Scenie w Malarni.',
+      content: 'Akapit pierwszy.\n\nAkapit drugi.',
+      sourceUrl: 'https://teatrslaski.art.pl/repertuar/hamlet/',
+      location: 'Scena w Malarni',
+    },
+    sourceItems,
+    new Date('2026-11-01T12:00:00Z')
+  );
+  assert.equal(tsBySourceNameArticle.category, 'teatr-slaski', 'Dopasowanie po sourceUrl/sourceName musi wymusić "teatr-slaski"');
+
+  // 5. „Stadion Śląski” i „Muzeum Śląskie” NIE mogą otrzymać kategorii teatr-slaski
+  const stadionArticle = validateArticle(
+    {
+      title: 'Mecz na Stadionie Śląskim',
+      city: 'chorzow',
+      category: 'sport',
+      status: 'published',
+      isAlert: false,
+      summary: 'Wielkie sportowe emocje na Stadionie Śląskim.',
+      content: 'Akapit pierwszy.\n\nAkapit drugi.',
+      sourceUrl: 'https://stadionslaski.pl/wydarzenia/mecz-reprezentacji',
+      location: 'Stadion Śląski, Chorzów',
+    },
+    sourceItems,
+    new Date('2026-11-01T12:00:00Z')
+  );
+  assert.equal(stadionArticle.category, 'sport', 'Stadion Śląski musi zachować kategorię "sport"');
+
+  const muzeumArticle = validateArticle(
+    {
+      title: 'Nowa wystawa w Muzeum Śląskim',
+      city: 'katowice',
+      category: 'kultura',
+      status: 'published',
+      isAlert: false,
+      summary: 'Wernisaż wystawy czasowej w Muzeum Śląskim.',
+      content: 'Akapit pierwszy.\n\nAkapit drugi.',
+      sourceUrl: 'https://muzeumslaskie.pl/pl/wystawy/nowa-wystawa',
+      location: 'Muzeum Śląskie w Katowicach',
+    },
+    sourceItems,
+    new Date('2026-11-01T12:00:00Z')
+  );
+  assert.equal(muzeumArticle.category, 'kultura', 'Muzeum Śląskie musi zachować kategorię "kultura"');
+
+  // 6. Artykuł standardowy (mojeKatowice.pl) zachowuje przypisaną kategorię
   const standardArticle = validateArticle(
     {
       title: 'Remont ważnej arterii drogowej',
@@ -660,6 +769,59 @@ console.log('\n--- 7. Automatyczne wymuszenie kategorii w validateArticle ---');
   );
   assert.equal(standardArticle.category, 'drogi-komunikacja', 'Standardowy artykuł zachowuje poprawną kategorię');
 }
-console.log('✅ validateArticle niezawodnie wymusza dedykowane kategorie (nospr, spodek, teatr-rozrywki).');
+console.log('✅ validateArticle niezawodnie wymusza dedykowane kategorie (nospr, spodek, teatr-rozrywki, teatr-slaski) i nie myli innych obiektów śląskich.');
+
+// ---------------------------------------------------------------------------
+// 8. Klasyfikacja obiektów w getVenueGroup
+// ---------------------------------------------------------------------------
+console.log('\n--- 8. Testy jednostkowe getVenueGroup ---');
+
+{
+  assert.equal(getVenueGroup({ sourceUrl: 'https://nospr.org.pl/pl/kalendarz/1' }), 'nospr');
+  assert.equal(getVenueGroup({ link: 'https://NOSPR.ORG.PL/pl/aktualnosci/1' }), 'nospr');
+  assert.equal(getVenueGroup({ location: 'Sala Koncertowa NOSPR' }), 'nospr');
+  assert.equal(getVenueGroup({ sourceName: 'NOSPR (Kalendarz)' }), 'nospr');
+
+  assert.equal(getVenueGroup({ sourceUrl: 'https://www.spodekkatowice.pl/pl/wydarzenia/1' }), 'spodek');
+  assert.equal(getVenueGroup({ location: 'Spodek Katowice' }), 'spodek');
+  assert.equal(getVenueGroup({ sourceName: 'Spodek Katowice' }), 'spodek');
+
+  assert.equal(getVenueGroup({ sourceUrl: 'https://teatr-rozrywki.pl/repertuar/1.html' }), 'teatr-rozrywki');
+  assert.equal(getVenueGroup({ location: 'Teatr Rozrywki w Chorzowie' }), 'teatr-rozrywki');
+  assert.equal(getVenueGroup({ sourceName: 'Teatr Rozrywki Chorzów' }), 'teatr-rozrywki');
+
+  assert.equal(getVenueGroup({ sourceUrl: 'https://teatrslaski.art.pl/repertuar/hamlet/' }), 'teatr-slaski');
+  assert.equal(getVenueGroup({ link: 'https://TEATRSLASKI.ART.PL/repertuar/carmen/' }), 'teatr-slaski');
+  assert.equal(getVenueGroup({ location: 'Teatr Śląski – Scena w Malarni' }), 'teatr-slaski');
+  assert.equal(getVenueGroup({ location: 'Teatr Slaski, Duza Scena' }), 'teatr-slaski');
+  assert.equal(getVenueGroup({ sourceName: 'Teatr Śląski Katowice' }), 'teatr-slaski');
+
+  // Kolejność reguł (§1 spec): nospr > spodek > teatr-rozrywki > teatr-slaski
+  assert.equal(
+    getVenueGroup({ sourceUrl: 'https://nospr.org.pl/pl/kalendarz/x', location: 'Spodek' }),
+    'nospr',
+    'Reguła nospr ma pierwszeństwo przed spodek'
+  );
+  assert.equal(
+    getVenueGroup({ sourceUrl: 'https://spodekkatowice.pl/x', location: 'Teatr Rozrywki' }),
+    'spodek',
+    'Reguła spodek ma pierwszeństwo przed teatr-rozrywki'
+  );
+  assert.equal(
+    getVenueGroup({ sourceUrl: 'https://teatr-rozrywki.pl/x', location: 'Teatr Śląski' }),
+    'teatr-rozrywki',
+    'Reguła teatr-rozrywki ma pierwszeństwo przed teatr-slaski'
+  );
+
+  // Obiekty śląskie niebędące Teatrem Śląskim -> 'other'
+  assert.equal(getVenueGroup({ sourceUrl: 'https://stadionslaski.pl/a', location: 'Stadion Śląski', sourceName: 'Stadion Śląski' }), 'other');
+  assert.equal(getVenueGroup({ sourceUrl: 'https://parkslaski.pl/a', location: 'Park Śląski', sourceName: 'Park Śląski' }), 'other');
+  assert.equal(getVenueGroup({ sourceUrl: 'https://muzeumslaskie.pl/a', location: 'Muzeum Śląskie', sourceName: 'Muzeum Śląskie' }), 'other');
+  assert.equal(getVenueGroup({ sourceUrl: 'https://ateneumteatr.pl/a', location: 'Śląski Teatr Lalki i Aktora Ateneum' }), 'other');
+  assert.equal(getVenueGroup({ sourceUrl: 'https://mojekatowice.pl/a', location: 'Katowice' }), 'other');
+  assert.equal(getVenueGroup(null), 'other');
+  assert.equal(getVenueGroup(undefined), 'other');
+}
+console.log('✅ getVenueGroup poprawnie klasyfikuje obiekty oraz zachowuje kolejność reguł i wykluczenia.');
 
 console.log('\n🎉 Wszystkie testy w test-priority-venues.mjs zakończone pełnym sukcesem (100% PASS)!\n');

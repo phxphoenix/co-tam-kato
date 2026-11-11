@@ -3,7 +3,7 @@ title: "Spektakl „Sztuka” Yasminy Rezy na Scenie w Malarni Teatru Śląskieg
 publishedDate: 2026-11-06
 eventDate: 2026-11-12
 city: "katowice"
-category: "kultura"
+category: "teatr-slaski"
 status: "published"
 summary: "Teatr Śląski w Katowicach zaprasza na kameralny spektakl „Sztuka”. Najbliższy pokaz zaplanowano na 12 listopada na Scenie w Malarni."
 location: "Teatr Śląski – Scena w Malarni"

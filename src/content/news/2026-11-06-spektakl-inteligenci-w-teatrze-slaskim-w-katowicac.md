@@ -3,7 +3,7 @@ title: "Spektakl „Inteligenci” w Teatrze Śląskim w Katowicach"
 publishedDate: 2026-11-06
 eventDate: 2026-11-10
 city: "katowice"
-category: "kultura"
+category: "teatr-slaski"
 status: "published"
 summary: "Teatr Śląski w Katowicach zaprasza na spektakl „Inteligenci” na Scenie Kameralnej. Bilety są cały czas w sprzedaży."
 location: "Teatr Śląski – Scena Kameralna"

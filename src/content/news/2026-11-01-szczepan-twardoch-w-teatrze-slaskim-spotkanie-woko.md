@@ -3,7 +3,7 @@ title: "Szczepan Twardoch w Teatrze Śląskim: Spotkanie wokół nowej powieści
 publishedDate: 2026-11-01
 eventDate: 2026-11-09
 city: "katowice"
-category: "kultura"
+category: "teatr-slaski"
 status: "published"
 summary: "Teatr Śląski zaprasza na Dużą Scenę na spotkanie ze Szczepanem Twardochem. Rozmowa poświęcona będzie nowej książce pisarza zatytułowanej „Waldkauz”."
 location: "Teatr Śląski – Duża Scena"

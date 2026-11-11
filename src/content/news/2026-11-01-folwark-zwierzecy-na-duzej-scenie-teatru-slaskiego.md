@@ -3,7 +3,7 @@ title: "„Folwark zwierzęcy” na Dużej Scenie Teatru Śląskiego"
 publishedDate: 2026-11-01
 eventDate: 2026-11-03
 city: "katowice"
-category: "kultura"
+category: "teatr-slaski"
 status: "published"
 summary: "Teatr Śląski zaprasza na spektakl „Folwark zwierzęcy” zaprezentowany na Dużej Scenie w Katowicach. Najbliższy pokaz odbędzie się 3 listopada o godz. 19:00."
 location: "Teatr Śląski – Duża Scena"

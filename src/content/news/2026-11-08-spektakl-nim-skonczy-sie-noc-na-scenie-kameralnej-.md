@@ -3,7 +3,7 @@ title: "Spektakl „Nim skończy się noc…” na Scenie Kameralnej Teatru Śl�
 publishedDate: 2026-11-08
 eventDate: 2026-11-14
 city: "katowice"
-category: "kultura"
+category: "teatr-slaski"
 status: "published"
 summary: "Teatr Śląski zaprasza na kameralny spektakl oraz spotkanie w kawiarence literackiej w Katowicach."
 location: "Teatr Śląski w Katowicach, Scena Kameralna"
