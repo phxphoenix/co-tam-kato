@@ -7,6 +7,122 @@ export const DEFAULT_PAGINATION_SETTINGS = {
   adminArchivePageSize: 25,
 };
 
+export const DEFAULT_BALANCE_SETTINGS = {
+  ticketedMaxPerRun: 2,
+  ticketedMaxPerDay: 3,
+  ticketedMinPerDay: 1,
+  ticketedMaxShare3d: 0.40,
+  nosprMaxPerRun: 1,
+  nosprMaxPerDay: 2,
+  otherVenueMaxPerDay: 1,
+  lastTicketsBonusPerDay: 1,
+  maxCandidates: 7,
+  poolMaxItemsPerTicketedSource: 5,
+  cycleCooldownDays: 7,
+  weeklySummaryEnabled: true,
+  weeklySummaryHorizonDays: 14,
+};
+
+/**
+ * Validates and normalizes balance settings object.
+ * Missing or invalid values are replaced with defaults and a warning is logged.
+ *
+ * @param {Record<string, any>} [raw]
+ * @returns {typeof DEFAULT_BALANCE_SETTINGS}
+ */
+export function validateBalanceSettings(raw = {}) {
+  const result = { ...DEFAULT_BALANCE_SETTINGS };
+  if (!raw || typeof raw !== 'object') {
+    console.warn('[BalanceSettings] Nieprawidłowy obiekt ustawień równowagi – użyto wartości domyślnych.');
+    return result;
+  }
+
+  for (const [key, defaultVal] of Object.entries(DEFAULT_BALANCE_SETTINGS)) {
+    const val = raw[key];
+    if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '')) {
+      console.warn(`[BalanceSettings] Brak parametru "${key}" – użyto wartości domyślnej (${defaultVal}).`);
+      result[key] = defaultVal;
+      continue;
+    }
+
+    if (typeof defaultVal === 'boolean') {
+      if (typeof val === 'boolean') {
+        result[key] = val;
+      } else if (typeof val === 'string' && /^(true|false)$/i.test(val.trim())) {
+        result[key] = val.trim().toLowerCase() === 'true';
+      } else {
+        console.warn(`[BalanceSettings] Nieprawidłowa wartość logiczna dla "${key}": ${JSON.stringify(val)} – użyto wartości domyślnej (${defaultVal}).`);
+        result[key] = defaultVal;
+      }
+      continue;
+    }
+
+    if (key === 'ticketedMaxShare3d') {
+      let num = NaN;
+      if (typeof val === 'number') {
+        num = val;
+      } else if (typeof val === 'string' && /^-?\d+(?:\.\d+)?$/.test(val.trim())) {
+        num = Number(val.trim());
+      }
+      if (Number.isFinite(num) && num >= 0 && num <= 1) {
+        result[key] = num;
+      } else {
+        console.warn(`[BalanceSettings] Nieprawidłowa wartość udziału (0–1) dla "${key}": ${JSON.stringify(val)} – użyto wartości domyślnej (${defaultVal}).`);
+        result[key] = defaultVal;
+      }
+      continue;
+    }
+
+    // Integer >= 0
+    let intVal = NaN;
+    if (typeof val === 'number') {
+      intVal = val;
+    } else if (typeof val === 'string' && /^-?\d+$/.test(val.trim())) {
+      intVal = Number(val.trim());
+    }
+    if (Number.isInteger(intVal) && intVal >= 0) {
+      result[key] = intVal;
+    } else {
+      console.warn(`[BalanceSettings] Nieprawidłowa wartość całkowita (>= 0) dla "${key}": ${JSON.stringify(val)} – użyto wartości domyślnej (${defaultVal}).`);
+      result[key] = defaultVal;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Parses balance settings from config/sources.md content or file path.
+ *
+ * @param {string} [input] File path or raw markdown content. Defaults to 'config/sources.md'.
+ * @returns {typeof DEFAULT_BALANCE_SETTINGS}
+ */
+export function parseBalanceSettings(input = path.resolve('config/sources.md')) {
+  let content = input;
+  if (input === undefined || input === null) {
+    const defaultPath = path.resolve('config/sources.md');
+    content = fs.existsSync(defaultPath) ? fs.readFileSync(defaultPath, 'utf8') : '';
+  } else if (typeof input === 'string' && !input.includes('\n') && fs.existsSync(input)) {
+    content = fs.readFileSync(input, 'utf8');
+  }
+
+  if (!content || typeof content !== 'string') {
+    console.warn('[BalanceSettings] Brak treści konfiguracji równowagi – użyto wartości domyślnych.');
+    return { ...DEFAULT_BALANCE_SETTINGS };
+  }
+
+  const raw = {};
+  for (const key of Object.keys(DEFAULT_BALANCE_SETTINGS)) {
+    const regex = new RegExp(`(?:^|\\r?\\n)\\s*(?:[-*]\\s*)?\`?${key}\`?\\s*[:=|]\\s*([^\\r\\n]+)`, 'i');
+    const match = content.match(regex);
+    if (match && match[1] !== undefined) {
+      raw[key] = match[1].trim();
+    }
+  }
+
+  return validateBalanceSettings(raw);
+}
+
 /**
  * Parses pagination settings (homePageSize, archivePageSize, adminArchivePageSize)
  * from config/sources.md content or file path.
@@ -91,6 +207,15 @@ export function serializePaginationSettingsInMarkdown(originalContent, settings)
     '---',
     '',
   ].join(lineEnding);
+
+  const balanceHeadingIdx = updated.indexOf('## Ustawienia równowagi treści');
+  if (balanceHeadingIdx !== -1) {
+    return (
+      updated.slice(0, balanceHeadingIdx) +
+      sectionBlock +
+      updated.slice(balanceHeadingIdx)
+    );
+  }
 
   const tableHeadingIdx = updated.indexOf('## Tabela Źródeł');
   if (tableHeadingIdx !== -1) {

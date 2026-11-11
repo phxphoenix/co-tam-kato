@@ -196,6 +196,29 @@ Przed zapisem skrypt przeprowadza wielowarstwową deduplikację (`resolveCandida
 - **Tematy cykliczne w Archiwum (`archived: true`)**: dokładny (niegeneryczny) adres URL wydarzenia pozostaje zablokowany bezterminowo, natomiast przy **innym adresie URL** nowa edycja cyklicznego wydarzenia jest dopuszczana, jeśli `eventDate` różni się o ponad `7` dni (lub po upływie `35` dni od publikacji w przypadku zarchiwizowanych komunikatów miejskich bez przyszłej daty `eventDate`).
 - **Blokada `deleted` i kolizji slugów**: wpisy o statusie `deleted` nadal blokują ponowną publikację wycofanych tematów po URL-u i podobieństwie tytułu, a kolizja istniejącego sluga pomija zapis. Walidacja Astro w CI stanowi drugi etap sprawdzenia treści.
 
+### Silnik równowagi kategorii, parametry i monitoring
+
+Aby utrzymać docelowy udział **grupy biletowanej** (`nospr`, `teatr-slaski`, `teatr-rozrywki`, `spodek`) na poziomie **30–40%** (w tym NOSPR ok. **12–20%**) przy jednoczesnym gwarantowanym minimum dziennym (`≥ 1` wpis dziennie) i ochronie „Ostatnich biletów”, proces digestu wykorzystuje deterministyczny silnik równowagi kategorii (`scripts/balance.mjs`):
+
+1. **Parametry w `config/sources.md` (`## Ustawienia równowagi treści (Agent AI)`)**:
+   - Parsowane i walidowane przez `parseBalanceSettings` / `validateBalanceSettings` w `scripts/sources-parser.mjs` (błędne lub brakujące wartości są zastępowane domyślnymi z `DEFAULT_BALANCE_SETTINGS` wraz z ostrzeżeniem w logu; zapis z panelu admina w `src/server/sources-service.ts` zachowuje tę sekcję bez zmian):
+     - `ticketedMaxPerRun: 2` — maks. artykułów z grupy biletowanej w jednym uruchomieniu,
+     - `ticketedMaxPerDay: 3` — maks. artykułów z grupy biletowanej w danym dniu (wg prefiksu daty pliku `addedDate` w strefie `Europe/Warsaw`),
+     - `ticketedMinPerDay: 1` — gwarantowane minimum dzienne dla grupy biletowanej,
+     - `ticketedMaxShare3d: 0.40` — maksymalny udział grupy biletowanej w oknie 3 dni (dziś + 2 poprzednie); po jego przekroczeniu (przy min. 4 artykułach w 3 dni i `today.ticketed ≥ 1`) budżet uruchomienia wynosi `0` poza bonusem pilnym,
+     - `nosprMaxPerRun: 1`, `nosprMaxPerDay: 2` — limity dla NOSPR,
+     - `otherVenueMaxPerDay: 1` — dzienny limit dla każdego z obiektów: `teatr-slaski`, `teatr-rozrywki`, `spodek`,
+     - `lastTicketsBonusPerDay: 1` — dzienny bonus dla kandydatów pilnych (`urgent`: status „Ostatnie bilety” / „Ostatnie wolne miejsca” i `eventDate ≤ 14` dni), pozwalający przekroczyć wyczerpany limit dzienny lub próg udziału,
+     - `maxCandidates: 7` — liczba kandydatów w kolejności ważności zwracana przez Gemini (`MAX_CANDIDATES = 7`), z których po walidacji, deduplikacji i selekcji równowagi publikowane są maksymalnie `MAX_ARTICLES = 4` artykuły,
+     - `poolMaxItemsPerTicketedSource: 5`, `cycleCooldownDays: 7`, `weeklySummaryEnabled: true`, `weeklySummaryHorizonDays: 14`.
+2. **Przepływ w `main()` i selekcja (`computeBalanceBudget` → `selectBalancedArticles`)**:
+   - Kolejność przetwarzania: `analyzeWithGemini` (do `maxCandidates` kandydatów, nadmiar przycinany z ostrzeżeniem) → filtr usuniętych (`matchesDeletedArticle`) → `validateArticle` (błąd pojedynczego kandydata odrzuca tylko tego kandydata z ostrzeżeniem, nie przerywając uruchomienia) → `resolveCandidateArticles` (deduplikacja przed wyborem kwotowym) → `selectBalancedArticles` → `writeArticle`.
+   - `selectBalancedArticles` egzekwuje limity budżetu, obsługuje bonus `urgent`, realizuje gwarantowane minimum dzienne (przez zamianę ostatniego zaakceptowanego artykułu `other` na najlepszego kandydata `ticketed` – z pierwszeństwem dla `urgent` – lub dodanie, gdy zaakceptowano `< 4` pozycje) i nie dopycha zestawienia ponad limit, gdy pozostali wyłącznie kandydaci `ticketed`.
+   - Do statystyk (`computeRecentDistribution`) wliczane są wyłącznie artykuły z `aiGenerated: true`, `status !== 'deleted'`, z wykluczeniem wpisów zbiorczych rozpoznawanych przez `isWeeklySummaryRecord` (slug zawierający `'tydzien-w-kulturze'`).
+3. **Monitoring i raportowanie (`scripts/report-balance.mjs`)**:
+   - Każda decyzja selekcji logowana jest z prefiksem `⚖️`, a na końcu uruchomienia (oraz w trybie `--dry-run`) wypisywane jest podsumowanie `📊 Rozkład dziś: …; 3 dni: ticketed X/Y (Z%); NOSPR …`.
+   - Skrypt `node scripts/report-balance.mjs [--days 14]` generuje zestawienie tabelaryczne `venueGroup` oraz `category` per dzień wraz z podsumowaniem udziałów procentowych (bez użycia sieci i bez zapisu na dysk).
+
 ### Zapis i publikacja
 
 Po digest skrypt workflow uruchamia `npm run build`. Następnie GitHub Actions dodaje wyłącznie `src/content/news/`, tworzy commit tylko wtedy, gdy wykryto zmiany, i wypycha go do `main`. Po zakończeniu pracy workflowu digestu, workflow wdrożeniowy `deploy.yml` zostaje automatycznie wywołany przez mechanizm `workflow_run`, co powoduje przebudowanie serwisu i odświeżenie strony na GitHub Pages. Jeśli nie ma zmian w artykułach, commit nie powstaje.
@@ -240,7 +263,10 @@ W katalogu `src/content/news/` znajdują się artykuły opisujące wydarzenia i 
 - `src/pages/index.astro` — agregacja i serializacja wiadomości.
 - `src/components/InteractiveFeed.tsx` — wyszukiwarka i filtry.
 - `src/pages/wpis/[slug].astro` — generowanie pojedynczych artykułów.
-- `scripts/daily-digest.mjs` — pobieranie RSS/WEB, zbalansowana selekcja puli promptu (`selectPromptItems`), kaskadowy Model Fallback Gemini (`callGeminiWithFallback`) z ochroną RPM/TPM Guard, wielowarstwowa deduplikacja i zastępowanie szkiców (`resolveCandidateArticles`) oraz zapis wpisów.
+- `scripts/daily-digest.mjs` — pobieranie RSS/WEB, zbalansowana selekcja puli promptu (`selectPromptItems`), kaskadowy Model Fallback Gemini (`callGeminiWithFallback`) z ochroną RPM/TPM Guard, wielowarstwowa deduplikacja i zastępowanie szkiców (`resolveCandidateArticles`), integracja z silnikiem równowagi kategorii oraz zapis wpisów.
+- `scripts/balance.mjs` — czyste funkcje silnika równowagi kategorii (`getVenueGroup`, `isWeeklySummaryRecord`, `computeRecentDistribution`, `isUrgentCandidate`, `computeBalanceBudget`, `selectBalancedArticles`, `formatBalanceSummary`).
+- `scripts/report-balance.mjs` — narzędzie CLI (`--days N`) generujące raport rozkładu `venueGroup` i kategorii per dzień na podstawie plików w `src/content/news/`.
+- `scripts/test-category-balance.mjs` — testy jednostkowe parsera ustawień równowagi, budżetu, wyboru artykułów, zamiany minimum dziennego, bonusu `urgent` oraz historycznego replayu (`scripts/fixtures/balance-replay.json`).
 - `scripts/test-duplicate-detection.mjs` — testy jednostkowe wykrywania duplikatów, normalizacji URL/tytułów, zastępowania `draft` -> `published`, tematów cyklicznych w Archiwum oraz selekcji puli `RSS`/`WEB`.
 - `scripts/test-priority-venues.mjs` — testy jednostkowe parserów `parseNosprKalendarz`, `parseNosprAktualnosci`, `parseTeatrSlaski`, limitu `MAX_ARTICLES = 4` oraz kolejki priorytetowej w `selectPromptItems`.
 - `scripts/test-gemini-fallback.mjs` — testy jednostkowe hierarchii modeli `GEMINI_MODELS`, mechanizmu Model Fallback (`429`/`503`/`404`/timeouty) i throttlingu RPM/TPM.

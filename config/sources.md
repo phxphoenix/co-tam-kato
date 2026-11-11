@@ -20,6 +20,24 @@
 
 ---
 
+## Ustawienia równowagi treści (Agent AI)
+
+- `ticketedMaxPerRun`: 2
+- `ticketedMaxPerDay`: 3
+- `ticketedMinPerDay`: 1
+- `ticketedMaxShare3d`: 0.40
+- `nosprMaxPerRun`: 1
+- `nosprMaxPerDay`: 2
+- `otherVenueMaxPerDay`: 1
+- `lastTicketsBonusPerDay`: 1
+- `maxCandidates`: 7
+- `poolMaxItemsPerTicketedSource`: 5
+- `cycleCooldownDays`: 7
+- `weeklySummaryEnabled`: true
+- `weeklySummaryHorizonDays`: 14
+
+---
+
 ## Tabela Źródeł (Konfiguracja)
 
 | ID | Nazwa | Typ | URL | Kategoria | Status | Wskazówki dla agenta (Scraping Hints) |

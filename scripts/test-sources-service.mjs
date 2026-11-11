@@ -8,8 +8,13 @@ import {
   validateSourceInput,
   addSource,
   updateSource,
+  updatePaginationSettings,
   serializeSourcesMarkdown,
 } from '../src/server/sources-service.ts';
+import {
+  DEFAULT_BALANCE_SETTINGS,
+  parseBalanceSettings,
+} from './sources-parser.mjs';
 
 console.log('Testing sources-service...');
 
@@ -84,12 +89,16 @@ try {
   assert.equal(item30.hints, 'Testowe wskazówki z | pipe');
   console.log('✓ Successfully added new source #31 to table');
 
-  // Verify preamble in file is intact
+  // Verify preamble in file is intact (including balance settings section after pagination update)
+  const pagUpdateRes = updatePaginationSettings({ homePageSize: 24, archivePageSize: 36, adminArchivePageSize: 100 });
+  assert.ok(pagUpdateRes.success);
   const currentMd = fs.readFileSync('config/sources.md', 'utf8');
   assert.ok(currentMd.startsWith('# Baza Źródeł Wydarzeń – Katowice i Metropolia GZM'));
   assert.ok(currentMd.includes('## Instrukcje operacyjne dla Agenta AI (Ingestion Pipeline)'));
   assert.ok(currentMd.includes('1. **Filtrowanie:**'));
-  console.log('✓ Preamble and AI instructions remain 100% intact');
+  assert.ok(currentMd.includes('## Ustawienia równowagi treści (Agent AI)'));
+  assert.deepEqual(parseBalanceSettings(currentMd), DEFAULT_BALANCE_SETTINGS);
+  console.log('✓ Preamble, AI instructions and balance settings section remain 100% intact');
 
   console.log('All sources-service tests passed successfully!');
 } finally {

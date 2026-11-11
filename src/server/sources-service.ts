@@ -176,6 +176,11 @@ export function serializePaginationSettingsInMarkdown(
     '',
   ].join(lineEnding);
 
+  const balanceHeadingIdx = updated.indexOf('## Ustawienia równowagi treści');
+  if (balanceHeadingIdx !== -1) {
+    return updated.slice(0, balanceHeadingIdx) + sectionBlock + updated.slice(balanceHeadingIdx);
+  }
+
   const tableHeadingIdx = updated.indexOf('## Tabela Źródeł');
   if (tableHeadingIdx !== -1) {
     return updated.slice(0, tableHeadingIdx) + sectionBlock + updated.slice(tableHeadingIdx);

@@ -129,22 +129,22 @@ try {
 
   // Weryfikacja AC 7: Sortowanie i paginacja
   assert.ok(
-    interactiveFeedSrc.includes('visibleCount'),
-    'InteractiveFeed musi obsługiwać paginację przez visibleCount'
+    interactiveFeedSrc.includes('pageSize') && interactiveFeedSrc.includes('currentPage'),
+    'InteractiveFeed musi obsługiwać paginację przez pageSize i currentPage'
   );
   assert.ok(
-    interactiveFeedSrc.includes('PAGE_SIZE'),
-    'InteractiveFeed musi mieć zdefiniowany rozmiar strony'
+    interactiveFeedSrc.includes('archivePageSize'),
+    'InteractiveFeed musi przyjmować skonfigurowany rozmiar strony archiwum (archivePageSize)'
   );
   assert.ok(
-    interactiveFeedSrc.includes('sentinelRef'),
-    'InteractiveFeed musi posiadać sentinel do infinite scroll'
+    interactiveFeedSrc.includes('getPaginationMeta'),
+    'InteractiveFeed musi wyliczać metadane paginacji (getPaginationMeta)'
   );
   assert.ok(
-    interactiveFeedSrc.includes('Załaduj więcej wpisów'),
-    'InteractiveFeed musi posiadać przycisk „Załaduj więcej wpisów”'
+    interactiveFeedSrc.includes('PaginationBar'),
+    'InteractiveFeed musi renderować komponent nawigacji stron (PaginationBar)'
   );
-  console.log('✅ AC 7 spełnione: Sortowanie domyślne od najnowszych oraz obsługa paginacji i infinite scroll zaimplementowane.');
+  console.log('✅ AC 7 spełnione: Sortowanie domyślne od najnowszych oraz obsługa paginacji (PaginationBar) zaimplementowane.');
 
 } finally {
   // Posprzątajmy plik testowy i przebudujmy do czystego stanu

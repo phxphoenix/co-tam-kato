@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { parseSourcesMarkdown, loadActiveSources, serializeSourcesMarkdown } from './sources-parser.mjs';
+import {
+  parseSourcesMarkdown,
+  loadActiveSources,
+  serializeSourcesMarkdown,
+  DEFAULT_BALANCE_SETTINGS,
+  parseBalanceSettings,
+} from './sources-parser.mjs';
 
 console.log('Testing parseSourcesMarkdown...');
 
@@ -53,7 +59,12 @@ console.log('✓ INACTIVE and TEMPLATE correctly filtered out');
 const originalSourcesMd = fs.readFileSync('config/sources.md', 'utf8');
 const serialized = serializeSourcesMarkdown(allSources, originalSourcesMd);
 assert.equal(serialized, originalSourcesMd, 'Serialized output must exactly match original file');
-console.log('✓ Serialization roundtrip preserves config/sources.md 100% exactly');
+assert.deepEqual(
+  parseBalanceSettings(serialized),
+  DEFAULT_BALANCE_SETTINGS,
+  'Balance settings must be preserved 100% after sources serialization'
+);
+console.log('✓ Serialization roundtrip preserves config/sources.md (including balance settings) 100% exactly');
 
 // 5. Test pipe escaping during serialization and parsing
 const sourceWithPipe = {
