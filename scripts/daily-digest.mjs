@@ -487,8 +487,25 @@ function decodeXml(value = '') {
   return value
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
     .replace(/&amp;#0*38;|&#0*38;|&amp;#x0*26;|&#x0*26;|&amp;/gi, '&')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&ndash;/gi, '–')
+    .replace(/&mdash;/gi, '—')
+    .replace(/&bdquo;/gi, '„')
+    .replace(/&ldquo;/gi, '“')
+    .replace(/&rdquo;/gi, '”')
+    .replace(/&lsquo;/gi, '‘')
+    .replace(/&rsquo;/gi, '’')
+    .replace(/&hellip;/gi, '…')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'");
+    .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
+    .replace(/&#(\d+);/g, (m, code) => {
+      const cp = Number(code);
+      return Number.isInteger(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : m;
+    })
+    .replace(/&#x([0-9a-f]+);/gi, (m, hex) => {
+      const cp = parseInt(hex, 16);
+      return Number.isInteger(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : m;
+    });
 }
 
 function stripHtml(value = '') {
@@ -641,6 +658,149 @@ export function parseStadionSlaski(html, sourceUrl = 'https://superautostadionsl
     value: chunks.length,
     enumerable: false,
   });
+
+  return items;
+}
+
+function extractAgeRange(text = '') {
+  if (!text || typeof text !== 'string') return undefined;
+  const patterns = [
+    /\b(?:dla\s+dzieci\s+(?:w\s+wieku\s+)?|wiek\s*[:\-]?\s*)(\d+\s*[-–]\s*\d+\s*lat(?:a)?)/i,
+    /\b(\d+\s*[-–]\s*\d+\s*lat(?:a)?)\b/i,
+    /\b(od\s+\d+\s*(?:lat|roku|miesi[eę]cy)(?:\s+do\s+\d+\s*(?:lat|roku))?)/i,
+    /\b(\d+\s*\+\s*lat|\d+\s*lat\+)\b/i,
+    /\b(szkoła\s+podstawowa(?:\s+i\s+zerówka)?|przedszkol[ae](?:\s+i\s+szkoła\s+podstawowa)?)\b/i,
+  ];
+  for (const re of patterns) {
+    const m = text.match(re);
+    if (m && m[1]) {
+      return m[1].replace(/\s+/g, ' ').trim();
+    }
+  }
+  return undefined;
+}
+
+function inferCityFromText(text = '', fallback = 'katowice') {
+  const lower = String(text || '').toLocaleLowerCase('pl-PL');
+  if (/\bchorz[oó]w/i.test(lower)) return 'chorzow';
+  if (/\bkatowic/i.test(lower)) return 'katowice';
+  if (/\bsosnowi?e?c/i.test(lower)) return 'sosnowiec';
+  if (/\btychy|\btychach\b/i.test(lower)) return 'tychy';
+  if (/\bbytom/i.test(lower)) return 'bytom';
+  if (/\bmysłowic|\bmyslowic/i.test(lower)) return 'myslowice';
+  if (/\bsiemianowic/i.test(lower)) return 'siemianowice';
+  if (/\brud[ayąe]\s+[śs]l[ąa]sk/i.test(lower)) return 'ruda-slaska';
+  if (/\bd[ąa]brow[ayąe]\s+g[óo]rnicz/i.test(lower)) return 'dabrowa-gornicza';
+  if (/\bczelad[źz]/i.test(lower)) return 'czeladz';
+  if (/\b[śs]wi[ęe]tochłowic|\bswietochlowic/i.test(lower)) return 'swietochlowice';
+  if (/\bzabrz|\bgliwic/i.test(lower)) return 'cala-okolica';
+  return fallback;
+}
+
+/**
+ * Parser dla źródła PIK Katowice – Dzieci (https://pik.katowice.pl/dzieci/).
+ * Wyodrębnia nadchodzące wydarzenia dla dzieci wraz z datą, godziną, opisem i sugerowanym wiekiem,
+ * odrzucając wpisy przeszłe (pik-past-event lub eventDate < dziś).
+ */
+export function parsePikDzieci(html, baseUrl = 'https://pik.katowice.pl/dzieci/', options = {}) {
+  if (!html || typeof html !== 'string') return [];
+  const {
+    now = new Date(),
+    defaultCity = 'katowice',
+  } = options;
+
+  const nowTs = now instanceof Date ? now.getTime() : Date.now();
+  const todayIso = toIsoDate(now) || new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(new Date(nowTs));
+
+  const blocks = html.split(/<div\b[^>]*class=["'][^"']*\bblog-post\b[^"']*["'][^>]*>/i);
+  const items = [];
+  const seenLinks = new Set();
+
+  for (let idx = 1; idx < blocks.length; idx++) {
+    const prevTail = blocks[idx - 1].slice(-250);
+    const block = blocks[idx];
+    const isPastByClass = /\bpik-past-event\b/i.test(prevTail) || /^\s*[^<]*\bpik-past-event\b/i.test(block);
+    if (isPastByClass) continue;
+
+    const headMatch = block.match(/<h[123]\b[^>]*>\s*<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>\s*<\/h[123]>/i);
+    if (!headMatch) continue;
+
+    const href = headMatch[1].trim();
+    const title = stripHtml(headMatch[2]);
+    if (!title || !href) continue;
+
+    let fullLink;
+    try {
+      fullLink = href.startsWith('http') ? href : new URL(href, baseUrl).toString();
+    } catch {
+      continue;
+    }
+
+    const normLink = normalizeSourceUrl(fullLink);
+    if (!normLink || seenLinks.has(normLink) || isGenericSourceUrl(normLink)) continue;
+
+    const dataBlockMatch =
+      block.match(/<span\b[^>]*class=["'][^"']*\bdata\b[^"']*["'][^>]*>([\s\S]*?)(?=<!--\s*Gogole Event Data END|<div\b[^>]*class=["'][^"']*\bbp-details\b)/i) ||
+      block.match(/<span\b[^>]*class=["'][^"']*\bdata\b[^"']*["'][^>]*>([\s\S]*?)<\/span>/i);
+    const rawDateText = dataBlockMatch ? stripHtml(dataBlockMatch[1]) : '';
+
+    const allDates = [];
+    for (const part of rawDateText.split(/\s+-\s+/)) {
+      const iso = extractPolishDateFromText(part);
+      if (iso) allDates.push(iso);
+    }
+    const startDate = allDates[0] || extractPolishDateFromText(rawDateText);
+    const endDate = allDates.length > 1 ? allDates[allDates.length - 1] : startDate;
+
+    if (endDate && endDate < todayIso) {
+      continue;
+    }
+    const eventDate = startDate && startDate >= todayIso ? startDate : (endDate && endDate >= todayIso ? endDate : null);
+    if (!eventDate) {
+      continue;
+    }
+
+    const timeMatch = rawDateText.match(/\b(\d{1,2}:\d{2})\b/);
+    const timeStr = timeMatch ? timeMatch[1] : '';
+
+    const metaMatch = block.match(/<div\b[^>]*class=["'][^"']*\bmom-post-meta\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+    const metaText = metaMatch ? stripHtml(metaMatch[1]) : '';
+
+    const detailsMatch = block.match(/<div\b[^>]*class=["'][^"']*\bbp-details\b[^"']*["'][^>]*>([\s\S]*?)<!--details-->/i)
+      || block.match(/<div\b[^>]*class=["'][^"']*\bbp-details\b[^"']*["'][^>]*>([\s\S]*?)<div\b[^>]*class=["'][^"']*clear\b/i);
+    let excerpt = '';
+    if (detailsMatch) {
+      const cleanedDetails = detailsMatch[1]
+        .replace(/<div\b[^>]*class=["'][^"']*\bbuttony\b[^"']*["'][^>]*>[\s\S]*?<\/div>/gi, ' ')
+        .replace(/<a\b[^>]*class=["'][^"']*\bread-more-link\b[^"']*["'][^>]*>[\s\S]*?<\/a>/gi, ' ');
+      excerpt = stripHtml(cleanedDetails);
+    }
+
+    const ageRange = extractAgeRange(`${title} ${excerpt}`);
+    const city = inferCityFromText(`${title} ${metaText} ${excerpt}`, defaultCity);
+
+    const descParts = [excerpt || title];
+    if (rawDateText) {
+      descParts.push(`Termin: ${rawDateText}${timeStr && !rawDateText.includes(timeStr) ? `, godz. ${timeStr}` : ''}.`);
+    }
+    if (ageRange) {
+      descParts.push(`Wiek uczestników: ${ageRange}.`);
+    }
+
+    seenLinks.add(normLink);
+    items.push({
+      title,
+      link: fullLink,
+      description: descParts.join(' ').replace(/\s+/g, ' ').trim(),
+      eventDate,
+      pubDate: undefined,
+      defaultCity: city,
+      defaultCategory: 'dla-dzieci',
+      isForKids: true,
+      ...(ageRange ? { ageRange } : {}),
+      isEvent: true,
+    });
+  }
 
   return items;
 }
@@ -1515,6 +1675,32 @@ export async function processSource(source) {
       source.id === '11' ||
       lowerName.includes('teatr rozrywki') ||
       lowerUrl.includes('teatr-rozrywki.pl');
+    const isPikDzieci =
+      source.id === '14' ||
+      lowerUrl.includes('pik.katowice.pl/dzieci');
+
+    if (isPikDzieci) {
+      const now = new Date();
+      const response = await fetchWithTlsAia(source.url, {
+        headers: { 'User-Agent': BOT_USER_AGENT, 'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8' },
+        signal: AbortSignal.timeout(12000),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const html = await response.text();
+      prefetchedHtml = html;
+      const items = parsePikDzieci(html, source.url, { now, defaultCity: city });
+      if (items.length > 0) {
+        return items.map((item) => ({
+          ...item,
+          sourceId: source.id,
+          sourceName: source.name,
+          sourceType: 'WEB',
+          sourceCategory: source.category,
+          parsingHints: source.hints,
+        }));
+      }
+      console.warn(`  [${source.id}] parsePikDzieci zwrócił 0 pozycji – przełączam na tryb ogólny.`);
+    }
 
     if (isNosprKalendarz) {
       const now = new Date();
@@ -3019,6 +3205,15 @@ export function validateArticle(article, sourceItems, now = new Date()) {
       });
   if (resolvedVenue !== 'other') {
     article.category = resolvedVenue;
+  } else if (sourceItem?.defaultCategory && ALLOWED_CATEGORIES.has(sourceItem.defaultCategory)) {
+    article.category = sourceItem.defaultCategory;
+  }
+
+  if (sourceItem?.isForKids === true) {
+    article.isForKids = true;
+  }
+  if (!article.ageRange && typeof sourceItem?.ageRange === 'string' && sourceItem.ageRange.trim()) {
+    article.ageRange = sourceItem.ageRange.trim();
   }
 
   // 1. Wyznaczenie eventDate: zachowaj wcześniej wyodrębnione eventDate z parsera lub użyj doprecyzowanego przez AI
