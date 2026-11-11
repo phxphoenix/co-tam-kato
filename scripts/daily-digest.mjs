@@ -1152,6 +1152,152 @@ export function parseMuzeumSlaskie(html, baseUrl = 'https://muzeumslaskie.pl/war
   return items;
 }
 
+const KOSMOS_SPECIAL_RE =
+  /\b(?:prelekcj\p{L}*|dyskusj\p{L}*|spotkanie|festiwal\p{L}*|przegl[ąa]d\p{L}*|maraton\p{L}*|opera|koncert\p{L}*|warsztat\p{L}*|przedpremier\p{L}*|[śs]l[ąa]ska\s+premiera|kino\s+azji|pora\s+dla\s+seniora|rodzina\s+w\s+kinie|dla\s+dzieci)/iu;
+
+/**
+ * Parser dla Kina Kosmos w Katowicach (https://kosmos.katowice.pl/repertuar/).
+ * Wyodrębnia wyłącznie wydarzenia specjalne (cykle filmowe, przeglądy, prelekcje, transmisje operowe,
+ * cykle dla dzieci i seniorów), pomijając zwykłe codzienne seanse kinowe oraz terminy przeszłe.
+ */
+export function parseKinoKosmos(html, baseUrl = 'https://kosmos.katowice.pl/repertuar/', options = {}) {
+  if (!html || typeof html !== 'string') return [];
+  const {
+    now = new Date(),
+    defaultCity = 'katowice',
+  } = options;
+
+  const nowTs = now instanceof Date ? now.getTime() : Date.now();
+  const todayIso = toIsoDate(now) || new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(new Date(nowTs));
+
+  const hallSections = html.split(/(?=<div\b[^>]*class=["'][^"']*\bsala-repertuar\b[^"']*["'][^>]*>)/i);
+  const sections = hallSections.length > 1
+    ? hallSections.slice(1)
+    : [html];
+
+  const grouped = new Map();
+  const seenOccurrenceKeys = new Set();
+
+  for (const section of sections) {
+    const hallNameMatch = section.match(/<div\b[^>]*class=["'][^"']*\bsala-nazwa\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+    const hallName = hallNameMatch ? stripHtml(hallNameMatch[1]) : '';
+
+    const itemsInSection = section.split(/(?=<div\b[^>]*class=["'](?:[^"']*\s)?sala-item(?:\s[^"']*)?["'])/i).slice(1);
+    for (const block of itemsInSection) {
+      const fullDateAttr = block.match(/\bdata-full-date=["']([^"']+)["']/i)?.[1] || '';
+      const compactDateAttr = block.match(/\bdata-date=["'](\d{8})["']/i)?.[1] || '';
+
+      let eventDate = '';
+      let timeStr = '';
+      if (/^\d{4}-\d{2}-\d{2}/.test(fullDateAttr)) {
+        eventDate = fullDateAttr.slice(0, 10);
+        timeStr = fullDateAttr.match(/\b(\d{2}:\d{2})/)?.[1] || '';
+      } else if (compactDateAttr) {
+        eventDate = `${compactDateAttr.slice(0, 4)}-${compactDateAttr.slice(4, 6)}-${compactDateAttr.slice(6, 8)}`;
+      }
+      if (!timeStr) {
+        const godzMatch = block.match(/<div\b[^>]*class=["'][^"']*\bsala-item-godz\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+        timeStr = godzMatch ? stripHtml(godzMatch[1]).match(/\b(\d{1,2}:\d{2})\b/)?.[1] || '' : '';
+      }
+
+      if (!eventDate || eventDate < todayIso) continue;
+
+      const titleMatch = block.match(/<h2\b[^>]*class=["'][^"']*\bsala-item-title\b[^"']*["'][^>]*>([\s\S]*?)<\/h2>/i);
+      const title = titleMatch ? stripHtml(titleMatch[1]) : '';
+      if (!title) continue;
+
+      const cyklMatch = block.match(/<h3\b[^>]*class=["'][^"']*\bsala-item-cykl\b[^"']*["'][^>]*>([\s\S]*?)<\/h3>/i);
+      const cycleName = cyklMatch ? stripHtml(cyklMatch[1]) : '';
+
+      const isSpecial = Boolean(cycleName) || KOSMOS_SPECIAL_RE.test(title);
+      if (!isSpecial) continue;
+
+      const dataUrl = block.match(/\bdata-url=["']([^"']+)["']/i)?.[1] || '';
+      const rawHref = block.match(/<a\b[^>]*class=["'][^"']*\bsala-item-link\b[^"']*["'][^>]*href=["']([^"']+)["']/i)?.[1] || '';
+      const rawLink = dataUrl || (!rawHref.startsWith('javascript:') ? rawHref : '');
+      if (!rawLink) continue;
+
+      let fullLink;
+      try {
+        fullLink = rawLink.startsWith('http') ? rawLink : new URL(rawLink, baseUrl).toString();
+      } catch {
+        continue;
+      }
+
+      const normLink = normalizeSourceUrl(fullLink);
+      if (!normLink || isGenericSourceUrl(normLink)) continue;
+
+      const occKey = `${normLink}::${eventDate}::${timeStr}`;
+      if (seenOccurrenceKeys.has(occKey)) continue;
+      seenOccurrenceKeys.add(occKey);
+
+      const director = block.match(/<span\b[^>]*class=["'][^"']*\brezyseria\b[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1];
+      const directorClean = director ? stripHtml(director) : '';
+
+      if (!grouped.has(normLink)) {
+        grouped.set(normLink, {
+          title,
+          link: fullLink,
+          cycleName,
+          hallName,
+          director: directorClean,
+          slots: [],
+        });
+      }
+      grouped.get(normLink).slots.push({ eventDate, timeStr, hallName });
+    }
+  }
+
+  const items = [];
+  for (const entry of grouped.values()) {
+    entry.slots.sort((a, b) => a.eventDate.localeCompare(b.eventDate) || a.timeStr.localeCompare(b.timeStr));
+    const nearest = entry.slots[0];
+    const remaining = entry.slots
+      .slice(1, 6)
+      .map((s) => (s.timeStr ? `${s.eventDate} (${s.timeStr})` : s.eventDate));
+
+    const isForKids = /\b(?:rodzina\s+w\s+kinie|dla\s+dzieci|miko[łl]ajki)\b/i.test(`${entry.cycleName} ${entry.title}`);
+    const isForSeniors = /\bpora\s+dla\s+seniora\b/i.test(`${entry.cycleName} ${entry.title}`);
+
+    const slotText = nearest.timeStr ? `${nearest.eventDate}, godz. ${nearest.timeStr}` : nearest.eventDate;
+    const parts = [
+      `Wydarzenie specjalne w Kinie Kosmos w Katowicach (ul. Sokolska 66): ${entry.title}.`,
+      `Najbliższy termin: ${slotText}.`,
+    ];
+    if (nearest.hallName || entry.hallName) {
+      parts.push(`Sala: ${nearest.hallName || entry.hallName}.`);
+    }
+    if (entry.cycleName) {
+      parts.push(`Cykl: ${entry.cycleName}.`);
+    }
+    if (entry.director) {
+      parts.push(`Reżyseria: ${entry.director}.`);
+    }
+    if (isForSeniors) {
+      parts.push('Cykl dla seniorów.');
+    }
+    if (remaining.length > 0) {
+      parts.push(`Kolejne terminy: ${remaining.join(', ')}.`);
+    }
+
+    items.push({
+      title: entry.title,
+      link: entry.link,
+      description: parts.join(' ').replace(/\s+/g, ' ').trim(),
+      eventDate: nearest.eventDate,
+      pubDate: undefined,
+      defaultCity,
+      defaultCategory: isForKids ? 'dla-dzieci' : 'kultura',
+      isForKids,
+      isEvent: true,
+      ...(entry.cycleName ? { cycle: entry.cycleName } : {}),
+    });
+  }
+
+  items.sort((a, b) => a.eventDate.localeCompare(b.eventDate));
+  return items;
+}
+
 export function parseSpodekOrMck(html, baseUrl, defaultCity = 'katowice') {
   const eventItems = [...html.matchAll(/<li\b[^>]*>\s*<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>\s*<\/li>/gi)];
   const items = [];
@@ -2034,6 +2180,10 @@ export async function processSource(source) {
       lowerName.includes('muzeum śląskie') ||
       lowerName.includes('muzeum slaskie') ||
       lowerUrl.includes('muzeumslaskie.pl');
+    const isKinoKosmos =
+      source.id === '13' ||
+      lowerName.includes('kino kosmos') ||
+      lowerUrl.includes('kosmos.katowice.pl');
 
     if (isPikDzieci) {
       const now = new Date();
@@ -2127,6 +2277,29 @@ export async function processSource(source) {
         }));
       }
       console.warn(`  [${source.id}] parseMuzeumSlaskie zwrócił 0 pozycji – przełączam na tryb ogólny.`);
+    }
+
+    if (isKinoKosmos) {
+      const now = new Date();
+      const response = await fetchWithTlsAia(source.url, {
+        headers: { 'User-Agent': BOT_USER_AGENT, 'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8' },
+        signal: AbortSignal.timeout(12000),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const html = await response.text();
+      prefetchedHtml = html;
+      const items = parseKinoKosmos(html, source.url, { now, defaultCity: city });
+      if (items.length > 0) {
+        return items.map((item) => ({
+          ...item,
+          sourceId: source.id,
+          sourceName: source.name,
+          sourceType: 'WEB',
+          sourceCategory: source.category,
+          parsingHints: source.hints,
+        }));
+      }
+      console.warn(`  [${source.id}] parseKinoKosmos zwrócił 0 pozycji – przełączam na tryb ogólny.`);
     }
 
     if (isNosprKalendarz) {
