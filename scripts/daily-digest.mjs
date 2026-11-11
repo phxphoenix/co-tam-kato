@@ -1,5 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import tls from 'node:tls';
+import https from 'node:https';
+import crypto from 'node:crypto';
+import zlib from 'node:zlib';
+import net from 'node:net';
 import {
   loadActiveSources,
   parseSourcesMarkdown,
@@ -209,6 +214,261 @@ export function parsePolishDate(text) {
   return null;
 }
 
+/**
+ * Extracts ISO date (YYYY-MM-DD) from arbitrary Polish prose containing DD.MM.YYYY, YYYY-MM-DD, or "D miesiąc YYYY".
+ */
+export function extractPolishDateFromText(text, options = {}) {
+  if (!text || typeof text !== 'string') return null;
+  const { minDate } = options;
+  const candidates = [];
+
+  for (const m of text.matchAll(/\b(\d{4}-\d{2}-\d{2})\b/g)) {
+    candidates.push(m[1]);
+  }
+  for (const m of text.matchAll(/\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b/g)) {
+    const d = Number(m[1]);
+    const mo = Number(m[2]);
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) {
+      candidates.push(`${m[3]}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+    }
+  }
+  for (const m of text.matchAll(/\b(\d{1,2})(?:\s*[-–]\s*\d{1,2})?\s+([a-ząćęłńóśźż]+)\s+(\d{4})\b/gi)) {
+    const month = POLISH_MONTHS[m[2].toLowerCase()];
+    const d = Number(m[1]);
+    if (month && d >= 1 && d <= 31) {
+      candidates.push(`${m[3]}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+    }
+  }
+
+  if (candidates.length === 0) return null;
+  if (minDate) {
+    const matching = candidates.filter((c) => c >= minDate);
+    return matching[0] || null;
+  }
+  return candidates[0];
+}
+
+const aiaIntermediateCache = new Map();
+let cachedRootCerts = null;
+
+function getTrustedRootCerts() {
+  if (!cachedRootCerts) {
+    cachedRootCerts = tls.rootCertificates
+      .map((pem) => {
+        try {
+          return new crypto.X509Certificate(pem);
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+  }
+  return cachedRootCerts;
+}
+
+function isPrivateOrLocalHostname(hostname = '') {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (!host || host === 'localhost' || host.endsWith('.local') || host.endsWith('.internal')) return true;
+  const ipVer = net.isIP(host);
+  if (ipVer === 4) {
+    const parts = host.split('.').map(Number);
+    if (parts[0] === 10 || parts[0] === 127 || parts[0] === 0) return true;
+    if (parts[0] === 169 && parts[1] === 254) return true;
+    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+    if (parts[0] === 192 && parts[1] === 168) return true;
+  } else if (ipVer === 6) {
+    if (host === '::1' || host.startsWith('fc') || host.startsWith('fd') || host.startsWith('fe80')) return true;
+  }
+  return false;
+}
+
+function probeTlsCertificate(hostname, port = 443, timeoutMs = 8000) {
+  return new Promise((resolve, reject) => {
+    const sock = tls.connect(
+      { host: hostname, port, servername: hostname, rejectUnauthorized: false, timeout: timeoutMs },
+      () => {
+        try {
+          const peer = sock.getPeerCertificate(true);
+          sock.destroy();
+          if (!peer?.raw) return reject(new Error(`Brak certyfikatu TLS dla ${hostname}.`));
+          resolve(peer);
+        } catch (err) {
+          sock.destroy();
+          reject(err);
+        }
+      }
+    );
+    sock.setTimeout(timeoutMs, () => {
+      sock.destroy();
+      reject(new Error(`Timeout sondy TLS dla ${hostname}.`));
+    });
+    sock.on('error', (err) => {
+      sock.destroy();
+      reject(err);
+    });
+  });
+}
+
+async function resolveVerifiedAiaChain(peerCert, maxDepth = 3) {
+  const rootCerts = getTrustedRootCerts();
+  const now = Date.now();
+  const intermediates = [];
+  let current = new crypto.X509Certificate(peerCert.raw);
+  let currentPeer = peerCert;
+
+  for (let depth = 0; depth < maxDepth; depth++) {
+    const chainsToRoot = rootCerts.some((root) => {
+      if (root.subject !== current.issuer) return false;
+      const validFrom = Date.parse(root.validFrom);
+      const validTo = Date.parse(root.validTo);
+      if ((Number.isFinite(validFrom) && now < validFrom) || (Number.isFinite(validTo) && now > validTo)) return false;
+      try {
+        return current.verify(root.publicKey);
+      } catch {
+        return false;
+      }
+    });
+    if (chainsToRoot) {
+      return intermediates;
+    }
+
+    const peerUris = currentPeer?.infoAccess?.['CA Issuers - URI'] || [];
+    const textUris = typeof current.infoAccess === 'string'
+      ? [...current.infoAccess.matchAll(/CA Issuers - URI:(\S+)/g)].map((m) => m[1])
+      : [];
+    const aiaUris = [...new Set([...peerUris, ...textUris])];
+
+    let nextCert = null;
+    for (const uri of aiaUris) {
+      let parsed;
+      try {
+        parsed = new URL(uri);
+      } catch {
+        continue;
+      }
+      if ((parsed.protocol !== 'http:' && parsed.protocol !== 'https:') || isPrivateOrLocalHostname(parsed.hostname)) {
+        continue;
+      }
+      try {
+        const res = await fetch(uri, { signal: AbortSignal.timeout(5000) });
+        if (!res.ok) continue;
+        const buf = Buffer.from(await res.arrayBuffer());
+        if (buf.length === 0 || buf.length > 65536) continue;
+        const candidate = new crypto.X509Certificate(buf);
+        const validFrom = Date.parse(candidate.validFrom);
+        const validTo = Date.parse(candidate.validTo);
+        if (!candidate.ca) continue;
+        if ((Number.isFinite(validFrom) && now < validFrom) || (Number.isFinite(validTo) && now > validTo)) continue;
+        if (!current.verify(candidate.publicKey)) continue;
+        nextCert = candidate;
+        break;
+      } catch {
+        continue;
+      }
+    }
+
+    if (!nextCert) return null;
+    intermediates.push(nextCert.toString());
+    current = nextCert;
+    currentPeer = null;
+  }
+
+  return null;
+}
+
+function requestHttpsWithCustomCa(targetUrl, options = {}, caList = tls.rootCertificates, redirectsLeft = 5) {
+  const { headers = {}, timeoutMs = 12000 } = options;
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(targetUrl);
+    const req = https.request(
+      parsed,
+      {
+        method: 'GET',
+        headers: { 'Accept-Encoding': 'gzip, deflate, br', ...headers },
+        ca: caList,
+        rejectUnauthorized: true,
+        timeout: timeoutMs,
+      },
+      (res) => {
+        const status = res.statusCode || 0;
+        if (status >= 300 && status < 400 && res.headers.location && redirectsLeft > 0) {
+          res.resume();
+          const nextUrl = new URL(res.headers.location, parsed).toString();
+          resolve(requestHttpsWithCustomCa(nextUrl, options, caList, redirectsLeft - 1));
+          return;
+        }
+        const encoding = String(res.headers['content-encoding'] || '').toLowerCase();
+        let stream = res;
+        if (encoding === 'gzip') stream = res.pipe(zlib.createGunzip());
+        else if (encoding === 'deflate') stream = res.pipe(zlib.createInflate());
+        else if (encoding === 'br') stream = res.pipe(zlib.createBrotliDecompress());
+
+        const chunks = [];
+        stream.on('data', (chunk) => chunks.push(chunk));
+        stream.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf8');
+          resolve({
+            ok: status >= 200 && status < 300,
+            status,
+            url: targetUrl,
+            text: async () => body,
+          });
+        });
+        stream.on('error', reject);
+      }
+    );
+    req.on('timeout', () => req.destroy(new Error(`Timeout HTTPS (${timeoutMs} ms) dla ${targetUrl}`)));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+/**
+ * Performs standard fetch() and, exclusively when TLS fails due to a missing intermediate CA
+ * (UNABLE_TO_VERIFY_LEAF_SIGNATURE / UNABLE_TO_GET_ISSUER_CERT_LOCALLY), resolves and
+ * cryptographically verifies the missing intermediate certificate via AIA against Node's
+ * trusted root store while keeping rejectUnauthorized: true.
+ */
+export async function fetchWithTlsAia(url, fetchOptions = {}) {
+  try {
+    return await fetch(url, fetchOptions);
+  } catch (err) {
+    const tlsCode = String(err?.cause?.code || err?.code || '');
+    const isMissingIntermediate =
+      tlsCode === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' ||
+      tlsCode === 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY';
+    if (!isMissingIntermediate) {
+      throw err;
+    }
+
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch {
+      throw err;
+    }
+    if (parsed.protocol !== 'https:') throw err;
+
+    const hostKey = `${parsed.hostname}:${parsed.port || '443'}`;
+    let intermediates = aiaIntermediateCache.get(hostKey);
+    if (!intermediates) {
+      console.warn(`  [TLS-AIA] Brak certyfikatu pośredniego dla ${parsed.hostname} (${tlsCode}) – weryfikuję łańcuch przez AIA...`);
+      const peer = await probeTlsCertificate(parsed.hostname, Number(parsed.port || 443));
+      intermediates = await resolveVerifiedAiaChain(peer);
+      if (!intermediates || intermediates.length === 0) {
+        throw err;
+      }
+      aiaIntermediateCache.set(hostKey, intermediates);
+    }
+
+    return requestHttpsWithCustomCa(
+      url,
+      { headers: fetchOptions.headers, timeoutMs: 12000 },
+      [...tls.rootCertificates, ...intermediates]
+    );
+  }
+}
+
 export function getUpcomingWarsawMonths(now = new Date(), count = 3) {
   const iso = toIsoDate(now) || new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(new Date());
   const baseYear = Number(iso.slice(0, 4));
@@ -286,35 +546,102 @@ export function parseParkSlaski(html, sourceUrl) {
   return items;
 }
 
-export function parseStadionSlaski(html, sourceUrl) {
-  const cards = [...html.matchAll(/<div\b[^>]*class="[^"]*popular-events-content[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/gi)];
-  const items = [];
-  for (const [, body] of cards) {
-    const linkMatch = body.match(/<a\b[^>]*class="[^"]*popular-event-title[^"]*"[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i);
-    const descMatch = body.match(/<p\b[^>]*class="[^"]*popular-event-desc[^"]*"[^>]*>([\s\S]*?)<\/p>/i);
-    const dateMatch = body.match(/<span\b[^>]*class="[^"]*popular-event-date[^"]*"[^>]*>([\s\S]*?)<\/span>/i);
+export function parseStadionSlaski(html, sourceUrl = 'https://superautostadionslaski.pl/wiadomosci', options = {}) {
+  if (!html || typeof html !== 'string') return [];
+  const {
+    now = new Date(),
+    maxAgeDays = MAX_AGE_DAYS,
+    defaultCity = 'chorzow',
+  } = options;
 
+  const nowTs = now instanceof Date ? now.getTime() : Date.now();
+  const todayIso = toIsoDate(now) || new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(new Date(nowTs));
+  const todayTs = parseIsoDayUtc(todayIso);
+  const cutoffPastTs = todayTs - maxAgeDays * 24 * 60 * 60 * 1000;
+  const cutoffFutureTs = todayTs + 24 * 60 * 60 * 1000;
+
+  const chunks = html.split(/<div\b[^>]*class=["'][^"']*\bpopular-events-content\b[^"']*["'][^>]*>/i).slice(1);
+  const items = [];
+  const seenLinks = new Set();
+
+  for (const rawChunk of chunks) {
+    const body = rawChunk.split(/<div\b[^>]*class=["'][^"']*\bpopular-events\b[^"']*["'][^>]*>|<footer\b/i)[0];
+    const linkMatch = body.match(/<a\b[^>]*class=["'][^"']*\bpopular-event-title\b[^"']*["'][^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i);
     if (!linkMatch) continue;
+
     const title = stripHtml(linkMatch[2]);
     const href = linkMatch[1].trim();
+    if (!title || !href) continue;
+
+    let fullLink;
+    try {
+      fullLink = href.startsWith('http') ? href : new URL(href, sourceUrl).toString();
+    } catch {
+      continue;
+    }
+
+    const normLink = normalizeSourceUrl(fullLink);
+    if (!normLink || seenLinks.has(normLink)) continue;
+
+    const descMatch = body.match(/<p\b[^>]*class=["'][^"']*\bpopular-event-desc\b[^"']*["'][^>]*>([\s\S]*?)<\/p>/i);
+    const dateMatch = body.match(/<span\b[^>]*class=["'][^"']*\bpopular-event-date\b[^"']*["'][^>]*>([\s\S]*?)<\/span>/i);
+
     const desc = descMatch ? stripHtml(descMatch[1]) : '';
     const dateStr = dateMatch ? stripHtml(dateMatch[1]) : '';
-    const fullLink = href.startsWith('http') ? href : new URL(href, sourceUrl).toString();
-    const isoEventDate = parsePolishDate(dateStr);
+    const tileIsoDate = parsePolishDate(dateStr);
+    const timeMatch = dateStr.match(/\b(\d{1,2}:\d{2})\b/);
+    const timeStr = timeMatch ? timeMatch[1] : '';
 
-    if (title && fullLink) {
+    const isEventEntry =
+      fullLink.includes('/wydarzenie/') ||
+      (String(sourceUrl).includes('/wydarzenia') && !fullLink.includes('/wiadomosc/'));
+
+    if (isEventEntry) {
+      if (tileIsoDate && tileIsoDate < todayIso) {
+        continue;
+      }
+      seenLinks.add(normLink);
+      const description = desc
+        ? (timeStr && !desc.includes(timeStr)
+            ? `${desc} Termin: ${tileIsoDate || dateStr}, godz. ${timeStr}. Miejsce: Stadion Śląski, Chorzów.`
+            : desc)
+        : `Wydarzenie na Stadionie Śląskim w Chorzowie.${dateStr ? ` Termin: ${dateStr}.` : ''}`;
       items.push({
         title,
         link: fullLink,
-        description: desc,
-        // Wyodrębniona data z kafelka to data wydarzenia (eventDate), a nie data publikacji źródła.
-        eventDate: isoEventDate || null,
+        description,
+        eventDate: tileIsoDate || null,
         pubDate: undefined,
-        defaultCity: 'chorzow',
+        defaultCity,
         isEvent: true,
+      });
+    } else {
+      const futureEventDate = extractPolishDateFromText(`${title} ${desc}`, { minDate: todayIso });
+      const pubTs = tileIsoDate ? parseIsoDayUtc(tileIsoDate) : NaN;
+      const isFreshNews = !Number.isFinite(pubTs) || (pubTs >= cutoffPastTs && pubTs <= cutoffFutureTs);
+
+      if (!futureEventDate && !isFreshNews) {
+        continue;
+      }
+
+      seenLinks.add(normLink);
+      items.push({
+        title,
+        link: fullLink,
+        description: desc || `${title} – wiadomość ze Stadionu Śląskiego w Chorzowie${dateStr ? ` (${dateStr})` : ''}.`,
+        eventDate: futureEventDate || null,
+        pubDate: tileIsoDate || undefined,
+        defaultCity,
+        isEvent: Boolean(futureEventDate),
       });
     }
   }
+
+  Object.defineProperty(items, 'rawTileCount', {
+    value: chunks.length,
+    enumerable: false,
+  });
+
   return items;
 }
 
@@ -1105,16 +1432,61 @@ export async function processSource(source) {
       }
     }
 
+    let prefetchedHtml = '';
+
     if (isStadion) {
-      const response = await fetch(source.url, {
-        headers: { 'User-Agent': BOT_USER_AGENT },
+      const now = new Date();
+      const reqHeaders = {
+        'User-Agent': BOT_USER_AGENT,
+        'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
+      };
+      const response = await fetchWithTlsAia(source.url, {
+        headers: reqHeaders,
         signal: AbortSignal.timeout(12000),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const html = await response.text();
-      const items = parseStadionSlaski(html, source.url);
-      if (items.length > 0) {
-        return items.map((item) => ({
+      const mainHtml = await response.text();
+      prefetchedHtml = mainHtml;
+
+      const altUrl =
+        extractAlternativeUrl(source.hints, source.url) ||
+        (source.url.includes('/wiadomosci') ? new URL('/wydarzenia', source.url).toString() : null);
+
+      const allParsed = [];
+      let totalRawTiles = 0;
+
+      if (altUrl) {
+        try {
+          const altRes = await fetchWithTlsAia(altUrl, {
+            headers: reqHeaders,
+            signal: AbortSignal.timeout(12000),
+          });
+          if (altRes.ok) {
+            const altHtml = await altRes.text();
+            const altItems = parseStadionSlaski(altHtml, altUrl, { now, defaultCity: city });
+            totalRawTiles += altItems.rawTileCount ?? 0;
+            allParsed.push(...altItems);
+          }
+        } catch (altErr) {
+          console.warn(`  [${source.id}] Dodatkowy URL wydarzeń (${altUrl}) niedostępny: ${altErr.message}`);
+        }
+      }
+
+      const mainItems = parseStadionSlaski(mainHtml, source.url, { now, defaultCity: city });
+      totalRawTiles += mainItems.rawTileCount ?? 0;
+      allParsed.push(...mainItems);
+
+      const seenLinks = new Set();
+      const deduped = [];
+      for (const item of allParsed) {
+        const norm = normalizeSourceUrl(item.link);
+        if (!norm || seenLinks.has(norm)) continue;
+        seenLinks.add(norm);
+        deduped.push(item);
+      }
+
+      if (deduped.length > 0 || totalRawTiles > 0) {
+        return deduped.map((item) => ({
           ...item,
           sourceId: source.id,
           sourceName: source.name,
@@ -1123,6 +1495,7 @@ export async function processSource(source) {
           parsingHints: source.hints,
         }));
       }
+      console.warn(`  [${source.id}] parseStadionSlaski nie rozpoznał kafelków – przełączam na tryb ogólny.`);
     }
 
     const lowerName = source.name.toLowerCase();
@@ -1142,8 +1515,6 @@ export async function processSource(source) {
       source.id === '11' ||
       lowerName.includes('teatr rozrywki') ||
       lowerUrl.includes('teatr-rozrywki.pl');
-
-    let prefetchedHtml = '';
 
     if (isNosprKalendarz) {
       const now = new Date();
@@ -1313,7 +1684,7 @@ export async function processSource(source) {
     if (!contentText) {
       let html = prefetchedHtml;
       if (!html) {
-        let res = await fetch(source.url, {
+        let res = await fetchWithTlsAia(source.url, {
           headers: { 'User-Agent': BOT_USER_AGENT, 'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8' },
           signal: AbortSignal.timeout(12000),
         });
