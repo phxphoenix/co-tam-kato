@@ -1023,6 +1023,135 @@ export function parseTeatrAteneum(htmlPages, baseUrl = 'https://ateneumteatr.pl/
   return items;
 }
 
+/**
+ * Resolves a Polish date (with or without explicit year) against a cultural-season reference date.
+ */
+export function resolveSeasonPolishDate(text, now = new Date()) {
+  if (!text || typeof text !== 'string') return null;
+  const explicit = extractPolishDateFromText(text);
+  if (explicit) return explicit;
+
+  const match = text.match(/\b(\d{1,2})\s+([a-ząćęłńóśźż]+)\b/i);
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = POLISH_MONTHS[match[2].toLowerCase()];
+  if (!month || day < 1 || day > 31) return null;
+
+  const todayIso = toIsoDate(now) || new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(new Date());
+  const currentYear = Number(todayIso.slice(0, 4));
+  const currentMonth = Number(todayIso.slice(5, 7));
+
+  let year = currentYear;
+  const diffMonths = month - currentMonth;
+  if (diffMonths < -4) {
+    year = currentYear + 1;
+  } else if (diffMonths > 6) {
+    year = currentYear - 1;
+  }
+
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+/**
+ * Parser dla Muzeum Śląskiego (https://muzeumslaskie.pl/warsztaty-spotkania-i-wydarzenia-cykliczne/).
+ * Wyodrębnia warsztaty, wykłady, oprowadzania i wydarzenia cykliczne z harmonogramów akordeonów Elementora,
+ * rozwiązuje daty sezonowe (bez roku) względem daty uruchomienia, odrzuca minione terminy i oznacza cykle dziecięce.
+ */
+export function parseMuzeumSlaskie(html, baseUrl = 'https://muzeumslaskie.pl/warsztaty-spotkania-i-wydarzenia-cykliczne/', options = {}) {
+  if (!html || typeof html !== 'string') return [];
+  const {
+    now = new Date(),
+    defaultCity = 'katowice',
+  } = options;
+
+  const nowTs = now instanceof Date ? now.getTime() : Date.now();
+  const todayIso = toIsoDate(now) || new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(new Date(nowTs));
+  const baseClean = String(baseUrl || '').split('#')[0];
+
+  const accordions = html.split(/<div\b[^>]*class=["'][^"']*elementor-accordion-item\b[^"']*["'][^>]*>/i).slice(1);
+  const items = [];
+
+  for (const acc of accordions) {
+    const tabId = acc.match(/\bid=["'](elementor-tab-title-[^"']+)["']/i)?.[1] || '';
+    const rawCycleTitle = acc.match(/class=["'][^"']*elementor-accordion-title\b[^"']*["'][^>]*>([\s\S]*?)<\/a>/i)?.[1];
+    const cycleTitle = rawCycleTitle
+      ? stripHtml(rawCycleTitle).replace(/\s*\/\s*NOWOŚĆ\b/gi, '').replace(/\s+/g, ' ').trim()
+      : '';
+    if (!cycleTitle) continue;
+
+    const contentMatch = acc.match(/<div\b[^>]*id=["']elementor-tab-content-[^"']+["'][^>]*>([\s\S]*?)<\/div>/i);
+    const contentHtml = contentMatch?.[1] || '';
+    if (!contentHtml) continue;
+
+    const firstParagraph = contentHtml.match(/<p\b[^>]*>([\s\S]*?)<\/p>/i)?.[1];
+    const introText = firstParagraph ? stripHtml(firstParagraph) : '';
+    const defaultTime = introText.match(/(?:o\s+)?godz\.?\s*(\d{1,2}[:.]\d{2})/i)?.[1]?.replace('.', ':') || '';
+
+    const sessions = [];
+    for (const liMatch of contentHtml.matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/gi)) {
+      const liText = stripHtml(liMatch[1]);
+      if (!liText) continue;
+      const eventDate = resolveSeasonPolishDate(liText, now);
+      if (!eventDate || eventDate < todayIso) continue;
+
+      const timeMatch = liText.match(/(?:godz\.?\s*)?(\d{1,2}[:.]\d{2})/i);
+      const timeStr = (timeMatch ? timeMatch[1].replace('.', ':') : defaultTime) || '';
+      const topicMatch = liText.match(/\s[–—-]\s+(.+)$/);
+      const topic = topicMatch ? topicMatch[1].trim() : '';
+
+      sessions.push({ eventDate, timeStr, topic, raw: liText });
+    }
+
+    if (sessions.length === 0) continue;
+    sessions.sort((a, b) => a.eventDate.localeCompare(b.eventDate));
+
+    const nearest = sessions[0];
+    const remaining = sessions.slice(1, 6).map((s) => (s.timeStr ? `${s.eventDate} (${s.timeStr})` : s.eventDate));
+    const isForKids = /\bdla\s+dzieci\b|\bcykl\s+rodzinny\b/i.test(`${cycleTitle} ${introText}`);
+    const ageRange = isForKids ? extractAgeRange(`${cycleTitle} ${introText}`) : undefined;
+
+    const cleanTopic = nearest.topic
+      ? nearest.topic.replace(/\s*Prowadzenie:\s*.+$/i, '').replace(/^[„"]|[”"]$/g, '').trim()
+      : '';
+    const title = cleanTopic && cleanTopic.length <= 80 && !cycleTitle.toLowerCase().includes(cleanTopic.toLowerCase())
+      ? `${cycleTitle}: ${cleanTopic}`
+      : cycleTitle;
+
+    const link = tabId ? `${baseClean}#${tabId}` : baseUrl;
+    const slotText = nearest.timeStr ? `${nearest.eventDate}, godz. ${nearest.timeStr}` : nearest.eventDate;
+    const descParts = [
+      `Wydarzenie w Muzeum Śląskim w Katowicach (ul. T. Dobrowolskiego 1): ${cycleTitle}.`,
+      `Najbliższy termin: ${slotText}${nearest.topic ? ` (${nearest.topic})` : ''}.`,
+    ];
+    if (introText && !/harmonogram/i.test(introText)) {
+      descParts.push(introText.slice(0, 260));
+    }
+    if (ageRange) {
+      descParts.push(`Wiek uczestników: ${ageRange}.`);
+    }
+    if (remaining.length > 0) {
+      descParts.push(`Kolejne terminy: ${remaining.join(', ')}.`);
+    }
+
+    items.push({
+      title,
+      link,
+      description: descParts.join(' ').replace(/\s+/g, ' ').trim(),
+      eventDate: nearest.eventDate,
+      pubDate: undefined,
+      defaultCity,
+      defaultCategory: isForKids ? 'dla-dzieci' : 'kultura',
+      isForKids,
+      ...(ageRange ? { ageRange } : {}),
+      isEvent: true,
+    });
+  }
+
+  items.sort((a, b) => a.eventDate.localeCompare(b.eventDate));
+  return items;
+}
+
 export function parseSpodekOrMck(html, baseUrl, defaultCity = 'katowice') {
   const eventItems = [...html.matchAll(/<li\b[^>]*>\s*<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>\s*<\/li>/gi)];
   const items = [];
@@ -1900,6 +2029,11 @@ export async function processSource(source) {
       source.id === '15' ||
       lowerName.includes('ateneum') ||
       lowerUrl.includes('ateneumteatr.pl');
+    const isMuzeumSlaskie =
+      source.id === '8' ||
+      lowerName.includes('muzeum śląskie') ||
+      lowerName.includes('muzeum slaskie') ||
+      lowerUrl.includes('muzeumslaskie.pl');
 
     if (isPikDzieci) {
       const now = new Date();
@@ -1970,6 +2104,29 @@ export async function processSource(source) {
         }));
       }
       console.warn(`  [${source.id}] parseTeatrAteneum zwrócił 0 pozycji – przełączam na tryb ogólny.`);
+    }
+
+    if (isMuzeumSlaskie) {
+      const now = new Date();
+      const response = await fetchWithTlsAia(source.url, {
+        headers: { 'User-Agent': BOT_USER_AGENT, 'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8' },
+        signal: AbortSignal.timeout(12000),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const html = await response.text();
+      prefetchedHtml = html;
+      const items = parseMuzeumSlaskie(html, source.url, { now, defaultCity: city });
+      if (items.length > 0) {
+        return items.map((item) => ({
+          ...item,
+          sourceId: source.id,
+          sourceName: source.name,
+          sourceType: 'WEB',
+          sourceCategory: source.category,
+          parsingHints: source.hints,
+        }));
+      }
+      console.warn(`  [${source.id}] parseMuzeumSlaskie zwrócił 0 pozycji – przełączam na tryb ogólny.`);
     }
 
     if (isNosprKalendarz) {
