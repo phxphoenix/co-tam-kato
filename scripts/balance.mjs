@@ -334,6 +334,470 @@ export function isWeeklySummaryRecord(record) {
   return false;
 }
 
+const POLISH_WEEKDAYS_SUNDAY_FIRST = [
+  'niedziela',
+  'poniedziałek',
+  'wtorek',
+  'środa',
+  'czwartek',
+  'piątek',
+  'sobota',
+];
+
+const WEEKLY_SUMMARY_SECTIONS = [
+  { venue: 'nospr', heading: 'NOSPR', fallbackHall: 'NOSPR Katowice' },
+  { venue: 'teatr-slaski', heading: 'Teatr Śląski', fallbackHall: 'Teatr Śląski' },
+  { venue: 'teatr-rozrywki', heading: 'Teatr Rozrywki', fallbackHall: 'Teatr Rozrywki' },
+  { venue: 'spodek', heading: 'Spodek', fallbackHall: 'Spodek Katowice' },
+];
+
+const WEEKLY_STOP_WORDS = new Set([
+  'aby', 'ale', 'bo', 'byc', 'czy', 'dla', 'do', 'i', 'ich', 'jest', 'juz', 'lub', 'ma',
+  'nad', 'na', 'oraz', 'pod', 'po', 'się', 'sie', 'ta', 'ten', 'to', 'w', 'we', 'z', 'ze',
+]);
+
+const WEEKLY_TRACKING_PARAMS = new Set([
+  'fbclid', 'gclid', 'msclkid', 'yclid', 'mc_cid', 'mc_eid',
+  '_ga', '_gl', 'igshid', 'ref', 'ref_src', 'ref_url', 'rss',
+]);
+
+function normalizeTitleForWeekly(value = '') {
+  return String(value || '')
+    .toLocaleLowerCase('pl-PL')
+    .replace(/ł/g, 'l')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function areTitlesSimilarForWeekly(first, second) {
+  const tokensA = new Set(
+    normalizeTitleForWeekly(first)
+      .split(' ')
+      .filter((w) => w.length > 2 && !WEEKLY_STOP_WORDS.has(w))
+  );
+  const tokensB = new Set(
+    normalizeTitleForWeekly(second)
+      .split(' ')
+      .filter((w) => w.length > 2 && !WEEKLY_STOP_WORDS.has(w))
+  );
+  const smallerSize = Math.min(tokensA.size, tokensB.size);
+  if (smallerSize < 3) return false;
+  let common = 0;
+  for (const token of tokensA) {
+    if (tokensB.has(token)) common++;
+  }
+  return common >= 3 && common / smallerSize >= 0.8;
+}
+
+function normalizeUrlForWeekly(value = '') {
+  if (!value || typeof value !== 'string') return '';
+  const decoded = value
+    .trim()
+    .replace(/&amp;#0*38;|&#0*38;|&amp;#x0*26;|&#x0*26;|&amp;/gi, '&');
+  if (!decoded) return '';
+  try {
+    const url = new URL(decoded);
+    url.hash = '';
+    url.hostname = url.hostname.toLowerCase().replace(/^www\./, '');
+    url.pathname = url.pathname.replace(/\/+$/, '').toLowerCase();
+
+    const keptParams = [];
+    for (const [k, v] of url.searchParams.entries()) {
+      const lower = k.toLowerCase();
+      if (!lower.startsWith('utm_') && !WEEKLY_TRACKING_PARAMS.has(lower)) {
+        keptParams.push([k, v]);
+      }
+    }
+    url.search = '';
+    keptParams.sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]));
+    for (const [k, v] of keptParams) {
+      url.searchParams.append(k, v);
+    }
+    return url.toString();
+  } catch {
+    return decoded.toLowerCase();
+  }
+}
+
+function isGenericUrlForWeekly(value = '') {
+  const norm = normalizeUrlForWeekly(value);
+  if (!norm) return false;
+  try {
+    const url = new URL(norm);
+    if (url.search) return false;
+    const pathname = url.pathname.replace(/\/+$/, '');
+    if (!pathname || pathname === '/') return true;
+    return /^\/(?:pl\/|en\/)?(?:repertuar(?:\.html)?|kalendarz(?:\.html)?|aktualnosci(?:\.html)?|wiadomosci(?:\.html)?|wydarzenia(?:\/\d+)?|event\/list|rss(?:\.xml)?|feed)$/i.test(
+      pathname
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Wyznacza zakres bieżącego tygodnia ISO (poniedziałek..niedziela) wg strefy Europe/Warsaw.
+ */
+export function getIsoWeekRangeWarsaw(now = new Date()) {
+  const todayIso = toWarsawDate(now);
+  const todayTs = parseIsoDayUtc(todayIso);
+  const utcDay = new Date(todayTs).getUTCDay(); // 0 = niedziela, 1 = poniedziałek, ..., 6 = sobota
+  const offsetFromMonday = (utcDay + 6) % 7; // 0 = poniedziałek, ..., 6 = niedziela
+  const mondayTs = todayTs - offsetFromMonday * DAY_MS;
+  const sundayTs = mondayTs + 6 * DAY_MS;
+  const mondayIso = new Date(mondayTs).toISOString().slice(0, 10);
+  const sundayIso = new Date(sundayTs).toISOString().slice(0, 10);
+  return { todayIso, todayTs, mondayIso, sundayIso };
+}
+
+/**
+ * Sprawdza, czy w bieżącym uruchomieniu należy wygenerować wpis zbiorczy „Tydzień w kulturze” (§6):
+ * - weeklySummaryEnabled musi być true,
+ * - tydzień ISO liczony wg Europe/Warsaw od poniedziałku do niedzieli,
+ * - idempotencja: pomija, jeśli w istniejących rekordach jest już wpis ze slugiem/tytułem
+ *   'tydzien-w-kulturze' i prefiksem daty z bieżącego tygodnia ISO.
+ */
+export function shouldGenerateWeeklySummary(
+  records = [],
+  now = new Date(),
+  settings = DEFAULT_BALANCE_SETTINGS
+) {
+  let effectiveNow = now;
+  let effectiveSettingsInput = settings;
+  if (
+    now &&
+    typeof now === 'object' &&
+    !(now instanceof Date) &&
+    (now.weeklySummaryEnabled !== undefined || now.weeklySummaryHorizonDays !== undefined)
+  ) {
+    effectiveSettingsInput = now;
+    effectiveNow = now.now ?? new Date();
+  }
+
+  const s = resolveEffectiveSettings(effectiveSettingsInput);
+  if (!s.weeklySummaryEnabled) return false;
+
+  const { mondayIso, sundayIso } = getIsoWeekRangeWarsaw(effectiveNow);
+  if (!Array.isArray(records) || records.length === 0) return true;
+
+  for (const record of records) {
+    if (!record || typeof record !== 'object') continue;
+    if (record.status === 'deleted' || record.status === 'draft') continue;
+    if (!isWeeklySummaryRecord(record)) continue;
+
+    const addedDate =
+      extractAddedDate(record) ||
+      (typeof record.publishedDate === 'string' && record.publishedDate.trim()
+        ? toWarsawDate(record.publishedDate)
+        : '');
+    if (!addedDate) continue;
+
+    if (addedDate >= mondayIso && addedDate <= sundayIso) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function formatDayMonth(isoDate) {
+  return `${isoDate.slice(8, 10)}.${isoDate.slice(5, 7)}`;
+}
+
+function getPolishWeekday(isoDate) {
+  const ts = parseIsoDayUtc(isoDate);
+  if (!Number.isFinite(ts)) return '';
+  const dayIdx = new Date(ts).getUTCDay();
+  return POLISH_WEEKDAYS_SUNDAY_FIRST[dayIdx] || '';
+}
+
+function extractItemHour(item) {
+  if (!item || typeof item !== 'object') return '';
+  if (typeof item.hour === 'string' && item.hour.trim()) return item.hour.trim();
+  if (typeof item.time === 'string' && item.time.trim()) return item.time.trim();
+  const desc = String(item.description || '');
+  const m = desc.match(/godz\.?\s*([0-2]?\d:[0-5]\d)\b/i);
+  if (m) return m[1];
+  return '';
+}
+
+function extractItemHall(item, venue, fallbackHall) {
+  const rawCandidates = [item?.hall, item?.scene, item?.location];
+  let raw = rawCandidates.find((v) => typeof v === 'string' && v.trim())?.trim() || '';
+
+  if (!raw && typeof item?.description === 'string') {
+    const placeMatch = item.description.match(/(?:Miejsce|Scena):\s*([^.]+)\./i);
+    if (placeMatch && placeMatch[1]) {
+      raw = placeMatch[1].trim();
+    }
+  }
+
+  if (!raw) return fallbackHall;
+
+  if (venue === 'nospr') {
+    const cleaned = raw.replace(/^NOSPR(?:\s+Katowice)?\s*,\s*/i, '').trim();
+    return cleaned || fallbackHall;
+  }
+  if (venue === 'teatr-slaski') {
+    const cleaned = raw
+      .replace(/^Teatr\s+[ŚS]l[ąa]ski(?:\s+w\s+Katowicach)?\s*[–-]\s*/i, '')
+      .trim();
+    if (!cleaned || /^inne$/i.test(cleaned)) return fallbackHall;
+    return cleaned;
+  }
+  if (venue === 'teatr-rozrywki') {
+    const cleaned = raw
+      .replace(/^Teatr\s+Rozrywki(?:\s+w\s+Chorzowie)?\s*[–-]\s*/i, '')
+      .replace(/^Teatr\s+Rozrywki(?:\s+w\s+Chorzowie)?\s*[–-]\s*/i, '')
+      .trim();
+    return cleaned || fallbackHall;
+  }
+
+  return raw || fallbackHall;
+}
+
+function extractItemTicketStatus(item) {
+  if (typeof item?.ticketStatus === 'string' && item.ticketStatus.trim()) {
+    return item.ticketStatus.trim();
+  }
+  const desc = String(item?.description || '');
+  const statusMatch = desc.match(/Status biletów:\s*([^.]+)\./i);
+  if (statusMatch && statusMatch[1]) {
+    return statusMatch[1].trim();
+  }
+  if (/ostatnie\s+wolne\s+miejsca/i.test(desc)) {
+    return 'Ostatnie wolne miejsca w sprzedaży';
+  }
+  if (/ostatnie\s+bilety/i.test(desc)) {
+    return 'Ostatnie bilety w sprzedaży';
+  }
+  return 'Bilety w sprzedaży';
+}
+
+function extractRecordSlug(record) {
+  if (!record || typeof record !== 'object') return '';
+  const raw =
+    record.slug ||
+    record.file ||
+    (typeof record.filePath === 'string' ? path.basename(record.filePath) : '');
+  return String(raw || '')
+    .trim()
+    .replace(/\.(md|mdx)$/i, '');
+}
+
+function findExistingArticleSlugForEvent(item, eligibleRecords) {
+  if (!item || !Array.isArray(eligibleRecords) || eligibleRecords.length === 0) return '';
+
+  const itemUrl = normalizeUrlForWeekly(item.link || item.sourceUrl);
+  const canMatchUrl = Boolean(itemUrl) && !isGenericUrlForWeekly(itemUrl);
+
+  if (canMatchUrl) {
+    for (const rec of eligibleRecords) {
+      const recUrl = normalizeUrlForWeekly(rec.sourceUrl);
+      if (recUrl && recUrl === itemUrl) {
+        const slug = extractRecordSlug(rec);
+        if (slug) return slug;
+      }
+    }
+  }
+
+  const itemTitle = String(item.title || '').trim();
+  if (!itemTitle) return '';
+
+  const itemEventTs = parseIsoDayUtc(item.eventDate);
+
+  for (const rec of eligibleRecords) {
+    if (!rec.title) continue;
+    if (!areTitlesSimilarForWeekly(itemTitle, rec.title)) continue;
+
+    if (Number.isFinite(itemEventTs) && rec.eventDate) {
+      const recEventTs = parseIsoDayUtc(String(rec.eventDate));
+      if (Number.isFinite(recEventTs)) {
+        const diffDays = Math.abs(itemEventTs - recEventTs) / DAY_MS;
+        if (diffDays > 14) continue;
+      }
+    }
+
+    const slug = extractRecordSlug(rec);
+    if (slug) return slug;
+  }
+
+  return '';
+}
+
+/**
+ * Buduje deterministyczny artykuł zbiorczy „Tydzień w kulturze” wg §6 specyfikacji.
+ * Zwraca obiekt artykułu gotowy do zapisu przez writeArticle albo null, gdy < 3 wydarzeń.
+ */
+export function buildWeeklyVenueSummary(
+  sourceItems = [],
+  records = [],
+  now = new Date(),
+  settings = DEFAULT_BALANCE_SETTINGS
+) {
+  const s = resolveEffectiveSettings(settings);
+  const horizonDays = s.weeklySummaryHorizonDays;
+
+  const todayIso = toWarsawDate(now);
+  const todayTs = parseIsoDayUtc(todayIso);
+  const horizonEndTs = todayTs + horizonDays * DAY_MS;
+  const horizonEndIso = new Date(horizonEndTs).toISOString().slice(0, 10);
+
+  const eligibleRecords = (Array.isArray(records) ? records : [])
+    .filter(
+      (rec) =>
+        rec &&
+        typeof rec === 'object' &&
+        rec.status !== 'draft' &&
+        rec.status !== 'deleted' &&
+        !isWeeklySummaryRecord(rec) &&
+        Boolean(extractRecordSlug(rec))
+    )
+    .sort((a, b) => {
+      if (Boolean(a.archived) !== Boolean(b.archived)) {
+        return a.archived ? 1 : -1;
+      }
+      const aDate = extractAddedDate(a) || String(a.publishedDate || '');
+      const bDate = extractAddedDate(b) || String(b.publishedDate || '');
+      return bDate.localeCompare(aDate);
+    });
+
+  const eventsByVenue = new Map(WEEKLY_SUMMARY_SECTIONS.map((sec) => [sec.venue, []]));
+  const seenKeysByVenue = new Map(WEEKLY_SUMMARY_SECTIONS.map((sec) => [sec.venue, new Set()]));
+
+  for (const item of Array.isArray(sourceItems) ? sourceItems : []) {
+    if (!item || typeof item !== 'object') continue;
+    if (item.isDiscoveredLinkOnly || item.isSyntheticContainer) continue;
+    if (item.isEvent === false) continue;
+
+    const srcId = String(item.sourceId ?? item.id ?? '').trim();
+    const rawUrl = String(item.link || item.sourceUrl || '').trim();
+    if (srcId === '30' || rawUrl.toLowerCase().includes('nospr.org.pl/pl/aktualnosci')) {
+      continue;
+    }
+
+    const venue = resolveVenueGroup(item);
+    if (!eventsByVenue.has(venue)) continue;
+
+    const rawEventDate = typeof item.eventDate === 'string' ? item.eventDate.trim().slice(0, 10) : '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(rawEventDate)) continue;
+    if (rawEventDate < todayIso || rawEventDate > horizonEndIso) continue;
+
+    const rawTitle = String(item.title || '').trim();
+    if (!rawTitle || !rawUrl) continue;
+
+    const combinedStatusText = `${item.ticketStatus || ''} ${rawTitle}`;
+    if (
+      /brak\s+bilet[oó]w|brak\s+miejsc|wyprzedan[ey]|odwo[łl]an[ey]/i.test(combinedStatusText)
+    ) {
+      continue;
+    }
+
+    const normUrl = normalizeUrlForWeekly(rawUrl);
+    const dedupKey = `${normUrl || normalizeTitleForWeekly(rawTitle)}|${rawEventDate}`;
+    const venueSeen = seenKeysByVenue.get(venue);
+    if (venueSeen.has(dedupKey)) continue;
+    venueSeen.add(dedupKey);
+
+    const sectionMeta = WEEKLY_SUMMARY_SECTIONS.find((sec) => sec.venue === venue);
+    const hour = extractItemHour(item);
+    const hall = extractItemHall(item, venue, sectionMeta.fallbackHall);
+    const ticketStatus = extractItemTicketStatus(item);
+    const isLastTickets = /ostatnie\s+(?:bilety|wolne\s+miejsca|miejsca)/i.test(
+      `${ticketStatus} ${item.description || ''}`
+    );
+    const matchedSlug = findExistingArticleSlugForEvent(
+      { ...item, eventDate: rawEventDate },
+      eligibleRecords
+    );
+
+    eventsByVenue.get(venue).push({
+      title: rawTitle,
+      link: rawUrl,
+      eventDate: rawEventDate,
+      hour,
+      hall,
+      ticketStatus,
+      isLastTickets,
+      matchedSlug,
+    });
+  }
+
+  let totalEvents = 0;
+  for (const list of eventsByVenue.values()) {
+    list.sort((a, b) => {
+      if (a.eventDate !== b.eventDate) return a.eventDate.localeCompare(b.eventDate);
+      const aHour = a.hour || '99:99';
+      const bHour = b.hour || '99:99';
+      if (aHour !== bHour) return aHour.localeCompare(bHour);
+      return a.title.localeCompare(b.title, 'pl');
+    });
+    totalEvents += list.length;
+  }
+
+  if (totalEvents < 3) {
+    return null;
+  }
+
+  const startDDMM = formatDayMonth(todayIso);
+  const endDDMM = formatDayMonth(horizonEndIso);
+  const title = `Tydzień w kulturze: NOSPR, teatry i Spodek (${startDDMM}–${endDDMM})`;
+  const summary = `Zestawienie ${totalEvents} wydarzeń z dostępnymi biletami w NOSPR, Teatrze Śląskim, Teatrze Rozrywki i Spodku w najbliższych ${horizonDays} dniach.`;
+
+  const sectionBlocks = [];
+  for (const { venue, heading } of WEEKLY_SUMMARY_SECTIONS) {
+    const events = eventsByVenue.get(venue) || [];
+    if (events.length === 0) continue;
+
+    const lines = [`### ${heading}`, ''];
+    for (const ev of events) {
+      const ddmm = formatDayMonth(ev.eventDate);
+      const weekday = getPolishWeekday(ev.eventDate);
+      const datePart = ev.hour
+        ? `${ddmm} (${weekday}), godz. ${ev.hour}`
+        : `${ddmm} (${weekday})`;
+      const safeTitle = ev.title.replace(/\[/g, '(').replace(/\]/g, ')');
+      const statusPart = ev.isLastTickets
+        ? `⚠️ *${ev.ticketStatus}*`
+        : `*${ev.ticketStatus}*`;
+      const articleLinkPart = ev.matchedSlug
+        ? ` · [nasz artykuł](/wpis/${ev.matchedSlug}/)`
+        : '';
+
+      lines.push(
+        `- **${datePart}** – [${safeTitle}](${ev.link}) – ${ev.hall} – ${statusPart}${articleLinkPart}`
+      );
+    }
+
+    sectionBlocks.push(lines.join('\n'));
+  }
+
+  const footerNote =
+    '*Lista została wygenerowana automatycznie na podstawie aktualnych repertuarów instytucji. Przed zakupem zachęcamy do sprawdzenia bieżącej dostępności biletów bezpośrednio na stronie organizatora.*';
+
+  const content = [...sectionBlocks, footerNote].join('\n\n');
+
+  return {
+    title,
+    publishedDate: todayIso,
+    eventDate: null,
+    city: 'cala-okolica',
+    category: 'kultura',
+    status: 'published',
+    summary,
+    location: 'Katowice i Chorzów (NOSPR, Teatr Śląski, Teatr Rozrywki, Spodek)',
+    isAlert: false,
+    isForKids: false,
+    sourceUrl: 'https://nospr.org.pl/pl/kalendarz',
+    aiGenerated: true,
+    archived: false,
+    content,
+  };
+}
+
 function createEmptyPeriodStats() {
   return {
     total: 0,

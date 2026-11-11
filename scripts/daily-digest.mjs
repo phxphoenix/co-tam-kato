@@ -18,6 +18,9 @@ import {
   extractCycleName,
   normalizeCycleKey,
   isWeeklySummaryRecord,
+  getIsoWeekRangeWarsaw,
+  shouldGenerateWeeklySummary,
+  buildWeeklyVenueSummary,
   computeRecentDistribution,
   isUrgentCandidate,
   computeBalanceBudget,
@@ -39,6 +42,9 @@ export {
   extractCycleName,
   normalizeCycleKey,
   isWeeklySummaryRecord,
+  getIsoWeekRangeWarsaw,
+  shouldGenerateWeeklySummary,
+  buildWeeklyVenueSummary,
   computeRecentDistribution,
   isUrgentCandidate,
   computeBalanceBudget,
@@ -1678,6 +1684,7 @@ function collectRecentCycleData(
 
   for (const article of existingArticles) {
     if (!article || article.status === 'draft' || article.status === 'deleted') continue;
+    if (isWeeklySummaryRecord(article)) continue;
     const rawDate = article.addedDate || article.publishedDate || '';
     const artTs = parseIsoDayUtc(rawDate) || Date.parse(rawDate);
     if (!Number.isFinite(artTs)) continue;
@@ -1903,8 +1910,9 @@ export function selectPromptItems(newsItems, existingArticles = [], options = {}
 
   const blockedSpecificUrls = new Set();
   for (const article of existingArticles) {
-    // Nie filtrujemy szkiców (draft), aby Gemini mogło wygenerować pełny wpis published, gdy pojawią się kompletne dane
+    // Nie filtrujemy szkiców (draft) ani wpisów zbiorczych, aby Gemini mogło wygenerować pełny wpis indywidualny
     if (!article || article.status === 'draft') continue;
+    if (isWeeklySummaryRecord(article)) continue;
     const normUrl = normalizeSourceUrl(article.sourceUrl);
     if (normUrl && !isGenericSourceUrl(normUrl, genericUrls)) {
       blockedSpecificUrls.add(normUrl);
@@ -1984,8 +1992,9 @@ export function buildCoveredTopics(existingArticles = [], options = {}) {
   return existingArticles
     .filter((article) => {
       if (!article || !article.title) return false;
-      // Szkice (draft) nie mają opublikowanego odpowiednika na stronie — nie blokują wygenerowania pełnego wpisu published
+      // Szkice (draft) i wpisy zbiorcze nie blokują wygenerowania pełnego wpisu indywidualnego
       if (article.status === 'draft') return false;
+      if (isWeeklySummaryRecord(article)) return false;
 
       const pubTs = parseIsoDayUtc(article.publishedDate) || Date.parse(article.publishedDate);
       const ageDays = Number.isFinite(pubTs) && Number.isFinite(todayTs)
@@ -2339,6 +2348,7 @@ export function loadNewsRecords(newsDir = NEWS_DIR) {
 
       return [{
         file: name,
+        slug: name.replace(/\.(md|mdx)$/i, ''),
         filePath,
         title: readYamlString(frontmatter[1], 'title'),
         summary: readYamlString(frontmatter[1], 'summary'),
@@ -2395,6 +2405,10 @@ export function articleSourceTitles(article, sourceItems = [], genericUrls = get
 }
 
 export function isDuplicateArticle(article, existing, sourceItems = [], options = {}) {
+  if (isWeeklySummaryRecord(existing) || isWeeklySummaryRecord(article)) {
+    return '';
+  }
+
   const {
     now = new Date(),
     genericUrls = getDefaultGenericSourceUrls(),
@@ -2506,10 +2520,10 @@ export function matchesDeletedArticle(article, sourceItems = [], deletedRecords 
 
 export function resolveCandidateArticles(articles, existingArticles = [], sourceItems = [], options = {}) {
   const publishedExisting = existingArticles.filter(
-    (item) => item && item.status !== 'draft' && item.status !== 'deleted'
+    (item) => item && item.status !== 'draft' && item.status !== 'deleted' && !isWeeklySummaryRecord(item)
   );
   const availableDrafts = existingArticles.filter(
-    (item) => item && item.status === 'draft'
+    (item) => item && item.status === 'draft' && !isWeeklySummaryRecord(item)
   );
   const claimedDrafts = new Set();
   const acceptedArticles = [];
@@ -2569,8 +2583,10 @@ export function validateArticle(article, sourceItems, now = new Date()) {
   };
   if (typeof article.city === 'string') article.city = cityAliases[article.city.trim().toLocaleLowerCase('pl-PL')] || article.city;
   if (!ALLOWED_CITIES.has(article.city)) throw new Error(`Nieznane miasto: ${article.city}.`);
-  // Wymuszenie kategorii dedykowanych obiektom i instytucjom biletowanym (NOSPR, Spodek, Teatr Rozrywki, Teatr Śląski)
-  const candidateVenue = getVenueGroup(article);
+  // Wymuszenie kategorii dedykowanych obiektom i instytucjom biletowanym (NOSPR, Spodek, Teatr Rozrywki, Teatr Śląski),
+  // z wyłączeniem wpisu zbiorczego „Tydzień w kulturze” (§6, category: 'kultura').
+  const isWeeklySummary = isWeeklySummaryRecord(article);
+  const candidateVenue = isWeeklySummary ? 'other' : getVenueGroup(article);
   if (candidateVenue !== 'other') {
     article.category = candidateVenue;
   }
@@ -2623,18 +2639,20 @@ export function validateArticle(article, sourceItems, now = new Date()) {
   article.location = typeof article.location === 'string' ? article.location.trim() : '';
 
   // Weryfikacja kategorii na podstawie skojarzonego sourceItem (źródła)
-  const resolvedVenue = getVenueGroup({
-    sourceUrl: article.sourceUrl,
-    location: article.location,
-    sourceName: sourceItem?.sourceName || article.sourceName,
-  });
+  const resolvedVenue = isWeeklySummary
+    ? 'other'
+    : getVenueGroup({
+        sourceUrl: article.sourceUrl,
+        location: article.location,
+        sourceName: sourceItem?.sourceName || article.sourceName,
+      });
   if (resolvedVenue !== 'other') {
     article.category = resolvedVenue;
   }
 
   // 1. Wyznaczenie eventDate: zachowaj wcześniej wyodrębnione eventDate z parsera lub użyj doprecyzowanego przez AI
-  const parserEventDate = normalizeEventDate(sourceItem?.eventDate);
-  const aiEventDate = normalizeEventDate(article.eventDate);
+  const parserEventDate = isWeeklySummary ? null : normalizeEventDate(sourceItem?.eventDate);
+  const aiEventDate = isWeeklySummary ? null : normalizeEventDate(article.eventDate);
   const resolvedEventDate = parserEventDate || aiEventDate || null;
   article.eventDate = resolvedEventDate;
 
@@ -2793,8 +2811,33 @@ async function main() {
 
   const sourceItems = await collectNews();
   const now = new Date();
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(now);
   const balanceSettings = parseBalanceSettings();
   const existingArticles = loadNewsRecords();
+
+  // Wpis zbiorczy „Tydzień w kulturze” (§6): generowany deterministycznie po collectNews, PRZED wywołaniem Gemini.
+  if (shouldGenerateWeeklySummary(existingArticles, now, balanceSettings)) {
+    const weeklySummary = buildWeeklyVenueSummary(sourceItems, existingArticles, now, balanceSettings);
+    if (weeklySummary) {
+      if (isDryRun || !apiKey) {
+        console.log(`\n[DRY-RUN] 📅 Podgląd wpisu zbiorczego "${weeklySummary.title}":`);
+        console.log(`  summary: ${weeklySummary.summary}`);
+        console.log('------------------------------------------------------');
+        console.log(weeklySummary.content);
+        console.log('------------------------------------------------------');
+      } else {
+        fs.mkdirSync(NEWS_DIR, { recursive: true });
+        if (writeArticle(weeklySummary, today)) {
+          console.log(`📅 Zapisano cotygodniowy wpis zbiorczy: ${weeklySummary.title}`);
+        }
+      }
+    } else {
+      console.log('📅 Wpis zbiorczy „Tydzień w kulturze” pominięty (mniej niż 3 wydarzenia w horyzoncie).');
+    }
+  } else {
+    console.log('📅 Wpis zbiorczy „Tydzień w kulturze” jest już obecny w bieżącym tygodniu ISO (lub wyłączony).');
+  }
+
   const budget = computeBalanceBudget(existingArticles, balanceSettings, now);
 
   console.log(
@@ -2877,7 +2920,6 @@ async function main() {
     now,
   });
 
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(now);
   fs.mkdirSync(NEWS_DIR, { recursive: true });
   const saved = acceptedArticles.reduce((count, article) => count + Number(writeArticle(article, today)), 0);
   console.log(`Zakończono: ${saved} wpisów zapisanych; ${acceptedArticles.filter((item) => item.status === 'published').length} opublikowanych.`);
