@@ -21,6 +21,7 @@ import {
 console.log('Testing pagination configuration & logic...');
 
 const originalSourcesMd = fs.readFileSync('config/sources.md', 'utf8');
+const initialActiveCount = loadActiveSources().length;
 
 try {
   // 1. Default values in config/sources.md
@@ -59,8 +60,8 @@ try {
   const allSourcesAfterUpdate = getAllSources();
   const activeSourcesAfterUpdate = loadActiveSources();
   assert.equal(allSourcesAfterUpdate.length, 30);
-  assert.equal(activeSourcesAfterUpdate.length, 30);
-  console.log('✓ Updating pagination settings in config/sources.md preserves all 30 sources');
+  assert.equal(activeSourcesAfterUpdate.length, initialActiveCount);
+  console.log(`✓ Updating pagination settings in config/sources.md preserves all 30 sources (${initialActiveCount} active)`);
 
   // 3. Validation tests
   assert.ok(!validatePaginationSettings({ homePageSize: 0 }).valid);

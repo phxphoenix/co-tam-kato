@@ -17,8 +17,11 @@ console.log(`✓ Parsed ${allSources.length} total sources from config/sources.m
 
 // 2. Test loading ACTIVE sources
 const activeSources = loadActiveSources();
-assert.ok(activeSources.length >= 30, `Expected at least 30 active sources, got ${activeSources.length}`);
+const expectedActiveCount = allSources.filter((s) => s.status === 'ACTIVE').length;
+assert.equal(activeSources.length, expectedActiveCount, `Expected ${expectedActiveCount} active sources, got ${activeSources.length}`);
+assert.ok(activeSources.length >= 25, `Expected at least 25 active sources, got ${activeSources.length}`);
 assert.ok(activeSources.every((s) => s.status === 'ACTIVE'), 'All sources must have status ACTIVE');
+assert.equal(activeSources.some((s) => s.id === '18'), false, 'Inactive Crossweb (id 18) must be excluded from active sources');
 console.log(`✓ Loaded ${activeSources.length} ACTIVE sources`);
 
 // Verify first item
