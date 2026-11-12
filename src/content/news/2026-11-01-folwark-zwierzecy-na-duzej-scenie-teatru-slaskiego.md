@@ -10,7 +10,7 @@ location: "Teatr Śląski – Duża Scena"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/folwark-zwierzecy/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Śląski im. Stanisława Wyspiańskiego w Katowicach prezentuje sceniczną adaptację klasycznej powieści George'a Orwella „Folwark zwierzęcy”. Najbliższy spektakl zaplanowano na wtorek, 3 listopada 2026 roku o godzinie 19:00 na Dużej Scenie.

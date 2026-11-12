@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/nospr-s3-waclawik-bialic"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Siedziba Narodowej Orkiestry Symfonicznej Polskiego Radia w Katowicach zaprasza na kolejny niezwykły koncert symfoniczny w ramach cyklu S3 Abonament. Wydarzenie zatytułowane „Gra nastrojów i emocji” odbędzie się 15 listopada 2026 roku o godzinie 12:00 w Sali koncertowej NOSPR.

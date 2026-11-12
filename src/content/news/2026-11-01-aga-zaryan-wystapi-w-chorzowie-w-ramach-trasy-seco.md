@@ -10,7 +10,7 @@ location: "Teatr Rozrywki – Duża Scena"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/921.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W środę, 4 listopada 2026 roku o godzinie 19:00, w Teatrze Rozrywki w Chorzowie wystąpi Aga Zaryan, uznawana za jedną z najwybitniejszych polskich wokalistek jazzowych.

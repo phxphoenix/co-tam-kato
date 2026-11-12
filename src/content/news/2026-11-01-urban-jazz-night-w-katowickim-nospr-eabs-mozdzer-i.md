@@ -10,7 +10,7 @@ location: "NOSPR, Sala Koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/urban-jazz-night"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W środę, 11 listopada 2026 roku o godzinie 18:00, w prestiżowej Sali Koncertowej katowickiego NOSPR odbędzie się widowisko muzyczne Urban Jazz Night. Projekt łączy świat jazzowej improwizacji z energią polskiego hip-hopu.

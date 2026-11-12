@@ -10,7 +10,7 @@ location: "NOSPR, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/wang"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W piątek, 13 listopada 2026 roku o godzinie 19:30, w Sali koncertowej NOSPR w Katowicach odbędzie się wyjątkowy recital chopinowski w wykonaniu chińskiej pianistki Zitong Wang.

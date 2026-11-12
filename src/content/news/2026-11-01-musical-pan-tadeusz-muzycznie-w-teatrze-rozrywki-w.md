@@ -10,7 +10,7 @@ location: "Teatr Rozrywki – Duża Scena"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/734.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Rozrywki w Chorzowie zaprasza na musicalową wersję narodowego eposu – spektakl „Pan Tadeusz Muzycznie”. Widowisko odbędzie się w czwartek, 5 listopada 2026 roku na Dużej Scenie chorzowskiego teatru.

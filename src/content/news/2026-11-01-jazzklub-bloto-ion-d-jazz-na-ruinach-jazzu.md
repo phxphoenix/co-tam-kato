@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala kameralna"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/jazzklub-bloto-ion-d"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Miłośnicy nowoczesnego jazzu i brzmień eksperymentalnych powinni zapisać w kalendarzach datę 17 listopada 2026 roku. O godzinie 19:30 na Sali kameralnej katowickiej NOSPR w ramach cyklu JazzKLUB wystąpi formacja Błoto oraz projekt ION D.

@@ -10,7 +10,7 @@ location: "NOSPR, Sala kameralna"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/jazzklub-wilkins"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowicki NOSPR zaprasza na kolejny koncert w ramach popularnego cyklu JazzKLUB. We wtorek, 3 listopada 2026 roku o godzinie 19:30, w Sali kameralnej wystąpi ceniony amerykański saksofonista Immanuel Wilkins wraz ze swoim kwartetem.

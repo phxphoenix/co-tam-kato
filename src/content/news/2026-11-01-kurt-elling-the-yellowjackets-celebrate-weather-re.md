@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/kurt-elling-and-the-yellowjackets-celebrate-weather-report"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowicka NOSPR będzie gospodarzem wyjątkowego koncertu jazzowego. 15 listopada 2026 roku o godzinie 19:30 w Sali koncertowej wystąpi wybitny wokalista Kurt Elling w towarzystwie legendarnej formacji The Yellowjackets.

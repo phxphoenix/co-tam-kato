@@ -10,7 +10,7 @@ location: "Teatr Śląski – Duża Scena"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/waldkauz-szczepana-twardocha/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W poniedziałek, 9 listopada 2026 roku o godzinie 18:00, w Teatrze Śląskim im. Stanisława Wyspiańskiego w Katowicach odbędzie się premierowe spotkanie z cyklu „Nowe Książki”. Gościem wieczoru będzie Szczepan Twardoch.
