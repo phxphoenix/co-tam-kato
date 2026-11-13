@@ -10,7 +10,7 @@ location: "Teatr Rozrywki w Chorzowie"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/907.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Rozrywki w Chorzowie włącza do listopadowego repertuaru spektakl „Nawiedzony toster pani Watterson”. Pierwszy z cyklu pokazów na Małej Scenie zaplanowano na piątek, 6 listopada 2026 roku o godzinie 19:30.

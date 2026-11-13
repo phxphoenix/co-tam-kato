@@ -10,7 +10,7 @@ location: "NOSPR, Sala kameralna"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/kameralisci-nospr-5"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W czwartek, 19 listopada 2026 roku o godzinie 19:30, w Sali kameralnej katowickiego NOSPR odbędzie się koncert z cyklu Koncerty Kameralne. Artyści zaprezentują program skupiony wokół beethovenowskich inspiracji w muzyce kameralnej.

@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/aukso-x-shannon"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 21 listopada 2026 roku o godzinie 19:30 katowicka siedziba NOSPR zaprasza na niezwykły koncert w ramach cyklu „Orkiestry gościnne / Mój Karnet”. Na scenie Sali koncertowej spotkają się znakomita orkiestra kameralna AUKSO oraz formacja Shannon, która od lat popularyzuje muzykę celtycką w nowoczesnych aranżacjach.

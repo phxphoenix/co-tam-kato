@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/nospr-s1-young-hamelin"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Kolejne z cyklicznych wydarzeń abonamentowych w katowickim NOSPR odbędzie się 26 listopada 2026 roku o godzinie 19:30. W Sali koncertowej wystąpią wspólnie orkiestra NOSPR oraz ceniony kanadyjski pianista Charles Richard-Hamelin.

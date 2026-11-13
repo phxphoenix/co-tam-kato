@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/sinfonia-varsovia"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W listopadzie katowicki NOSPR po raz kolejny gościć będzie czołowe orkiestry i artystów światowego formatu. W poniedziałek, 23 listopada 2026 roku o godzinie 19:30, w Sali koncertowej wystąpi Sinfonia Varsovia, a za pulpitem dyrygenckim oraz jako solista zaprezentuje się legendarny skrzypek Pinchas Zukerman.

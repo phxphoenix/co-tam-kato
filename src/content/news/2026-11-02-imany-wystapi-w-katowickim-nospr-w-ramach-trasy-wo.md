@@ -10,7 +10,7 @@ location: "NOSPR, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/imany-women-deserve-rage-tour"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Niedziela, 22 listopada 2026 roku, upłynie w Katowicach pod znakiem wyjątkowego głosu francuskiej artystki IMANY. Wokalistka wystąpi w monumentalnej Sali koncertowej NOSPR o godzinie 20:00 w ramach trasy „Women Deserve Rage Tour”.

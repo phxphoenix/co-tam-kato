@@ -10,7 +10,7 @@ location: "Teatr Śląski – Scena Kameralna"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/od-jednego-lucypera/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Śląski w Katowicach zaprasza na pokazy spektaklu „Od jednego Lucypera”, które odbędą się na Scenie Kameralnej. Najbliższa premiera serii listopadowych spektakli zaplanowana jest na środę, 4 listopada 2026 roku o godzinie 19:00.

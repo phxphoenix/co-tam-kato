@@ -10,7 +10,7 @@ location: "Katowice, Sosnowiec"
 isAlert: true
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/duze-zmiany-w-komunikacji-tramwajowej-w-katowicach-i-sosnowcu-ruszaja-modernizacje-i-autobusy-zastepcze"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Pasażerów komunikacji miejskiej Transport GZM czekają duże zmiany. Od środy, 4 listopada 2026 roku, ruszają prace modernizacyjne układu torowego na katowickim Placu Wolności oraz przebudowa torowiska wzdłuż ul. 1 Maja i Obrońców Westerplatte.
