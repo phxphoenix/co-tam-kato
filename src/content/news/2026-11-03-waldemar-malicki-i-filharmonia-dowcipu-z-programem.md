@@ -10,7 +10,7 @@ location: "Teatr Rozrywki w Chorzowie"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/920.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Rozrywki w Chorzowie zaprasza na wyjątkowe popołudnie z muzyką filmową w unikalnym, kabaretowym wydaniu. W niedzielę, 8 listopada 2026 roku, odbędą się dwa seanse programu „Filmowy Świat” – o godzinie 15:00 oraz 17:30. Na Dużej Scenie wystąpi niezrównany Waldemar Malicki wraz z Filharmonią Dowcipu.

@@ -10,7 +10,7 @@ location: "Miejski Inkubator Przedsiębiorczości Rawa.Ink, Katowice"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/swiatowy-tydzien-przedsiebiorczosci-w-katowicach-program-rawa-ink-16-20-listopada"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Miejski Inkubator Przedsiębiorczości Rawa.Ink w Katowicach przygotował bogaty program z okazji nadchodzącego Światowego Tygodnia Przedsiębiorczości. Wydarzenia potrwają od 16 do 20 listopada 2026 roku i skierowane są zarówno do doświadczonych biznesmenów, jak i osób stawiających pierwsze kroki w świecie biznesu.

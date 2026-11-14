@@ -10,7 +10,7 @@ location: "NOSPR, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/ms-lisa-fischer-z-towarzyszeniem-nospr-pod-batuta-adama-szta"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W sobotę, 28 listopada 2026 roku o godzinie 20:00, w Sali koncertowej katowickiego NOSPR odbędzie się wyjątkowe wydarzenie muzyczne. Na scenie wystąpi Ms. Lisa Fischer, znana ze współpracy z takimi gigantami muzyki jak The Rolling Stones, Tina Turner czy Sting.

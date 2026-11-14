@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/chor-polskiego-radia-tworek-strzadala"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 29 listopada 2026 roku o godzinie 18:00 w Sali koncertowej katowickiej siedziby NOSPR wystąpi Chór Polskiego Radia z Lusławic. Wydarzenie zatytułowane „Od mroku do światła” z pewnością przyciągnie miłośników wyrafinowanej muzyki chóralnej.

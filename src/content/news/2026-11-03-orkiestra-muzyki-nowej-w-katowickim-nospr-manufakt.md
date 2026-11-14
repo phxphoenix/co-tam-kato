@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala kameralna"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/orkiestra-muzyki-nowej-5"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 22 listopada 2026 roku o godzinie 18:00 w Sali kameralnej katowickiego NOSPR odbędzie się koncert z cyklu muzyki najnowszej. Orkiestra Muzyki Nowej pod dyrekcją Szymona Bywalca zaprezentuje intrygujący program w ramach wydarzenia „Manufaktura dźwięku”. 

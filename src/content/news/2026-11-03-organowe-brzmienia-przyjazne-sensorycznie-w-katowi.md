@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/audycje-organowe"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W poniedziałek, 30 listopada 2026 roku o godzinie 11:00, Sala koncertowa katowickiego NOSPR otworzy się na publiczność podczas specjalnego wydarzenia „Organowe brzmienia przyjazne sensorycznie”. Koncert zaprojektowano tak, aby zapewnić komfort odbioru muzyki osobom ze szczególnymi potrzebami sensorycznymi.

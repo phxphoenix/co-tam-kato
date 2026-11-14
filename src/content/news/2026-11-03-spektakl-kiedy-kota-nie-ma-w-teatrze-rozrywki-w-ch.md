@@ -10,7 +10,7 @@ location: "Teatr Rozrywki, Duża Scena"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/790.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Rozrywki w Chorzowie zaprasza na spektakl komediowy „Kiedy kota nie ma...”, który zostanie zaprezentowany w piątek, 6 listopada 2026 roku. Zaplanowano dwa pokazy: o godzinie 17:00 oraz 20:30 na Dużej Scenie.

@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/mozdzer-danielsson-fresco-the-best-of"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Fani jazzu na najwyższym poziomie powinni zarezerwować czas na początek grudnia. 2 grudnia 2026 roku o godzinie 19:00 w Sali koncertowej NOSPR wystąpi kultowe trio w składzie: Leszek Możdżer, Lars Danielsson oraz Zohar Fresco z wyjątkowym programem „The Best Of”.

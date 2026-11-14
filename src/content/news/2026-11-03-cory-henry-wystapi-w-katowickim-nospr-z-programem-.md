@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/cory-henry-and-trio-band"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Fani soulu, jazzu i funku mogą szykować się na wyjątkowe muzyczne święto. W poniedziałek, 30 listopada 2026 roku o godzinie 19:30, w Sali koncertowej NOSPR wystąpi genialny multiinstrumentalista i wokalista Cory Henry w ramach projektu „A Jam Good Time”.
