@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/ralph-kaminski"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W ramach koncertów organizowanych przez zewnętrznych organizatorów w katowickiej siedzibie Narodowej Orkiestry Symfonicznej Polskiego Radia wystąpi Ralph Kaminski. Artysta zaprezentuje swój program zatytułowany „Góra” na dużej Sali koncertowej.

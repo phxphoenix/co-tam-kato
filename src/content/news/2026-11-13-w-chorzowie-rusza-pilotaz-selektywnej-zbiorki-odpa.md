@@ -10,7 +10,7 @@ location: "Chorzów"
 isAlert: false
 sourceUrl: "https://metropoliagzm.pl/2026/11/04/w-chorzowie-rusza-pilotaz-zbiorki-odpadow-kuchennych/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Górnośląsko-Zagłębiowska Metropolia w ramach międzynarodowego projektu MICAD rozpoczyna w Chorzowie pilotażowy program dotyczący selektywnej zbiórki odpadów kuchennych. Działania skierowane są do mieszkańców wybranego obszaru zabudowy wielorodzinnej.

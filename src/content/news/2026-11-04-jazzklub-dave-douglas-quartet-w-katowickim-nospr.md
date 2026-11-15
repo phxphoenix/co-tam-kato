@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala kameralna"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/jazzklub-dave-douglas-quintet"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Miłośnicy jazzu na najwyższym poziomie mają kolejny powód do wizyty w katowickiej siedzibie Narodowej Orkiestry Symfonicznej Polskiego Radia. W ramach popularnego cyklu JazzKLUB na Sali kameralnej zaprezentuje się Dave Douglas Quartet.

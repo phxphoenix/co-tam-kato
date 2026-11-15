@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "5-12 lat"
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/517.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W połowie listopada na Małej Scenie Teatru Rozrywki w Chorzowie zagości familijny spektakl zatytułowany „Pozaziomki, czyli kosmiczna przygoda”. Przedstawienie skierowane jest do dzieci oraz całych rodzin poszukujących wyjątkowych wrażeń teatralnych.
