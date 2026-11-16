@@ -10,7 +10,7 @@ location: "Teatr Rozrywki, Duża Scena"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/943.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 16 listopada na Dużej Scenie Teatru Rozrywki w Chorzowie odbędzie się wyjątkowy koncert jubileuszowy z okazji 70-lecia Piwnicy pod Baranami. To niezwykła szansa, by przenieść się w świat krakowskiego kabaretu.

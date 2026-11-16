@@ -10,7 +10,7 @@ location: "NOSPR, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/nospr-s1-arming"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 5 listopada w Sali koncertowej NOSPR odbędzie się wyjątkowe wydarzenie muzyczne. Na scenie pojawi się Praski Chór Filharmoniczny pod batutą Arminga, prezentując m.in. Requiem Mozarta.

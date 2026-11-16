@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala kameralna"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/nospr-string-sextet"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Miłośnicy kameralnego brzmienia mają okazję zaplanować wyjątkowy wieczór w katowicej siedzibie Narodowej Orkiestry Symfonicznej Polskiego Radia. W grudniu na scenie sali kameralnej zaprezentuje się NOSPR String Sextet w ramach cyklu koncertów kameralnych.

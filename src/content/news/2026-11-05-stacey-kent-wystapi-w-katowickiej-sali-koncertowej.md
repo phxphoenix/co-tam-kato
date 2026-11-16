@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/stacey-kent-2"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Mikołajkowy wieczór w Katowicach minie pod znakiem najwyższej klasy jazzu. 6 grudnia 2026 roku o godzinie 20:00 w Sali koncertowej NOSPR wystąpi uznana na całym świecie wokalistka Stacey Kent.

@@ -10,7 +10,7 @@ location: "Bytom"
 isAlert: false
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/bytom-uczci-swieto-niepodleglosci-zawyja-syreny-beda-utrudnienia-i-wiele-wydarzen"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Obchody Narodowego Święta Niepodległości w Bytomiu rozpoczną się 11 listopada o godzinie 11:30. W programie przewidziano szereg atrakcji, w tym Bieg Niepodległości, uroczysty koncert oraz Strzelanie Obywatelskie.

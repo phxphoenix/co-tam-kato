@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/epitafium-dla-stanislawa-soyki"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Grudniowy kalendarz katowickiego NOSPR wzbogacił się o niezwykłe wydarzenie muzyczne. Na deskach Sali koncertowej odbędzie się koncert zatytułowany „Epitafium dla Stanisława Soyki”, organizowany przez zewnętrznego promotora.

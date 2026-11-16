@@ -10,7 +10,7 @@ location: "Teatr Rozrywki, Duża Scena"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/942.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W sobotę, 7 listopada 2026 roku o godzinie 19:00 na Dużej Scenie Teatru Rozrywki w Chorzowie zaprezentowane zostanie widowisko muzyczne „Legendy Polskiej Piosenki”.

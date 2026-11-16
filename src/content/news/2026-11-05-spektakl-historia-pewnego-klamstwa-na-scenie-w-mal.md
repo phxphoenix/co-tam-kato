@@ -10,7 +10,7 @@ location: "Teatr Śląski – Scena w Malarni"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/historia_pewnego_klamstwa/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Śląski im. Stanisława Wyspiańskiego w Katowicach prezentuje spektakl dyplomowy słuchaczy Szkoły Aktorskiej pt. „Historia pewnego kłamstwa”. Najbliższy pokaz zaplanowano na sobotę, 7 listopada 2026 roku o godzinie 19:00.

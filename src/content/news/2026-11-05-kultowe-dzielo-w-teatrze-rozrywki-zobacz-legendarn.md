@@ -10,7 +10,7 @@ location: "Teatr Rozrywki - Duża Scena, Chorzów"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/368.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Chorzowski Teatr Rozrywki przygotował dla widzów serię pokazów jednego ze swoich najgłośniejszych tytułów. Musical „Cabaret” powraca na Dużą Scenę w listopadzie, oferując publiczności niezapomniane emocje i popisowe kreacje aktorskie.

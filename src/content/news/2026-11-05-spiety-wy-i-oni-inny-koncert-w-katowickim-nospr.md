@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/spiety-wy-i-oni-inny-koncert-feat-fisz-blazej-krol-tomasz-or"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 4 grudnia 2026 roku o godzinie 18:00 w Sali koncertowej NOSPR w Katowicach odbędzie się wyjątkowe wydarzenie muzyczne „SPIĘTY/WY I ONI – INNY KONCERT*”. Na jednej scenie pojawią się wybitni przedstawiciele polskiej sceny alternatywnej i rockowej.

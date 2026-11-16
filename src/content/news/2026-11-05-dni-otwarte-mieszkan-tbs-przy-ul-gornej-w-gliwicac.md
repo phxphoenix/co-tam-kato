@@ -10,7 +10,7 @@ location: "Gliwice, ul. Górna 8"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/nowe-mieszkania/nowe-mieszkania-tbs-przy-gornej-8-mozna-obejrzec-zanim-zlozysz-wniosek"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Osoby zainteresowane wynajmem mieszkań w formule TBS mają niepowtarzalną okazję obejrzeć lokale przy ul. Górnej 8 w Gliwicach. Dni otwarte odbędą się w soboty 7 oraz 14 listopada, w godzinach od 9:00 do 13:00.
