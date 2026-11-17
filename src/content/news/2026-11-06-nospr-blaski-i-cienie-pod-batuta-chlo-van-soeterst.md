@@ -10,7 +10,7 @@ location: "NOSPR, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/nospr-s3-fanshil-gavrylyuk"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W niedzielę 6 grudnia 2026 roku o godzinie 12:00 w Sali koncertowej NOSPR w Katowicach odbędzie się koncert symfoniczny z cyklu abonamentowego S3 noszący tytuł „Blaski i cienie”. Orkiestrę NOSPR poprowadzi francuska dyrygentka Chloé van Soeterstède, a w roli solisty wystąpi uznany pianista Alexander Gavrylyuk.

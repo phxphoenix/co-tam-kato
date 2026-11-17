@@ -10,7 +10,7 @@ location: "Teatr Rozrywki - Duża Scena"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/742.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 26 listopada 2026 roku na Dużej Scenie Teatru Rozrywki w Chorzowie rozpocznie się seria pokazów głośnego i niezwykle dynamicznego musicalu „School of Rock”. Spektakl zaplanowano w kilku terminach na przełomie listopada i grudnia.

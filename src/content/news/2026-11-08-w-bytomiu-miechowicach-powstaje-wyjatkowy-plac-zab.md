@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "3-12 lat"
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/takiego-placu-zabaw-w-bytomiu-jeszcze-nie-bylo-powstaje-w-miechowicach"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W Bytomiu-Miechowicach przy ul. Stolarzowickiej powstaje wyjątkowa przestrzeń rekreacyjna dla najmłodszych mieszkańców. Inwestycja wyróżnia się wykorzystaniem naturalnych materiałów, co tworzy bezpieczne i przyjazne środowisko do zabawy na świeżym powietrzu.

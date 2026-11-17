@@ -10,7 +10,7 @@ location: "Teatr Śląski – Scena Kameralna"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/inteligenci/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W najbliższy wtorek, 10 listopada 2026 roku o godzinie 19:00, na Scenie Kameralnej Teatru Śląskiego odbędzie się kolejna odsłona cenionego spektaklu „Inteligenci”. Warto zaplanować wizytę w teatrze, ponieważ w repertuarze przewidziano także kolejne terminy w nadchodzących miesiącach.

@@ -10,7 +10,7 @@ location: "Teatr Śląski – Scena w Malarni"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/sztuka/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Śląski im. Stanisława Wyspiańskiego w Katowicach zaprasza na inscenizację głośnej komedii „Sztuka” autorstwa Yasminy Rezy. Spektakl odbędzie się w czwartek 12 listopada 2026 roku o godzinie 19:00 na Scenie w Malarni.

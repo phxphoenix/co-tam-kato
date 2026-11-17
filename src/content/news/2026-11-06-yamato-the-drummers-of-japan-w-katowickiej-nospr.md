@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/yamato-the-drummers-of-japan-hito-no-chikara-the-power-of-hu"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 7 listopada 2026 roku o godzinie 19:00 katowicka Sala koncertowa NOSPR gościć będzie wyjątkowy zespół YAMATO – The Drummers of Japan. Artyści zaprezentują swój widowiskowy program zatytułowany „Hito no Chikara – The Power of Human Strength”. 

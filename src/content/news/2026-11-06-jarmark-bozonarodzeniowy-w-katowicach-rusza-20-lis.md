@@ -11,7 +11,7 @@ isAlert: false
 isForKids: true
 sourceUrl: "https://silesion.pl/przgotowania-jarmark-bozonarodzeniowy-katowice-2026/?utm_source=rss&utm_medium=rss&utm_campaign=przgotowania-jarmark-bozonarodzeniowy-katowice-2026"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowice oficjalnie rozpoczynają przygotowania do tegorocznego okresu świątecznego. Już w piątek, 20 listopada 2026 roku, na katowickim Rynku oraz placu Obrońców Katowic ruszy wyczekiwany Jarmark Bożonarodzeniowy, który potrwa aż do 10 stycznia.

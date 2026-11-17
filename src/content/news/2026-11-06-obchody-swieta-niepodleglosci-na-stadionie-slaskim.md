@@ -10,7 +10,7 @@ location: "Stadion Śląski, Chorzów"
 isAlert: false
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/tak-stadion-slaski-uczci-swieto-niepodleglosci-koncerty-i-mnostwo-darmowych-atrakcji"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W środę 11 listopada 2026 roku Stadion Śląski w Chorzowie stanie się centrum regionalnych obchodów Narodowego Święta Niepodległości. Wydarzenie rozpocznie się o godzinie 12:00 wspólnym odśpiewaniem hymnu państwowego.

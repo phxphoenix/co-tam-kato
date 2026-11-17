@@ -10,7 +10,7 @@ location: "Teatr Rozrywki, Mała Scena"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/843.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Na Małej Scenie Teatru Rozrywki w Chorzowie zagości spektakl muzyczny „Serce z czekolady”. Najbliższa prezentacja odbędzie się w czwartek 19 listopada 2026 roku o godzinie 11:00, a kolejne pokazy zaplanowano na 20 listopada.

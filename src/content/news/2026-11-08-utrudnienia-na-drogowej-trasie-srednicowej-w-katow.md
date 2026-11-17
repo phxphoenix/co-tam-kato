@@ -10,7 +10,7 @@ location: "Drogowa Trasa Średnicowa (zjazd w ul. Jana Pawła II), Katowice"
 isAlert: true
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/uwaga-kierowcy-w-katowicach-w-sobote-utrudnienia-na-srednicowce"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Kierowcy poruszający się po Katowicach muszą przygotować się na chwilowe utrudnienia na Drogowej Trasie Średnicowej. W sobotę, 7 listopada 2026 roku, w godzinach od 6:00 do 16:00 zamknięty zostanie zjazd ze Średnicówki w ulicę Jana Pawła II w kierunku Chorzowa.

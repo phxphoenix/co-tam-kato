@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "5-12 lat"
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/951.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 13 listopada 2026 roku o godzinie 18:30 na Małej Scenie Teatru Rozrywki w Chorzowie odbędzie się wyjątkowy spektakl „Warzymy emocje z Panem Babcią”. To barwna i angażująca propozycja sceniczna, łącząca elementy teatrów muzycznych z przystępnym przekazem dla całej rodziny.

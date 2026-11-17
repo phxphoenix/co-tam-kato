@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "5-12 lat"
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/koncert-familijny-z-wizyta-u-mozarta"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowicka NOSPR zaprasza najmłodszych melomanów oraz ich rodziców na niezwykłe wydarzenie edukacyjne. Koncert familijny zatytułowany „Z wizyta u Mozarta” odbędzie się 15 listopada 2026 roku o godzinie 16:00 w Sali kameralnej.
