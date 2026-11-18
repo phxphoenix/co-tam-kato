@@ -10,7 +10,7 @@ location: "NOSPR, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/michal-bajor-piosenki-ktore-lubie"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 13 grudnia 2026 roku o godzinie 18:00 katowicka NOSPR zaprasza na wyjątkowy koncert Michała Bajora zatytułowany „Piosenki, które lubię”. Artysta zaprezentuje swój starannie wyselekcjonowany repertuar, w którym nie zabraknie nastrojowych utworów pełnych literackiego wyrazu i emocji.

@@ -10,7 +10,7 @@ location: "NOSPR, Sala kameralna"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/camerata-silesia-szostak-2"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W niedzielę, 6 grudnia 2026 roku o godzinie 18:00, Sala kameralna katowickiej NOSPR wypełni się wyjątkowymi brzmieniami chóralnymi. Zespół Camerata Silesia pod dyrekcją Szostaka zaprezentuje koncert zatytułowany „Między nową muzyką a klasyką polskiej piosenki”.

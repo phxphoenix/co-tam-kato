@@ -10,7 +10,7 @@ location: "Teatr Rozrywki, Duża Scena"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/919.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Rozrywki w Chorzowie zaprasza na koncert świąteczny „Swinging Bells”, podczas którego publiczność usłyszy najpiękniejsze utwory bożonarodzeniowe w eleganckich, swingowych aranżacjach.

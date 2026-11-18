@@ -10,7 +10,7 @@ location: "NOSPR, Sala Koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/nospr-s2-alsop-kanneh-mason"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W katowickiej Sali koncertowej NOSPR odbędzie się wyjątkowy wieczór symfoniczny „Od rokoka do nowoczesności”. Orkiestrę NOSPR poprowadzi uznana na całym świecie dyrygentka Marin Alsop, a w roli solisty wystąpi ceniony wiolonczelista Sheku Kanneh-Mason.
