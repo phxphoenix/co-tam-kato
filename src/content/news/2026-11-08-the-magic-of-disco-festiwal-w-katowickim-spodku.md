@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/the-magic-of-disco-festiwal,3858.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Fani muzyki tanecznej z ubiegłych dziesięcioleci mogą już planować zimowy wyjazd do Katowic. 27 lutego 2027 roku w legendarnej hali Spodek odbędzie się The Magic of Disco Festiwal, który przeniesie uczestników w złoty wiek muzyki klubowej i dyskotekowej.

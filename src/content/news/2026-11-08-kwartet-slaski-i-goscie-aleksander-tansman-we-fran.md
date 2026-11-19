@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala kameralna"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/kwartet-slaski-drugi-koncert-z-cyklu-aleksander-tansman"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W grudniu miłośnicy muzyki kameralnej będą mieli okazję wziąć udział w wyjątkowym wydarzeniu w katowickiej NOSPR. 19 grudnia 2026 roku o godzinie 18:00 w Sali kameralnej odbędzie się koncert zatytułowany „Kwartet Śląski i goście / Drugi koncert z cyklu: Aleksander Tansman we Francji”.

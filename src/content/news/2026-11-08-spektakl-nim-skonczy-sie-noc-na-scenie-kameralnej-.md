@@ -10,7 +10,7 @@ location: "Teatr Śląski w Katowicach, Scena Kameralna"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/nim-skonczy-sie-noc/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 14 listopada 2026 roku o godzinie 19:00 na Scenie Kameralnej Teatru Śląskiego w Katowicach odbędzie się kolejna odsłona cenionego przez widzów spektaklu „Nim skończy się noc…”. Wydarzeniu towarzyszyć będzie wyjątkowa atmosfera katowickiej kawiarenki literackiej.

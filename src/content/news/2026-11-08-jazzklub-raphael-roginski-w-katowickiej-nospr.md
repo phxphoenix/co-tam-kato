@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala kameralna"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/jazzklub-raphael-roginski"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W ramach cyklu JazzKLUB katowicka NOSPR zaprasza na niezwykły koncert, podczas którego gitarzysta i kompozytor Raphael Rogiński zaprezentuje autorską, całkowicie odmienną interpretację twórczości Johna Coltrane’a. Wydarzenie odbędzie się 15 grudnia 2026 roku o godzinie 19:30 w Sali kameralnej.

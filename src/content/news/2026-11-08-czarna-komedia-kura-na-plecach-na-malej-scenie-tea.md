@@ -10,7 +10,7 @@ location: "Teatr Rozrywki - Mała Scena, Chorzów"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/435.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Rozrywki w Chorzowie prezentuje spektakl „Kura na plecach” – komedię pełną dowcipnych zwrotów akcji i absurdu, która od pierwszych minut wciąga widza w gąszcz niespodziewanych sytuacji i zabawnych relacji między bohaterami.

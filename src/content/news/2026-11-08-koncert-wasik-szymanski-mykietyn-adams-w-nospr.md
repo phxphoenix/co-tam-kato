@@ -10,7 +10,7 @@ location: "NOSPR (Sala kameralna), Katowice"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/bartek-wasik"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W czwartek, 10 grudnia 2026 roku o godzinie 19:30 w Sali kameralnej katowickiej NOSPR odbędzie się koncert z cyklu muzyki najnowszej. Na scenie wystąpi znakomity pianista Bartek Wąsik, prezentując utwory Szymańskiego, Mykietyna oraz Adamsa pod przewodnim pytaniem: „Czy muzyka lubi się powtarzać?”.

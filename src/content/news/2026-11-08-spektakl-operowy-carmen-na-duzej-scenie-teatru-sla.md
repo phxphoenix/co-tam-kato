@@ -10,7 +10,7 @@ location: "Teatr Śląski (Duża Scena), Katowice"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/carmen/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Na Dużej Scenie Teatru Śląskiego im. St. Wyspiańskiego w Katowicach zagości widowiskowa inscenizacja „Carmen” w wykonaniu zespołu Opery Śląskiej. Spektakl odbędzie się we wtorek, 17 listopada 2026 roku o godzinie 18:00.

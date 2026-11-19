@@ -10,7 +10,7 @@ location: "Teatr Rozrywki (Mała Scena), Chorzów"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/952.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Na Małej Scenie Teatru Rozrywki w Chorzowie odbędzie się koncert Kamila Franczaka zatytułowany „Nie dokazuj”. Wydarzenie zaplanowano na niedzielę, 22 listopada 2026 roku, na godzinę 20:30.

@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/nospr-s1-alsop-duenas"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Do Katowic powraca jedna z najważniejszych postaci światowej dyrygentury – Marin Alsop. Podczas grudniowego wieczoru w Sali koncertowej NOSPR towarzyszyć jej będzie niezwykle utalentowana hiszpańska skrzypaczka María Dueñas, doceniana na najważniejszych scenach muzycznych świata.

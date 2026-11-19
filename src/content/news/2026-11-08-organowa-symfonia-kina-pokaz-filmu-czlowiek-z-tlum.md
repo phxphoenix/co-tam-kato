@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/organowa-symfonia-kina-czlowiek-z-tlumu"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Cykl „OrgaNOWA symfonia kina” to unikalne przedsięwzięcie łączące sztukę filmową z potęgą brzmienia katowickich organów. Tym razem widzowie będą mieli okazję obejrzeć klasyczny niemy film „Człowiek z tłumu” w niezapomnianej oprawie dźwiękowej.
