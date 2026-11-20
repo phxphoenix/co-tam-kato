@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/zakopower-xx-miuosh-2"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 20 grudnia 2026 roku o godzinie 17:00 w Sali koncertowej NOSPR w Katowicach odbędzie się koncert z cyklu „Zakopower XX Miuosh”. Wydarzenie stanowi unikalne połączenie podhalańskiej tradycji muzycznej z hip-hopową ekspresją i symfonicznymi aranżacjami.

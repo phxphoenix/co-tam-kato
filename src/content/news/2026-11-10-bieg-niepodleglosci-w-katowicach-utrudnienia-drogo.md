@@ -10,7 +10,7 @@ location: "Katowice (trasa biegu)"
 isAlert: true
 sourceUrl: "https://www.wkatowicach.eu/informacje/w-drodze/Bieg-Niepodleglosci-w-Katowicach-11-listopada-utrudnienia-na-drogach-i-zmiany-w-komunikacji/idn:13668"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W środę, 11 listopada 2026 roku, w Katowicach odbędzie się Bieg Niepodległości im. Dziewięciu z „Wujka”. W związku z organizacją imprezy kierowcy oraz pasażerowie komunikacji miejskiej muszą przygotować się na utrudnienia w godzinach od 9:30 do 12:00.

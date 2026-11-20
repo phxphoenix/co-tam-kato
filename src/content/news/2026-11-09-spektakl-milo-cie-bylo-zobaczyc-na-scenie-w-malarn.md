@@ -10,7 +10,7 @@ location: "Teatr Śląski – Scena w Malarni"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/milo-cie-bylo-zobaczyc/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Śląski w Katowicach przygotował serię pokazów spektaklu „Miło cię było zobaczyć”, który odbędzie się na Scenie w Malarni. Najbliższy termin zaplanowano na 20 listopada 2026 roku na godzinę 19:00.

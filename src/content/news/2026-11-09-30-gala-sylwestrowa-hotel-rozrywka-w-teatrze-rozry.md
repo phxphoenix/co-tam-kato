@@ -10,7 +10,7 @@ location: "Teatr Rozrywki, Duża Scena"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/938.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W sylwestrowy wieczór, 31 grudnia 2026 roku o godzinie 20:00, na Dużej Scenie Teatru Rozrywki w Chorzowie odbędzie się jubileuszowa, 30. Gala Sylwestrowa zatytułowana „Hotel: Rozrywka!”.

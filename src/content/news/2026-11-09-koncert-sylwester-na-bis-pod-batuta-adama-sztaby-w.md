@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/sylwester-na-bis-nospr-sztaba"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 2 stycznia 2027 roku o godzinie 18:00 w Sali koncertowej NOSPR w Katowicach odbędzie się widowiskowy koncert „Sylwester na bis”. Orkiestrę NOSPR poprowadzi ceniony aranżer i dyrygent Adam Sztaba.

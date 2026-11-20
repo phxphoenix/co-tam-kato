@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/kuba-badach-jazzy-christmas-5"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowicka NOSPR zaprasza na wyjątkowy przedświąteczny koncert, podczas którego na scenie wystąpi Kuba Badach z nastrojowym programem „Jazzy Christmas”. Wydarzenie odbędzie się 21 grudnia 2026 roku o godzinie 17:30 w Sali koncertowej.

@@ -10,7 +10,7 @@ location: "Teatr Śląski, Duża Scena"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/boska/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Na Dużej Scenie Teatru Śląskiego im. St. Wyspiańskiego w Katowicach odbędą się pokazy popularnej komedii „Boska!”. Najbliższy spektakl zaplanowano na czwartek, 19 listopada 2026 roku o godzinie 18:00.
