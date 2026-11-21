@@ -10,7 +10,7 @@ location: "Centrum Kultury Studenckiej „Mrowisko”, Gliwice"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/nauka/przed-nami-nasa-space-apps-challenge-gliwice-25-godzinny-kosmiczny-hackathon"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W weekend 14-15 listopada Gliwice staną się centrum innowacji kosmicznych podczas NASA Space Apps Challenge. Uczestnicy będą rozwiązywać realne wyzwania naukowe przy użyciu otwartych danych największych agencji kosmicznych.

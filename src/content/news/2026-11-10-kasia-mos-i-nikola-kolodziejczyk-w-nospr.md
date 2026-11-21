@@ -10,7 +10,7 @@ location: "NOSPR, Sala Koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/koncert-koledowy-proensamble-kolodziejczyk-mos"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 6 stycznia 2027 roku w Sali Koncertowej NOSPR wystąpią Kasia Moś, Nikola Kołodziejczyk oraz ProEnsemble. Program „All that Christmas” to propozycja na muzyczne zamknięcie okresu świątecznego.

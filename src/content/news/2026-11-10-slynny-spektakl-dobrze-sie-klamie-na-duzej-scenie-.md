@@ -10,7 +10,7 @@ location: "Teatr Rozrywki w Chorzowie, Duża Scena"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/653.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W poniedziałek, 14 grudnia 2026 roku, na Dużej Scenie Teatru Rozrywki w Chorzowie pokazany zostanie spektakl „DOBRZE SIĘ KŁAMIE”. Zaplanowano dwa seanse: o godzinie 17:00 oraz 19:30.

@@ -10,7 +10,7 @@ location: "NOSPR, Sala Koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/koncert-koledowy-camerata-silesia-2"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 27 grudnia w Sali Koncertowej NOSPR odbędzie się koncert kolędowy zespołu Camerata Silesia. To jedna z ostatnich okazji w sezonie, by usłyszeć polską muzykę chóralną w mistrzowskiej interpretacji.

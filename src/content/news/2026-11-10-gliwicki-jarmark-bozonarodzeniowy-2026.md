@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "3-15 lat"
 sourceUrl: "http://gliwice.eu/aktualnosci/dzieje-sie/gliwicki-jarmark-bozonarodzeniowy-rozpoczynamy-odliczanie"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Gliwicki Jarmark Bożonarodzeniowy rozpocznie się 28 listopada i potrwa do 20 grudnia. Na mieszkańców czeka bogaty program pełen muzycznych niespodzianek, bajkowych spotkań oraz świątecznych kramów z regionalnymi przysmakami.

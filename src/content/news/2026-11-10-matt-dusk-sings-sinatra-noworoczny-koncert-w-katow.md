@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/matt-dusk-sings-sinatra-a-celebration-of-the-new-year-katowi"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 4 stycznia 2027 roku o godzinie 20:00 w Sali koncertowej NOSPR w Katowicach odbędzie się wyjątkowe widowisko muzyczne „Matt Dusk Sings Sinatra: A celebration of the New Year”. Kanadyjski wokalista zaprezentuje najsłynniejsze i najbardziej poruszające utwory z repertuaru legendy amerykańskiej sceny – Franka Sinatry.

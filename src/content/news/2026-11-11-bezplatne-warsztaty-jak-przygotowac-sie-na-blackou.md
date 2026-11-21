@@ -10,7 +10,7 @@ location: "Katowice"
 isAlert: false
 sourceUrl: "https://www.wkatowicach.eu/informacje/w-katowicach/Jak-przygotowac-sie-na-blackout-Bezplatne-warsztaty-dla-mieszkancow-Katowic/idn:13679"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Jak zachować się w przypadku przedłużających się przerw w dostawie energii elektrycznej? Mieszkańcy Katowic będą mogli zdobyć praktyczną wiedzę na ten temat podczas bezpłatnych warsztatów wolontariacko-odpornościowych organizowanych w sobotę, 14 listopada 2026 roku.

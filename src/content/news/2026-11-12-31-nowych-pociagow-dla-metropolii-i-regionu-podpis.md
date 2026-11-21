@@ -10,7 +10,7 @@ location: "Górnośląsko-Zagłębiowska Metropolia"
 isAlert: false
 sourceUrl: "https://metropoliagzm.pl/2026/11/10/nowe-pociagi-dla-metropolii-i-regionu-umowy-o-dofinansowanie-podpisane/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Górnośląsko-Zagłębiowska Metropolia oraz Województwo Śląskie podpisały w Centrum Unijnych Projektów Transportowych trzy umowy na dofinansowanie zakupu nowoczesnego taboru kolejowego. Projekt jest realizowany ze środków unijnego programu FEnIKS.
