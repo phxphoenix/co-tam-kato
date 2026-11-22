@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/hard-christmas-rave-holy-priest,4164.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W piątek, 25 grudnia 2026 roku, w katowickim Spodku odbędzie się wydarzenie muzyczne Hard Christmas Rave, którego główną gwiazdą będzie Holy Priest.

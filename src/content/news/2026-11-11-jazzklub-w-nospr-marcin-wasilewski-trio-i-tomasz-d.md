@@ -10,7 +10,7 @@ location: "NOSPR, Sala kameralna"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/jazzklub-marcin-wasilewski-trio-tomasz-dabrowski"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W ramach cyklu JazzKLUB już 12 stycznia 2027 roku o godzinie 19:30 w Sali kameralnej katowickiej NOSPR zaprezentuje się Marcin Wasilewski Trio. Zespołowi na scenie towarzyszyć będzie trębacz Tomasz Dąbrowski.

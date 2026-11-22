@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala kameralna"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/kameralisci-nospr-13"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W czwartek, 7 stycznia 2027 roku o godzinie 19:30, w Sali kameralnej katowickiej NOSPR odbędzie się koncert z cyklu Kameraliści NOSPR zatytułowany „Brahmsowskie miłości”.
