@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "6-9 lat"
 sourceUrl: "https://muzeumslaskie.pl/warsztaty-spotkania-i-wydarzenia-cykliczne/#elementor-tab-title-8823"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Muzeum Śląskie w Katowicach zaprasza najmłodszych wraz z opiekunami na kolejne spotkanie z popularnego cyklu rodzinnego „Sztuka na start”. Najbliższe warsztaty odbędą się w sobotę, 14 listopada, o godz. 11:00.

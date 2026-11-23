@@ -10,7 +10,7 @@ location: "Gliwice (ul. Rybnicka - ul. Bojkowska)"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/gliwice-buduja/gliwice-przygotowuja-sie-do-budowy-ostatniego-fragmentu-obwodnicy"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Gliwice wkraczają w kluczowy etap realizacji miejskiego ringu drogowego. Nowy, około 1,7-kilometrowy odcinek obwodnicy połączy ul. Rybnicką z ul. Bojkowską, co pozwoli kierowcom na sprawne ominięcie ścisłego centrum miasta.

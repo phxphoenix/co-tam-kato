@@ -10,7 +10,7 @@ location: "NOSPR Katowice, Sala koncertowa"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/felix-mendelssohn-bartholdy-oratorium-eliasz-final-viii-metr"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 14 listopada 2026 roku o godzinie 18:30 w Sali koncertowej katowickiej NOSPR odbędzie się wyjątkowe wydarzenie będące wielkim finałem VIII Metropolitalnego Festiwalu Chóralnego. Na scenie zabrzmi potężne i niezwykle emocjonalne oratorium „Eliasz” skomponowane przez Felixa Mendelssohna-Bartholdyego.

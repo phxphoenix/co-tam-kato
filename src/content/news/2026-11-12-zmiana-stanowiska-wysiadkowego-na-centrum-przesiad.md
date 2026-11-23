@@ -10,7 +10,7 @@ location: "Centrum Przesiadkowe w Gliwicach"
 isAlert: true
 sourceUrl: "http://gliwice.eu/aktualnosci/miasto/uwaga-pasazerowie-czasowa-zmiana-lokalizacji-stanowiska-do-wysiadania-na-centrum"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Zarząd Transportu Metropolitalnego informuje o czasowych utrudnieniach na Centrum Przesiadkowym w Gliwicach. Przedsiębiorstwo Remontów Ulic i Mostów rozpoczęło naprawę nawierzchni zatok autobusowych przy wjeździe od strony ul. Składowej. Prace potrwają od 12 do 27 listopada.

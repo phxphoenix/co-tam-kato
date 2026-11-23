@@ -10,7 +10,7 @@ location: "Kino Kosmos Katowice (Sala Solaris)"
 isAlert: false
 sourceUrl: "https://kosmos.katowice.pl/repertuar/cool-film-fest-wystawa-seanse-i-spotkanie-z-rezyserem-piotrem-zukowskim/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Miłośnicy kina niezależnego i wartościowych spotkań artystycznych powinni zarezerwować czas w piątek, 13 listopada 2026 roku. W katowickim Kinie Kosmos odbędzie się wówczas COOL FILM FEST – specjalne wydarzenie w ramach cyklu festiwalowego.

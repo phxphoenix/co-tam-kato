@@ -10,7 +10,7 @@ location: "Stadion Miejski w Katowicach"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/stadion-miejski-w-katowicach-bedzie-nosil-imie-jana-furtoka"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Niedziela, 22 listopada, będzie wyjątkowym dniem dla społeczności piłkarskiej w Katowicach. Podczas ekstraklasowego starcia GKS-u Katowice z Lechem Poznań nastąpi oficjalne nadanie Stadionowi Miejskiemu przy ul. Nowej Bukowej imienia Jana Furtoka.
