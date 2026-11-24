@@ -10,7 +10,7 @@ location: "Hala MOSiR Katowice-Szopienice"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/wielkie-emocje-w-szopienicach-miners-katowice-podejma-niepokonanego-lidera"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W sobotę 14 listopada o godzinie 18:00 odbędzie się hitowy mecz koszykówki. Miners Katowice zmierzą się z Zagłębiem Sosnowiec, a stawką spotkania jest pierwsze miejsce w tabeli grupy C. Na kibiców w hali MOSiR czekają nie tylko sportowe emocje, ale także dodatkowe atrakcje.

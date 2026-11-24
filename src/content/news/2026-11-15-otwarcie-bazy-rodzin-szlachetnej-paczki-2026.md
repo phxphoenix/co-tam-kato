@@ -10,7 +10,7 @@ location: "Katowice"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/szlachetna-paczka-2026-baza-rodzin-otworzy-sie-14-listopada"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W sobotę, 14 listopada 2026 roku oficjalnie ruszyła internetowa Baza Rodzin Szlachetnej Paczki. To kluczowy moment tegorocznej edycji ogólnopolskiego programu pomocy społecznej.

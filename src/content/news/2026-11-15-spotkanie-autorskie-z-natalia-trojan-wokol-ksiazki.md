@@ -10,7 +10,7 @@ location: "Miejska Biblioteka Publiczna w Katowicach"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/miolak-opowiada-o-przemilczanej-historii-tychow-natalia-trojan-spotka-sie-z-czytelnikami-w-katowicach"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Miejska Biblioteka Publiczna w Katowicach oraz Wydawnictwo Biblioteki Śląskiej zapraszają na spotkanie z Natalią Trojan, autorką debiutanckiego reportażu „Miołak”. Książka przedstawia mało znaną historię wywłaszczeń ziem, które poprzedziły budowę Nowych Tychów.

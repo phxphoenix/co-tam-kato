@@ -10,7 +10,7 @@ location: "Bytom"
 isAlert: true
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/dron-nad-kominami-w-bytomiu-ruszyly-kontrole-palenisk-w-sezonie-grzewczym"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Wraz z nadejściem sezonu grzewczego w Bytomiu ruszyły regularne kontrole przydomowych palenisk i kotłowni. Działania prowadzi bytomska Straż Miejska we współpracy z mobilnym laboratorium pomiarowym wykorzystującym specjalistycznego drona.

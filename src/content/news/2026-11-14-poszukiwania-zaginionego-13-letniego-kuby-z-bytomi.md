@@ -10,7 +10,7 @@ location: "Bytom"
 isAlert: true
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/bytom-policja-szuka-13-letniego-kuby-od-1-listopada-nie-ma-z-nim-kontaktu"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Funkcjonariusze Wydziału Kryminalnego Komendy Miejskiej Policji w Bytomiu prowadzą poszukiwania 13-letniego Kuby Myszkowskiego. Chłopiec po raz ostatni był widziany 1 listopada 2026 roku około godziny 15:00, kiedy samowolnie opuścił placówkę opiekuńczo-wychowawczą na terenie Bytomia. Od tego momentu nie nawiązał kontaktu z opiekunami ani bliskimi.

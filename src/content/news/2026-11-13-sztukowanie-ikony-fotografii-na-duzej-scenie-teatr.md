@@ -10,7 +10,7 @@ location: "Teatr Śląski – Duża Scena, Katowice"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/sztukowanie-sila-jednego-kadru-ikony-fotografii/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W poniedziałek, 16 listopada 2026 roku o godzinie 10:00 na Dużej Scenie Teatru Śląskiego w Katowicach odbędzie się spotkanie z cyklu SZTUKOWANIE pod hasłem „Siła jednego kadru. Ikony fotografii”.

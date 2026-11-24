@@ -10,7 +10,7 @@ location: "Centrum Integracji Międzypokoleniowej w Chorzowie"
 isAlert: false
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/ostatnia-taka-potancowka-w-tym-roku-parkiet-znow-polaczy-pokolenia"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Centrum Integracji Międzypokoleniowej w Chorzowie organizuje ostatnią w tym roku kalendarzowym potańcówkę międzypokoleniową. Spotkanie zaplanowano na środę, 18 listopada, na godzinę 17:00 przy ul. Dąbrowskiego 7.

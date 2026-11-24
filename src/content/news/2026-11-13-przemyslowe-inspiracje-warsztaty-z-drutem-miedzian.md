@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "10-15 lat"
 sourceUrl: "https://muzeumslaskie.pl/warsztaty-spotkania-i-wydarzenia-cykliczne/#elementor-tab-title-8824"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Muzeum Śląskie w Katowicach rusza z nowym cyklem zajęć edukacyjnych „Przemysłowe inspiracje”, skierowanym do dzieci i młodzieży w wieku od 10 do 15 lat. Najблиższy warsztat pod hasłem „Zaplątał mi się drut miedziany” odbędzie się w sobotę, 21 listopada 2026 roku o godzinie 11:00.

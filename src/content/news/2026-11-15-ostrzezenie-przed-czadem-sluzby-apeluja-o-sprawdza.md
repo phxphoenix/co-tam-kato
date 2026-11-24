@@ -10,7 +10,7 @@ location: "Aglomeracja katowicka"
 isAlert: true
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/uwaga-na-czad-podczas-sezonu-grzewczego-najwazniejsze-zasady-bezpieczenstwa"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Wraz ze spadkiem temperatur w całym regionie wzrasta ryzyko zatruć tlenkiem węgla oraz pożarów w budynkach mieszkalnych. Policja i Straż Pożarna przypominają o podstawowych zasadach bezpieczeństwa w sezonie grzewczym.

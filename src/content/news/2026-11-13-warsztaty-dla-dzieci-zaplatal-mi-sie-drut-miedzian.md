@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "10-15 lat"
 sourceUrl: "https://muzeumslaskie.pl/warsztaty-spotkania-i-wydarzenia-cykliczne/#elementor-tab-title-8824"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Muzeum Śląskie w Katowicach uruchamia nowość w swoim programie edukacyjnym dla dzieci i młodzieży. Warsztaty pod tytułem „Zaplątał mi się drut miedziany” odbędą się w sobotę, 21 listopada 2026 roku o godzinie 11:00 w siedzibie muzeum przy ul. T. Dobrowolskiego 1.

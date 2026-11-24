@@ -10,7 +10,7 @@ location: "Stadion Śląski w Chorzowie"
 isAlert: false
 sourceUrl: "https://superautostadionslaski.pl/wydarzenie/aktywny-slaski-1"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Na Stadionie Śląskim w Chorzowie zaplanowano kolejną odsłonę inicjatywy „Aktywny Śląski”. Spotkanie odbędzie się w poniedziałek, 16 listopada 2026 roku od godziny 18:00.

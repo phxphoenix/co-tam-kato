@@ -10,7 +10,7 @@ location: "NOSPR Katowice"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz/nospr-3"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W piątek, 22 stycznia 2027 roku o godzinie 19:00, w NOSPR odbędzie się koncert w ramach prestiżowego Festiwalu Witolda Lutosławskiego Łańcuch.

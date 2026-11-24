@@ -10,7 +10,7 @@ location: "Teatr Rozrywki - Mała Scena, Chorzów"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/213.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Na Małej Scenie Teatru Rozrywki w Chorzowie zaprezentowany zostanie spektakl kameralny „Czarno na Białym”. Na grudniowe pokazy pozostały już ostatnie wolne miejsca w sprzedaży.

@@ -10,7 +10,7 @@ location: "Nowa Kolonia Robotnicza, Bytom-Bobrek"
 isAlert: false
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/w-bobrku-powstanie-centrum-aktywnosci-spolecznej-fundacji-leny-grochowskiej"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W Bytomiu-Bobrku rozpoczyna się nowy etap rewitalizacji społecznej. Miasto przekazało z 99-procentową bonifikatą zabytkowy budynek przy ul. Jochymczyka 4a na rzecz Fundacji Leny Grochowskiej.

@@ -10,7 +10,7 @@ location: "Gliwice"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/dzieje-sie/gliwice-gotowe-na-zime-1"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Służby odpowiedzialne za zimowe utrzymanie dróg w Gliwicach są gotowe do podjęcia akcji odśnieżania i posypywania nawierzchni. Prace obejmą ponad 4 mln m² powierzchni, w tym kluczowe arterie miejskie, ciągi piesze, przystanki komunikacji miejskiej oraz Strefę Płatnego Parkowania.

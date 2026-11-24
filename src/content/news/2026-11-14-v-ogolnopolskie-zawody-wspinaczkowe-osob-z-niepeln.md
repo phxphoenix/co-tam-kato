@@ -10,7 +10,7 @@ location: "PreZero Arena Gliwice, Chwyciarnia"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/niepelnosprawnosc/wspinacze-z-niepelnosprawnoscia-po-raz-piaty-upamietnia-ryska-pilcha"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już 18 listopada Gliwice staną się areną niezwykłych zmagań. W Chwyciarni PreZero Areny Gliwice odbędą się V Ogólnopolskie Zawody Wspinaczkowe Osób z Niepełną Sprawnością – Memoriał Ryśka Pilcha.

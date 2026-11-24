@@ -10,7 +10,7 @@ location: "Międzynarodowe Centrum Kongresowe w Katowicach"
 isAlert: false
 sourceUrl: "https://www.wkatowicach.eu/informacje/kultura-i-rozrywka/10-Slaski-Festiwal-Nauki-Katowice-Jubileuszowa-edycja-juz-w-grudniu-pod-haslem-Inteligencje-Zdjecia/idn:13698"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W dniach od 5 do 7 grudnia 2026 roku Międzynarodowe Centrum Kongresowe w Katowicach powita odwiedzających podczas 10. edycji Śląskiego Festiwalu Nauki. Tegoroczny jubileusz upłynie pod hasłem „Inteligencje”, nawiązującym zarówno do możliwości ludzkiego umysłu, jak i rozwoju nowych technologii.
