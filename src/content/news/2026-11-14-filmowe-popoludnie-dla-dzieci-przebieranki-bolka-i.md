@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "3-9 lat"
 sourceUrl: "https://kosmos.katowice.pl/repertuar/filmowe-popoludnie-dla-dzieci-przebieranki-bolka-i-lolka/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W niedzielę 15 listopada o godzinie 14:00 zapraszamy rodziny do kina Kosmos na „Filmowe popołudnie dla dzieci”. Tym razem na dużym ekranie zobaczymy kultowe przygody Bolka i Lolka.

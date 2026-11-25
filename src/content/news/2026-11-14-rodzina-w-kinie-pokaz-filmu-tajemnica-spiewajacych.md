@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "dla rodzin z dziećmi"
 sourceUrl: "https://kosmos.katowice.pl/repertuar/rodzina-w-kinie-tajemnica-spiewajacych-ptakow/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Kino Kosmos w Katowicach (ul. Sokolska 66) zaprasza najmłodszych widzów wraz z rodzicami na kolejną odsłonę popularnego cyklu „RODZINA W KINIE”. W sobotę, 14 listopada 2026 roku o godzinie 13:00 w sali Solaris zaprezentowany zostanie film animowany „Tajemnica śpiewających ptaków” w reżyserii Antoine'a Lanciaux.

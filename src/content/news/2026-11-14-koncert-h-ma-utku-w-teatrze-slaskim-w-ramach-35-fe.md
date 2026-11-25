@@ -10,7 +10,7 @@ location: "Teatr Śląski, Scena w Malarni"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/huma-utku-xxxv-festiwal-ars-cameralis/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W niedzielę, 15 listopada 2026 roku o godzinie 19:00 na Scenie w Malarni Teatru Śląskiego im. Stanisława Wyspiańskiego w Katowicach odbędzie się wyjątkowy koncert w ramach XXXV Festiwalu Ars Cameralis. Na katowickiej scenie wystąpi stambułska kompozytorka i artystka dźwiękowa Hüma Utku.

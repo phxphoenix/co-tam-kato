@@ -10,7 +10,7 @@ location: "Przychodnie Brackie w Katowicach"
 isAlert: false
 sourceUrl: "https://www.wkatowicach.eu/miasto/giszowiec/Darmowe-badanie-poziomu-cukru-w-Katowicach-Bez-skierowania-juz-16-listopada/idn:13695"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Z okazji Światowego Dnia Cukrzycy w poniedziałek, 16 listopada 2026 roku w Katowicach zorganizowana zostanie prozdrowotna akcja profilaktyczna. Mieszkańcy miasta będą mogli bezpłatnie i bez konieczności posiadania skierowania lekarskiego zbadać poziom glukozy we krwi.

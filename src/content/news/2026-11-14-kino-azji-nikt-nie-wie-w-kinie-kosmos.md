@@ -10,7 +10,7 @@ location: "Kino Kosmos, sala Solaris"
 isAlert: false
 sourceUrl: "https://kosmos.katowice.pl/repertuar/nikt-nie-wie-kino-azji/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Zapraszamy na cykl Kino Azji w katowickim Kosmosie. 15 listopada o godzinie 17:30 zostanie wyświetlony poruszający dramat Hirokazu Koreedy pt. „Nikt nie wie”.
