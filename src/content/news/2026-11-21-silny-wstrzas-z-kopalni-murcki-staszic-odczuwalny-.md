@@ -10,7 +10,8 @@ location: "Kopalnia Murcki-Staszic, Katowice"
 isAlert: true
 sourceUrl: "https://silesion.pl/wstrzas-w-katowicach-kopalnia-murcki-staszic-21-listopada/?utm_source=rss&utm_medium=rss&utm_campaign=wstrzas-w-katowicach-kopalnia-murcki-staszic-21-listopada"
 aiGenerated: true
-archived: false
+archived: true
+manualOverride: false
 ---
 
 W sobotę, 21 listopada, o godzinie 5:34 rano w wielu miastach aglomeracji katowickiej odczuwalny był silny wstrząs podziemny. Mieszkańcy zgłaszali drgania odczuwalne m.in. w Katowicach, Sosnowcu, Chorzowie, Mysłowicach i Siemianowicach Śląskich.
