@@ -9,6 +9,9 @@ import {
   addSource,
   updateSource,
   updatePaginationSettings,
+  getBalanceSettings,
+  validateBalanceSettingsInput,
+  updateBalanceSettings,
   serializeSourcesMarkdown,
 } from '../src/server/sources-service.ts';
 import {
@@ -99,6 +102,49 @@ try {
   assert.ok(currentMd.includes('## Ustawienia równowagi treści (Agent AI)'));
   assert.deepEqual(parseBalanceSettings(currentMd), DEFAULT_BALANCE_SETTINGS);
   console.log('✓ Preamble, AI instructions and balance settings section remain 100% intact');
+
+  // 7. AI worker & balance settings validation and update roundtrip
+  const initialBalance = getBalanceSettings();
+  assert.equal(initialBalance.maxArticlesPerRun, 4);
+  assert.equal(initialBalance.rssPoolShare, 0.50);
+  assert.equal(initialBalance.maxPromptItems, 60);
+
+  assert.equal(validateBalanceSettingsInput({ maxArticlesPerRun: 0 }).valid, false);
+  assert.equal(validateBalanceSettingsInput({ maxArticlesPerRun: 13 }).valid, false);
+  assert.equal(validateBalanceSettingsInput({ rssPoolShare: 0.05 }).valid, false);
+  assert.equal(validateBalanceSettingsInput({ rssPoolShare: 0.95 }).valid, false);
+  assert.equal(
+    validateBalanceSettingsInput({ maxArticlesPerRun: 8, maxCandidates: 5 }).valid,
+    false,
+    'maxCandidates < maxArticlesPerRun musi zostać odrzucone'
+  );
+  assert.equal(
+    validateBalanceSettingsInput({ ticketedMinPerDay: 4, ticketedMaxPerDay: 2 }).valid,
+    false
+  );
+  assert.equal(
+    validateBalanceSettingsInput({ nosprMaxPerRun: 3, ticketedMaxPerRun: 2 }).valid,
+    false
+  );
+
+  const balanceUpdateRes = updateBalanceSettings({
+    maxArticlesPerRun: 6,
+    maxCandidates: 9,
+    ticketedMaxShare3d: 0.30,
+    rssPoolShare: 0.65,
+    maxPromptItems: 75,
+    weeklySummaryEnabled: false,
+  });
+  assert.ok(balanceUpdateRes.success, `updateBalanceSettings failed: ${balanceUpdateRes.error}`);
+  const reloadedBalance = getBalanceSettings();
+  assert.equal(reloadedBalance.maxArticlesPerRun, 6);
+  assert.equal(reloadedBalance.maxCandidates, 9);
+  assert.equal(reloadedBalance.ticketedMaxShare3d, 0.30);
+  assert.equal(reloadedBalance.rssPoolShare, 0.65);
+  assert.equal(reloadedBalance.maxPromptItems, 75);
+  assert.equal(reloadedBalance.weeklySummaryEnabled, false);
+  assert.equal(getAllSources().length, 31, 'Sources table must remain intact after updateBalanceSettings');
+  console.log('✓ Balance settings validation, cross-checks and updateBalanceSettings roundtrip passed');
 
   console.log('All sources-service tests passed successfully!');
 } finally {

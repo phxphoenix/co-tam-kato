@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { requireAdminApiAuth } from './admin-auth.ts';
 import { getArchiveSettings, updateArchiveSettings, validateArchivePeriod } from './archive-settings-service';
 
 export const prerender = false;
@@ -44,7 +45,10 @@ async function commitSettingsToGitHub(token: string, content: string) {
   return await putRes.json();
 }
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ request }) => {
+  const unauthorized = await requireAdminApiAuth(request);
+  if (unauthorized) return unauthorized;
+
   try {
     const settings = getArchiveSettings();
     return new Response(JSON.stringify({ success: true, ...settings }), {
@@ -60,6 +64,9 @@ export const GET: APIRoute = async () => {
 };
 
 export const POST: APIRoute = async ({ request }) => {
+  const unauthorized = await requireAdminApiAuth(request);
+  if (unauthorized) return unauthorized;
+
   try {
     const contentType = request.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {

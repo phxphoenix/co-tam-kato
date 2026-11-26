@@ -3157,13 +3157,21 @@ export function interleaveWebItems(items, options = {}) {
 export function selectPromptItems(newsItems, existingArticles = [], options = {}) {
   const {
     genericUrls = getDefaultGenericSourceUrls(),
-    maxItems = MAX_PROMPT_ITEMS,
     budget = null,
     settings = DEFAULT_BALANCE_SETTINGS,
     now = new Date(),
     poolMaxItemsPerTicketedSource,
     cycleCooldownDays,
   } = options;
+
+  const effectiveSettings = validateBalanceSettings({
+    ...DEFAULT_BALANCE_SETTINGS,
+    ...(settings || {}),
+  });
+  const maxItems =
+    typeof options.maxItems === 'number'
+      ? options.maxItems
+      : effectiveSettings.maxPromptItems ?? MAX_PROMPT_ITEMS;
 
   const blockedSpecificUrls = new Set();
   for (const article of existingArticles) {
@@ -3202,15 +3210,16 @@ export function selectPromptItems(newsItems, existingArticles = [], options = {}
   const rssItems = candidates.filter((item) => item.sourceType === 'RSS');
   const webItems = candidates.filter((item) => item.sourceType !== 'RSS');
 
-  const targetRssQuota = Math.floor(maxItems / 2);
-  const targetWebQuota = maxItems - targetRssQuota;
+  const rssShare = effectiveSettings.rssPoolShare ?? 0.5;
+  const targetRssQuota = Math.round(maxItems * rssShare);
+  const targetWebQuota = Math.max(0, maxItems - targetRssQuota);
 
   const rssInterleaved = interleaveRssItems(rssItems);
   const webInterleaved = interleaveWebItems(webItems, {
     targetWebQuota,
     existingArticles,
     budget,
-    settings,
+    settings: effectiveSettings,
     now,
     poolMaxItemsPerTicketedSource,
     cycleCooldownDays,
@@ -3311,7 +3320,6 @@ export function buildDigestPrompt(newsItemsOrOptions = [], existingArticlesOrOpt
   const {
     now = new Date(),
     genericUrls = getDefaultGenericSourceUrls(),
-    maxPromptItems = MAX_PROMPT_ITEMS,
     settings = DEFAULT_BALANCE_SETTINGS,
   } = options;
 
@@ -3320,14 +3328,18 @@ export function buildDigestPrompt(newsItemsOrOptions = [], existingArticlesOrOpt
     ...(settings || {}),
   });
 
+  const maxPromptItems =
+    typeof options.maxPromptItems === 'number'
+      ? options.maxPromptItems
+      : effectiveSettings.maxPromptItems ?? MAX_PROMPT_ITEMS;
   const maxCandidates =
     typeof options.maxCandidates === 'number'
       ? options.maxCandidates
-      : effectiveSettings.maxCandidates || MAX_CANDIDATES;
+      : effectiveSettings.maxCandidates ?? MAX_CANDIDATES;
   const maxArticles =
     typeof options.maxArticles === 'number'
       ? options.maxArticles
-      : MAX_ARTICLES;
+      : effectiveSettings.maxArticlesPerRun ?? MAX_ARTICLES;
 
   const budget =
     options.budget || computeBalanceBudget(existingArticles, effectiveSettings, now);
@@ -3402,8 +3414,9 @@ export async function analyzeWithGemini(newsItems, existingArticles, apiKey, opt
   const {
     now = new Date(),
     genericUrls = getDefaultGenericSourceUrls(),
-    maxPromptItems = MAX_PROMPT_ITEMS,
-    maxCandidates = MAX_CANDIDATES,
+    maxPromptItems,
+    maxCandidates,
+    maxArticles,
     budget,
     settings,
     ...geminiOptions
@@ -3414,6 +3427,7 @@ export async function analyzeWithGemini(newsItems, existingArticles, apiKey, opt
     genericUrls,
     maxPromptItems,
     maxCandidates,
+    maxArticles,
     budget,
     settings,
   });
@@ -4107,6 +4121,11 @@ async function main() {
   const budget = computeBalanceBudget(existingArticles, balanceSettings, now);
 
   console.log(
+    `⚙️ Konfiguracja Workera AI: maxArticlesPerRun=${balanceSettings.maxArticlesPerRun}, ` +
+    `maxCandidates=${balanceSettings.maxCandidates}, ticketedMaxShare3d=${balanceSettings.ticketedMaxShare3d}, ` +
+    `rssPoolShare=${balanceSettings.rssPoolShare}, maxPromptItems=${balanceSettings.maxPromptItems}`
+  );
+  console.log(
     `⚖️ Budżet równowagi: ticketedAllowed=${budget.ticketedAllowed}, nosprAllowed=${budget.nosprAllowed}, ` +
     `teatr-slaski=${budget.perVenueAllowed['teatr-slaski']}, teatr-rozrywki=${budget.perVenueAllowed['teatr-rozrywki']}, ` +
     `spodek=${budget.perVenueAllowed.spodek}, floorRequired=${budget.floorRequired}, urgentBonusAvailable=${budget.urgentBonusAvailable}`
@@ -4115,6 +4134,7 @@ async function main() {
   if (isDryRun || !apiKey) {
     const selectedPrompt = selectPromptItems(sourceItems, existingArticles, {
       now,
+      maxItems: balanceSettings.maxPromptItems,
       budget,
       settings: balanceSettings,
     });
@@ -4148,10 +4168,13 @@ async function main() {
   const genericUrls = getDefaultGenericSourceUrls();
   const deletedRecords = loadDeletedRecords(existingArticles);
   const maxCandidates = balanceSettings.maxCandidates || MAX_CANDIDATES;
+  const maxArticles = balanceSettings.maxArticlesPerRun || MAX_ARTICLES;
   let proposed = await analyzeWithGemini(sourceItems, existingArticles, apiKey, {
     now,
     genericUrls,
+    maxPromptItems: balanceSettings.maxPromptItems,
     maxCandidates,
+    maxArticles,
     budget,
     settings: balanceSettings,
   });
@@ -4184,6 +4207,7 @@ async function main() {
   const { accepted: acceptedArticles } = selectBalancedArticles(dedupedCandidates, budget, balanceSettings, {
     sourceItems,
     now,
+    maxArticles,
   });
 
   fs.mkdirSync(NEWS_DIR, { recursive: true });

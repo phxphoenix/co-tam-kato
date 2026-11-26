@@ -19,6 +19,8 @@ import {
   isUrgentCandidate,
   computeBalanceBudget,
   selectBalancedArticles,
+  selectPromptItems,
+  buildDigestPrompt,
   formatBalanceSummary,
   loadNewsRecords,
 } from './daily-digest.mjs';
@@ -564,8 +566,78 @@ console.log('\n--- 5. Wybór artykułów (selectBalancedArticles) ---');
     'Brak dopychania: nie wolno przekraczać limitu ticketed nawet gdy zaakceptowano mniej niż 4 artykuły'
   );
   assert.deepEqual(resNoBackfill.accepted.map((a) => a.title), ['NOSPR #1', 'Other #1']);
+
+  // 5E. Niestandardowe maxArticlesPerRun (2 oraz 6) w selectBalancedArticles
+  const manyOtherCandidates = Array.from({ length: 7 }, (_, i) => ({
+    title: `Other limit test #${i + 1}`,
+    sourceUrl: `https://mojekatowice.pl/limit-${i + 1}`,
+    category: 'wydarzenia',
+  }));
+  const resMax2 = selectBalancedArticles(
+    manyOtherCandidates,
+    budgetOpen,
+    { ...DEFAULT_BALANCE_SETTINGS, maxArticlesPerRun: 2 }
+  );
+  assert.equal(resMax2.accepted.length, 2, 'maxArticlesPerRun=2 musi ograniczyć akceptację do 2 artykułów');
+
+  const resMax6 = selectBalancedArticles(
+    manyOtherCandidates,
+    budgetOpen,
+    { ...DEFAULT_BALANCE_SETTINGS, maxArticlesPerRun: 6 }
+  );
+  assert.equal(resMax6.accepted.length, 6, 'maxArticlesPerRun=6 musi pozwolić na publikację 6 artykułów');
+
+  // 5F. rssPoolShare oraz maxPromptItems w selectPromptItems i buildDigestPrompt
+  const rssPoolTestItems = [
+    ...Array.from({ length: 30 }, (_, i) => ({
+      title: `RSS #${i + 1}`,
+      link: `https://mojekatowice.pl/rss-${i + 1}`,
+      sourceId: '22',
+      sourceName: 'mojeKatowice.pl',
+      sourceType: 'RSS',
+      pubDate: new Date(Date.parse('2026-11-11T10:00:00Z') - i * 3600_000).toISOString(),
+    })),
+    ...Array.from({ length: 30 }, (_, i) => ({
+      title: `WEB #${i + 1}`,
+      link: `https://www.mckkatowice.pl/pl/wydarzenia/web-${i + 1}`,
+      sourceId: '6',
+      sourceName: 'MCK Katowice',
+      sourceType: 'WEB',
+    })),
+  ];
+  const customPool = selectPromptItems(rssPoolTestItems, [], {
+    now,
+    settings: {
+      ...DEFAULT_BALANCE_SETTINGS,
+      maxPromptItems: 40,
+      rssPoolShare: 0.70,
+    },
+  });
+  assert.equal(customPool.length, 40, 'maxPromptItems=40 musi ograniczyć pulę promptu do 40 pozycji');
+  assert.equal(
+    customPool.filter((i) => i.sourceType === 'RSS').length,
+    28,
+    'rssPoolShare=0.70 z 40 pozycji musi wybrać 28 pozycji RSS (70%)'
+  );
+  assert.equal(
+    customPool.filter((i) => i.sourceType !== 'RSS').length,
+    12,
+    'rssPoolShare=0.70 z 40 pozycji musi wybrać 12 pozycji WEB (30%)'
+  );
+
+  const customPrompt = buildDigestPrompt(rssPoolTestItems, [], {
+    now,
+    settings: {
+      ...DEFAULT_BALANCE_SETTINGS,
+      maxArticlesPerRun: 6,
+      maxCandidates: 9,
+      maxPromptItems: 40,
+    },
+  });
+  assert.ok(customPrompt.includes('System opublikuje maks. 6'));
+  assert.ok(customPrompt.includes('Zwróć do 9 kandydatów'));
 }
-console.log('✅ selectBalancedArticles poprawnie egzekwuje limity, minimum przez zamianę, bonus urgent i zakaz dopychania.');
+console.log('✅ selectBalancedArticles, rssPoolShare i maxPromptItems działają zgodnie z konfiguracją.');
 
 // ---------------------------------------------------------------------------
 // 6. REPLAY HISTORYCZNY (§9 pkt 2) z pliku scripts/fixtures/balance-replay.json

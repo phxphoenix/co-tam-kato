@@ -45,7 +45,320 @@ export const DEFAULT_PAGINATION_SETTINGS: PaginationSettings = {
   adminArchivePageSize: 25,
 };
 
+export interface BalanceSettings {
+  maxArticlesPerRun: number;
+  maxCandidates: number;
+  ticketedMaxShare3d: number;
+  rssPoolShare: number;
+  ticketedMaxPerRun: number;
+  ticketedMaxPerDay: number;
+  ticketedMinPerDay: number;
+  nosprMaxPerRun: number;
+  nosprMaxPerDay: number;
+  otherVenueMaxPerDay: number;
+  lastTicketsBonusPerDay: number;
+  poolMaxItemsPerTicketedSource: number;
+  maxPromptItems: number;
+  cycleCooldownDays: number;
+  weeklySummaryEnabled: boolean;
+  weeklySummaryHorizonDays: number;
+}
+
+export const DEFAULT_BALANCE_SETTINGS: BalanceSettings = {
+  maxArticlesPerRun: 4,
+  maxCandidates: 7,
+  ticketedMaxShare3d: 0.40,
+  rssPoolShare: 0.50,
+  ticketedMaxPerRun: 2,
+  ticketedMaxPerDay: 3,
+  ticketedMinPerDay: 1,
+  nosprMaxPerRun: 1,
+  nosprMaxPerDay: 2,
+  otherVenueMaxPerDay: 1,
+  lastTicketsBonusPerDay: 1,
+  poolMaxItemsPerTicketedSource: 5,
+  maxPromptItems: 60,
+  cycleCooldownDays: 7,
+  weeklySummaryEnabled: true,
+  weeklySummaryHorizonDays: 14,
+};
+
+const BALANCE_INTEGER_RULES: Array<{
+  key: keyof BalanceSettings;
+  label: string;
+  min: number;
+  max: number;
+}> = [
+  { key: 'maxArticlesPerRun', label: 'Liczba artykułów na przebieg (maxArticlesPerRun)', min: 1, max: 12 },
+  { key: 'maxCandidates', label: 'Liczba kandydatów z Gemini (maxCandidates)', min: 1, max: 25 },
+  { key: 'ticketedMaxPerRun', label: 'Limit biletowanych na przebieg (ticketedMaxPerRun)', min: 0, max: 12 },
+  { key: 'ticketedMaxPerDay', label: 'Dzienny limit biletowanych (ticketedMaxPerDay)', min: 0, max: 20 },
+  { key: 'ticketedMinPerDay', label: 'Dzienne minimum biletowanych (ticketedMinPerDay)', min: 0, max: 10 },
+  { key: 'nosprMaxPerRun', label: 'Limit NOSPR na przebieg (nosprMaxPerRun)', min: 0, max: 5 },
+  { key: 'nosprMaxPerDay', label: 'Dzienny limit NOSPR (nosprMaxPerDay)', min: 0, max: 10 },
+  { key: 'otherVenueMaxPerDay', label: 'Dzienny limit pozostałych scen (otherVenueMaxPerDay)', min: 0, max: 10 },
+  { key: 'lastTicketsBonusPerDay', label: 'Dzienny bonus „Ostatnie bilety” (lastTicketsBonusPerDay)', min: 0, max: 5 },
+  { key: 'poolMaxItemsPerTicketedSource', label: 'Limit pozycji z 1 źródła biletowanego (poolMaxItemsPerTicketedSource)', min: 1, max: 15 },
+  { key: 'maxPromptItems', label: 'Maks. pozycji w prompcie (maxPromptItems)', min: 20, max: 120 },
+  { key: 'cycleCooldownDays', label: 'Karencja cykli w dniach (cycleCooldownDays)', min: 0, max: 30 },
+  { key: 'weeklySummaryHorizonDays', label: 'Horyzont „Tygodnia w kulturze” w dniach (weeklySummaryHorizonDays)', min: 3, max: 30 },
+];
+
+const BALANCE_FLOAT_RULES: Array<{
+  key: 'ticketedMaxShare3d' | 'rssPoolShare';
+  label: string;
+  min: number;
+  max: number;
+}> = [
+  { key: 'ticketedMaxShare3d', label: 'Maks. udział biletowanych w 3 dni (ticketedMaxShare3d)', min: 0, max: 1 },
+  { key: 'rssPoolShare', label: 'Udział źródeł RSS w puli (rssPoolShare)', min: 0.1, max: 0.9 },
+];
+
 const SOURCES_FILE = path.resolve(process.cwd(), 'config', 'sources.md');
+
+/**
+ * Parses AI worker & balance settings from config/sources.md content or file path.
+ */
+export function parseBalanceSettings(contentOrPath?: string): BalanceSettings {
+  let content = contentOrPath;
+  if (!content) {
+    if (!fs.existsSync(SOURCES_FILE)) return { ...DEFAULT_BALANCE_SETTINGS };
+    content = fs.readFileSync(SOURCES_FILE, 'utf8');
+  } else if (!content.includes('\n') && fs.existsSync(content)) {
+    content = fs.readFileSync(content, 'utf8');
+  }
+
+  const result: BalanceSettings = { ...DEFAULT_BALANCE_SETTINGS };
+  if (!content || typeof content !== 'string') return result;
+
+  const raw: Record<string, string> = {};
+  for (const key of Object.keys(DEFAULT_BALANCE_SETTINGS)) {
+    const regex = new RegExp(`(?:^|\\r?\\n)\\s*(?:[-*]\\s*)?\`?${key}\`?\\s*[:=|]\\s*([^\\r\\n]+)`, 'i');
+    const match = content.match(regex);
+    if (match && match[1] !== undefined) {
+      raw[key] = match[1].trim();
+    }
+  }
+
+  for (const rule of BALANCE_INTEGER_RULES) {
+    const valStr = raw[rule.key];
+    if (valStr !== undefined && /^-?\d+$/.test(valStr)) {
+      const parsed = Number(valStr);
+      if (Number.isInteger(parsed) && parsed >= rule.min && parsed <= rule.max) {
+        (result as any)[rule.key] = parsed;
+      }
+    }
+  }
+
+  for (const rule of BALANCE_FLOAT_RULES) {
+    const valStr = raw[rule.key];
+    if (valStr !== undefined && /^-?\d+(?:\.\d+)?$/.test(valStr)) {
+      const parsed = Number(valStr);
+      if (Number.isFinite(parsed) && parsed >= rule.min && parsed <= rule.max) {
+        result[rule.key] = Math.round(parsed * 100) / 100;
+      }
+    }
+  }
+
+  if (raw.weeklySummaryEnabled !== undefined && /^(true|false)$/i.test(raw.weeklySummaryEnabled)) {
+    result.weeklySummaryEnabled = raw.weeklySummaryEnabled.toLowerCase() === 'true';
+  }
+
+  if (result.maxCandidates < result.maxArticlesPerRun) {
+    result.maxCandidates = result.maxArticlesPerRun;
+  }
+  if (result.ticketedMinPerDay > result.ticketedMaxPerDay) {
+    result.ticketedMinPerDay = result.ticketedMaxPerDay;
+  }
+  if (result.nosprMaxPerRun > result.ticketedMaxPerRun) {
+    result.nosprMaxPerRun = result.ticketedMaxPerRun;
+  }
+  if (result.nosprMaxPerDay > result.ticketedMaxPerDay) {
+    result.nosprMaxPerDay = result.ticketedMaxPerDay;
+  }
+
+  return result;
+}
+
+/**
+ * Returns the current AI worker & balance settings from config/sources.md.
+ */
+export function getBalanceSettings(): BalanceSettings {
+  return parseBalanceSettings();
+}
+
+/**
+ * Validates AI worker & balance settings input with strict range and cross-field checks.
+ */
+export function validateBalanceSettingsInput(
+  input: Partial<BalanceSettings>
+): { valid: boolean; settings?: BalanceSettings; error?: string } {
+  if (!input || typeof input !== 'object') {
+    return { valid: false, error: 'Nieprawidłowy format danych ustawień Workera AI.' };
+  }
+
+  const current = getBalanceSettings();
+  const merged: BalanceSettings = { ...current };
+
+  for (const rule of BALANCE_INTEGER_RULES) {
+    const incoming = input[rule.key];
+    if (incoming !== undefined) {
+      const num = typeof incoming === 'number' ? incoming : Number(String(incoming).trim());
+      if (!Number.isInteger(num) || num < rule.min || num > rule.max) {
+        return {
+          valid: false,
+          error: `${rule.label} musi być liczbą całkowitą z przedziału od ${rule.min} do ${rule.max}.`,
+        };
+      }
+      (merged as any)[rule.key] = num;
+    }
+  }
+
+  for (const rule of BALANCE_FLOAT_RULES) {
+    const incoming = input[rule.key];
+    if (incoming !== undefined) {
+      const num = typeof incoming === 'number' ? incoming : Number(String(incoming).trim());
+      if (!Number.isFinite(num) || num < rule.min || num > rule.max) {
+        return {
+          valid: false,
+          error: `${rule.label} musi być liczbą z przedziału od ${rule.min.toFixed(2)} do ${rule.max.toFixed(2)}.`,
+        };
+      }
+      merged[rule.key] = Math.round(num * 100) / 100;
+    }
+  }
+
+  if (input.weeklySummaryEnabled !== undefined) {
+    if (typeof input.weeklySummaryEnabled === 'boolean') {
+      merged.weeklySummaryEnabled = input.weeklySummaryEnabled;
+    } else if (
+      typeof input.weeklySummaryEnabled === 'string' &&
+      /^(true|false)$/i.test((input.weeklySummaryEnabled as string).trim())
+    ) {
+      merged.weeklySummaryEnabled =
+        (input.weeklySummaryEnabled as string).trim().toLowerCase() === 'true';
+    } else {
+      return {
+        valid: false,
+        error: 'Parametr weeklySummaryEnabled musi mieć wartość logiczną (true lub false).',
+      };
+    }
+  }
+
+  if (merged.maxCandidates < merged.maxArticlesPerRun) {
+    return {
+      valid: false,
+      error: `Liczba kandydatów Gemini (${merged.maxCandidates}) nie może być mniejsza niż liczba publikowanych artykułów (${merged.maxArticlesPerRun}).`,
+    };
+  }
+  if (merged.ticketedMinPerDay > merged.ticketedMaxPerDay) {
+    return {
+      valid: false,
+      error: `Dzienne minimum biletowanych (${merged.ticketedMinPerDay}) nie może przekraczać dziennego limitu (${merged.ticketedMaxPerDay}).`,
+    };
+  }
+  if (merged.nosprMaxPerRun > merged.ticketedMaxPerRun) {
+    return {
+      valid: false,
+      error: `Limit NOSPR na przebieg (${merged.nosprMaxPerRun}) nie może przekraczać łącznego limitu biletowanych na przebieg (${merged.ticketedMaxPerRun}).`,
+    };
+  }
+  if (merged.nosprMaxPerDay > merged.ticketedMaxPerDay) {
+    return {
+      valid: false,
+      error: `Dzienny limit NOSPR (${merged.nosprMaxPerDay}) nie może przekraczać łącznego dziennego limitu biletowanych (${merged.ticketedMaxPerDay}).`,
+    };
+  }
+
+  return { valid: true, settings: merged };
+}
+
+/**
+ * Updates or inserts AI worker & balance settings inside markdown content while preserving the rest of the file.
+ */
+export function serializeBalanceSettingsInMarkdown(
+  originalContent: string,
+  settings: BalanceSettings
+): string {
+  const lineEnding = originalContent && originalContent.includes('\r\n') ? '\r\n' : '\n';
+  const formattedLines = (Object.keys(DEFAULT_BALANCE_SETTINGS) as Array<keyof BalanceSettings>).map(
+    (key) => {
+      const val = settings[key];
+      if (key === 'ticketedMaxShare3d' || key === 'rssPoolShare') {
+        return `- \`${key}\`: ${Number(val).toFixed(2)}`;
+      }
+      return `- \`${key}\`: ${val}`;
+    }
+  );
+
+  const updated = originalContent || '';
+  const sectionRegex =
+    /(^|\r?\n)(##\s+Ustawienia równowagi treści[^\r\n]*\r?\n)([\s\S]*?)(\r?\n---\r?\n|\r?\n##\s+|$)/;
+
+  if (sectionRegex.test(updated)) {
+    return updated.replace(
+      sectionRegex,
+      (_, prefix, headingLine, _body, suffix) =>
+        `${prefix}${headingLine}${lineEnding}${formattedLines.join(lineEnding)}${lineEnding}${suffix}`
+    );
+  }
+
+  const sectionBlock = [
+    '## Ustawienia równowagi treści (Agent AI)',
+    '',
+    ...formattedLines,
+    '',
+    '---',
+    '',
+  ].join(lineEnding);
+
+  const tableHeadingIdx = updated.indexOf('## Tabela Źródeł');
+  if (tableHeadingIdx !== -1) {
+    return updated.slice(0, tableHeadingIdx) + sectionBlock + updated.slice(tableHeadingIdx);
+  }
+
+  return sectionBlock + updated;
+}
+
+/**
+ * Updates AI worker & balance settings in config/sources.md.
+ */
+export function updateBalanceSettings(input: Partial<BalanceSettings>): {
+  success: boolean;
+  balanceSettings?: BalanceSettings;
+  sources?: EventSourceItem[];
+  readOnly?: boolean;
+  content?: string;
+  error?: string;
+} {
+  const validation = validateBalanceSettingsInput(input);
+  if (!validation.valid || !validation.settings) {
+    return { success: false, error: validation.error };
+  }
+
+  let originalContent = '';
+  if (fs.existsSync(SOURCES_FILE)) {
+    originalContent = fs.readFileSync(SOURCES_FILE, 'utf8');
+  } else {
+    originalContent = serializeSourcesMarkdown([], '');
+  }
+
+  const newContent = serializeBalanceSettingsInMarkdown(originalContent, validation.settings);
+  const writeRes = writeSourcesToFile(newContent);
+
+  if (!writeRes.success) {
+    return { success: false, error: writeRes.error };
+  }
+
+  const sources = parseSourcesMarkdown(newContent);
+  return {
+    success: true,
+    balanceSettings: validation.settings,
+    sources,
+    readOnly: writeRes.readOnly,
+    content: writeRes.content,
+  };
+}
 
 /**
  * Parses pagination settings (homePageSize, archivePageSize, adminArchivePageSize)

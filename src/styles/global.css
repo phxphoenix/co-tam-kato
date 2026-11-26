@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @layer base {
   :root {
@@ -30,4 +31,30 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #71717a;
+}
+
+@layer components {
+  .weekly-culture-prose h3 {
+    @apply text-xl sm:text-2xl font-extrabold text-amber-300 bg-zinc-950/85 border-y border-r border-zinc-800/90 border-l-4 border-l-amber-400 rounded-r-xl rounded-l-sm px-4 py-2.5 mt-9 first:mt-2 mb-4 shadow-md tracking-tight;
+  }
+
+  .weekly-culture-prose hr {
+    @apply my-8 border-0 border-t border-zinc-700/80;
+  }
+
+  .weekly-culture-prose ul {
+    @apply list-none pl-0 my-4 space-y-0 divide-y divide-zinc-800/70 rounded-2xl bg-zinc-950/40 border border-zinc-800/60 px-4 py-1;
+  }
+
+  .weekly-culture-prose li {
+    @apply py-3 my-0 pl-0 leading-relaxed text-zinc-200;
+  }
+
+  .weekly-culture-prose li::marker {
+    content: none;
+  }
+
+  .weekly-culture-prose p {
+    @apply text-xs sm:text-sm text-zinc-400 leading-relaxed mt-6;
+  }
 }

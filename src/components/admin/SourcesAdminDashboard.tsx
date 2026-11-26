@@ -16,6 +16,10 @@ import {
   Sliders,
   LayoutGrid,
   RotateCcw,
+  Bot,
+  ChevronDown,
+  ChevronUp,
+  Scale,
 } from 'lucide-react';
 import AdminHeaderNav from './AdminHeaderNav';
 import {
@@ -43,9 +47,29 @@ export interface PaginationSettings {
   adminArchivePageSize: number;
 }
 
+export interface BalanceSettings {
+  maxArticlesPerRun: number;
+  maxCandidates: number;
+  ticketedMaxShare3d: number;
+  rssPoolShare: number;
+  ticketedMaxPerRun: number;
+  ticketedMaxPerDay: number;
+  ticketedMinPerDay: number;
+  nosprMaxPerRun: number;
+  nosprMaxPerDay: number;
+  otherVenueMaxPerDay: number;
+  lastTicketsBonusPerDay: number;
+  poolMaxItemsPerTicketedSource: number;
+  maxPromptItems: number;
+  cycleCooldownDays: number;
+  weeklySummaryEnabled: boolean;
+  weeklySummaryHorizonDays: number;
+}
+
 interface SourcesAdminDashboardProps {
   initialSources: EventSourceItem[];
   initialPaginationSettings?: PaginationSettings;
+  initialBalanceSettings?: BalanceSettings;
   baseUrl?: string;
 }
 
@@ -55,9 +79,53 @@ const DEFAULT_PAGINATION: PaginationSettings = {
   adminArchivePageSize: 25,
 };
 
+const DEFAULT_BALANCE_SETTINGS: BalanceSettings = {
+  maxArticlesPerRun: 4,
+  maxCandidates: 7,
+  ticketedMaxShare3d: 0.40,
+  rssPoolShare: 0.50,
+  ticketedMaxPerRun: 2,
+  ticketedMaxPerDay: 3,
+  ticketedMinPerDay: 1,
+  nosprMaxPerRun: 1,
+  nosprMaxPerDay: 2,
+  otherVenueMaxPerDay: 1,
+  lastTicketsBonusPerDay: 1,
+  poolMaxItemsPerTicketedSource: 5,
+  maxPromptItems: 60,
+  cycleCooldownDays: 7,
+  weeklySummaryEnabled: true,
+  weeklySummaryHorizonDays: 14,
+};
+
+type BalanceNumericKey = Exclude<keyof BalanceSettings, 'weeklySummaryEnabled'>;
+type BalanceInputState = Record<BalanceNumericKey, string> & { weeklySummaryEnabled: boolean };
+
+function balanceToInputs(s: BalanceSettings): BalanceInputState {
+  return {
+    maxArticlesPerRun: String(s.maxArticlesPerRun),
+    maxCandidates: String(s.maxCandidates),
+    ticketedMaxShare3d: String(Math.round(s.ticketedMaxShare3d * 100)),
+    rssPoolShare: String(Math.round(s.rssPoolShare * 100)),
+    ticketedMaxPerRun: String(s.ticketedMaxPerRun),
+    ticketedMaxPerDay: String(s.ticketedMaxPerDay),
+    ticketedMinPerDay: String(s.ticketedMinPerDay),
+    nosprMaxPerRun: String(s.nosprMaxPerRun),
+    nosprMaxPerDay: String(s.nosprMaxPerDay),
+    otherVenueMaxPerDay: String(s.otherVenueMaxPerDay),
+    lastTicketsBonusPerDay: String(s.lastTicketsBonusPerDay),
+    poolMaxItemsPerTicketedSource: String(s.poolMaxItemsPerTicketedSource),
+    maxPromptItems: String(s.maxPromptItems),
+    cycleCooldownDays: String(s.cycleCooldownDays),
+    weeklySummaryEnabled: Boolean(s.weeklySummaryEnabled),
+    weeklySummaryHorizonDays: String(s.weeklySummaryHorizonDays),
+  };
+}
+
 export default function SourcesAdminDashboard({
   initialSources = [],
   initialPaginationSettings = DEFAULT_PAGINATION,
+  initialBalanceSettings = DEFAULT_BALANCE_SETTINGS,
   baseUrl = '/',
 }: SourcesAdminDashboardProps) {
   const [sources, setSources] = useState<EventSourceItem[]>(initialSources);
@@ -83,6 +151,23 @@ export default function SourcesAdminDashboard({
   });
   const [isSavingPagination, setIsSavingPagination] = useState(false);
   const [paginationFeedback, setPaginationFeedback] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+
+  // Stany konfiguracji Workera AI i proporcji treści
+  const mergedInitialBalance: BalanceSettings = {
+    ...DEFAULT_BALANCE_SETTINGS,
+    ...(initialBalanceSettings || {}),
+  };
+  const [balanceInputs, setBalanceInputs] = useState<BalanceInputState>(() =>
+    balanceToInputs(mergedInitialBalance)
+  );
+  const [savedBalanceSettings, setSavedBalanceSettings] =
+    useState<BalanceSettings>(mergedInitialBalance);
+  const [isSavingBalance, setIsSavingBalance] = useState(false);
+  const [isAdvancedBalanceOpen, setIsAdvancedBalanceOpen] = useState(false);
+  const [balanceFeedback, setBalanceFeedback] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
@@ -224,6 +309,179 @@ export default function SourcesAdminDashboard({
     setPaginationFeedback(null);
   };
 
+  // Walidacja konfiguracji Workera AI w locie
+  const balanceValidation = useMemo<{
+    valid: boolean;
+    error?: string;
+    values?: BalanceSettings;
+  }>(() => {
+    const intSpecs: Array<{
+      key: BalanceNumericKey;
+      label: string;
+      min: number;
+      max: number;
+    }> = [
+      { key: 'maxArticlesPerRun', label: 'Liczba artykułów na przebieg', min: 1, max: 12 },
+      { key: 'maxCandidates', label: 'Liczba kandydatów Gemini', min: 1, max: 25 },
+      { key: 'ticketedMaxPerRun', label: 'Maks. biletowanych na przebieg', min: 0, max: 12 },
+      { key: 'ticketedMaxPerDay', label: 'Dzienny limit biletowanych', min: 0, max: 20 },
+      { key: 'ticketedMinPerDay', label: 'Dzienne minimum biletowanych', min: 0, max: 10 },
+      { key: 'nosprMaxPerRun', label: 'Limit NOSPR na przebieg', min: 0, max: 5 },
+      { key: 'nosprMaxPerDay', label: 'Dzienny limit NOSPR', min: 0, max: 10 },
+      { key: 'otherVenueMaxPerDay', label: 'Dzienny limit pozostałych scen', min: 0, max: 10 },
+      { key: 'lastTicketsBonusPerDay', label: 'Dzienny bonus „Ostatnie bilety”', min: 0, max: 5 },
+      { key: 'poolMaxItemsPerTicketedSource', label: 'Limit pozycji z 1 źródła biletowanego', min: 1, max: 15 },
+      { key: 'maxPromptItems', label: 'Maks. materiałów w prompcie Gemini', min: 20, max: 120 },
+      { key: 'cycleCooldownDays', label: 'Okres karencji cykli (dni)', min: 0, max: 30 },
+      { key: 'weeklySummaryHorizonDays', label: 'Horyzont „Tygodnia w kulturze” (dni)', min: 3, max: 30 },
+    ];
+
+    const parsedInts: Record<string, number> = {};
+    for (const spec of intSpecs) {
+      const rawStr = balanceInputs[spec.key];
+      const num = /^-?\d+$/.test(rawStr.trim()) ? Number(rawStr.trim()) : NaN;
+      if (!Number.isInteger(num) || num < spec.min || num > spec.max) {
+        return {
+          valid: false,
+          error: `${spec.label} musi być liczbą całkowitą z przedziału ${spec.min}–${spec.max}.`,
+        };
+      }
+      parsedInts[spec.key] = num;
+    }
+
+    const ticketedPct = /^-?\d+$/.test(balanceInputs.ticketedMaxShare3d.trim())
+      ? Number(balanceInputs.ticketedMaxShare3d.trim())
+      : NaN;
+    if (!Number.isInteger(ticketedPct) || ticketedPct < 0 || ticketedPct > 100) {
+      return {
+        valid: false,
+        error: 'Maksymalny udział instytucji biletowanych (3 dni) musi wynosić od 0% do 100%.',
+      };
+    }
+
+    const rssPct = /^-?\d+$/.test(balanceInputs.rssPoolShare.trim())
+      ? Number(balanceInputs.rssPoolShare.trim())
+      : NaN;
+    if (!Number.isInteger(rssPct) || rssPct < 10 || rssPct > 90) {
+      return {
+        valid: false,
+        error: 'Proporcja źródeł RSS w puli wejściowej musi wynosić od 10% do 90%.',
+      };
+    }
+
+    if (parsedInts.maxCandidates < parsedInts.maxArticlesPerRun) {
+      return {
+        valid: false,
+        error: `Liczba kandydatów Gemini (${parsedInts.maxCandidates}) musi być ≥ liczbie publikowanych artykułów (${parsedInts.maxArticlesPerRun}).`,
+      };
+    }
+    if (parsedInts.ticketedMinPerDay > parsedInts.ticketedMaxPerDay) {
+      return {
+        valid: false,
+        error: `Dzienne minimum biletowanych (${parsedInts.ticketedMinPerDay}) nie może przekraczać limitu dziennego (${parsedInts.ticketedMaxPerDay}).`,
+      };
+    }
+    if (parsedInts.nosprMaxPerRun > parsedInts.ticketedMaxPerRun) {
+      return {
+        valid: false,
+        error: `Limit NOSPR na przebieg (${parsedInts.nosprMaxPerRun}) nie może przekraczać limitu biletowanych na przebieg (${parsedInts.ticketedMaxPerRun}).`,
+      };
+    }
+    if (parsedInts.nosprMaxPerDay > parsedInts.ticketedMaxPerDay) {
+      return {
+        valid: false,
+        error: `Dzienny limit NOSPR (${parsedInts.nosprMaxPerDay}) nie może przekraczać dziennego limitu biletowanych (${parsedInts.ticketedMaxPerDay}).`,
+      };
+    }
+
+    return {
+      valid: true,
+      values: {
+        maxArticlesPerRun: parsedInts.maxArticlesPerRun,
+        maxCandidates: parsedInts.maxCandidates,
+        ticketedMaxShare3d: Math.round(ticketedPct) / 100,
+        rssPoolShare: Math.round(rssPct) / 100,
+        ticketedMaxPerRun: parsedInts.ticketedMaxPerRun,
+        ticketedMaxPerDay: parsedInts.ticketedMaxPerDay,
+        ticketedMinPerDay: parsedInts.ticketedMinPerDay,
+        nosprMaxPerRun: parsedInts.nosprMaxPerRun,
+        nosprMaxPerDay: parsedInts.nosprMaxPerDay,
+        otherVenueMaxPerDay: parsedInts.otherVenueMaxPerDay,
+        lastTicketsBonusPerDay: parsedInts.lastTicketsBonusPerDay,
+        poolMaxItemsPerTicketedSource: parsedInts.poolMaxItemsPerTicketedSource,
+        maxPromptItems: parsedInts.maxPromptItems,
+        cycleCooldownDays: parsedInts.cycleCooldownDays,
+        weeklySummaryEnabled: balanceInputs.weeklySummaryEnabled,
+        weeklySummaryHorizonDays: parsedInts.weeklySummaryHorizonDays,
+      },
+    };
+  }, [balanceInputs]);
+
+  const updateBalanceField = (key: BalanceNumericKey, value: string) => {
+    setBalanceInputs((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSaveBalanceSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!balanceValidation.valid || !balanceValidation.values) {
+      setBalanceFeedback({
+        type: 'error',
+        message: balanceValidation.error || 'Popraw nieprawidłowe wartości konfiguracji Workera AI.',
+      });
+      return;
+    }
+
+    setIsSavingBalance(true);
+    setBalanceFeedback(null);
+
+    try {
+      const res = await fetch(`${cleanBase}/api/sources`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          balanceSettings: balanceValidation.values,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Nie udało się zapisać konfiguracji Workera AI.');
+      }
+
+      const updated: BalanceSettings = data.balanceSettings || balanceValidation.values;
+      setSavedBalanceSettings(updated);
+      setBalanceInputs(balanceToInputs(updated));
+
+      const persistLabel =
+        data.persisted === 'github'
+          ? 'zapisano przez GitHub API (commit do main)'
+          : data.persisted === 'client'
+          ? 'tryb podglądu (brak zapisu na dysk/GitHub)'
+          : 'zapisano lokalnie na dysku (fs)';
+
+      setBalanceFeedback({
+        type: 'success',
+        message: `Zapisano konfigurację Workera AI w config/sources.md (${persistLabel}).`,
+      });
+      setToast({
+        type: 'success',
+        message: `Zapisano konfigurację Workera AI (${persistLabel})!`,
+      });
+    } catch (err: any) {
+      setBalanceFeedback({
+        type: 'error',
+        message: err?.message || 'Wystąpił błąd podczas zapisywania konfiguracji Workera AI.',
+      });
+    } finally {
+      setIsSavingBalance(false);
+    }
+  };
+
+  const handleResetBalanceDefaults = () => {
+    setBalanceInputs(balanceToInputs(DEFAULT_BALANCE_SETTINGS));
+    setBalanceFeedback(null);
+  };
+
   // Odświeżenie listy z API
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -239,6 +497,10 @@ export default function SourcesAdminDashboard({
         setHomePageSizeInput(String(data.paginationSettings.homePageSize));
         setArchivePageSizeInput(String(data.paginationSettings.archivePageSize));
         setAdminArchivePageSizeInput(String(data.paginationSettings.adminArchivePageSize));
+      }
+      if (data.balanceSettings) {
+        setSavedBalanceSettings(data.balanceSettings);
+        setBalanceInputs(balanceToInputs(data.balanceSettings));
       }
       setToast({
         type: 'success',
@@ -858,6 +1120,457 @@ export default function SourcesAdminDashboard({
         </form>
       </section>
 
+      {/* Sekcja: Konfiguracja Workera AI i Proporcji Treści */}
+      {(() => {
+        const articlesPerRunNum = parseInt(balanceInputs.maxArticlesPerRun, 10);
+        const safeArticlesPerRun = Number.isInteger(articlesPerRunNum) ? articlesPerRunNum : 4;
+        const ticketedSharePct = Math.max(
+          0,
+          Math.min(100, parseInt(balanceInputs.ticketedMaxShare3d, 10) || 0)
+        );
+        const otherSharePct = 100 - ticketedSharePct;
+        const rssPoolPct = Math.max(
+          10,
+          Math.min(90, parseInt(balanceInputs.rssPoolShare, 10) || 50)
+        );
+        const webPoolPct = 100 - rssPoolPct;
+
+        return (
+          <section
+            aria-labelledby="ai-worker-settings-heading"
+            className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 shadow-xl space-y-6"
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-800/80 pb-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0 mt-0.5">
+                  <Bot className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2
+                    id="ai-worker-settings-heading"
+                    className="text-base sm:text-lg font-bold text-zinc-100 flex flex-wrap items-center gap-2"
+                  >
+                    <span>Konfiguracja Workera AI i Proporcji Treści</span>
+                    <span className="text-[11px] font-mono font-normal px-2 py-0.5 rounded-full bg-zinc-800 text-amber-300 border border-zinc-700">
+                      config/sources.md
+                    </span>
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                    Steruj liczbą artykułów generowanych podczas jednego przebiegu Agenta AI oraz równowagą pomiędzy kulturą biletowaną (NOSPR, Teatry, Spodek) a aktualnościami miejskimi z portali RSS i stron WEB.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleResetBalanceDefaults}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-950/80 hover:bg-zinc-800 border border-zinc-800 transition cursor-pointer shrink-0 self-start md:self-center"
+                title="Przywróć domyślne parametry Workera AI"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Przywróć domyślne</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBalanceSettings} className="space-y-6">
+              {/* Blok 1: Ilość artykułów na przebieg workera */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-300">
+                  <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Blok 1 — Ilość artykułów na przebieg workera</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <label htmlFor="maxArticlesPerRunInput" className="text-xs font-bold text-zinc-200">
+                        Artykułów na przebieg (<code className="text-amber-400 font-mono">maxArticlesPerRun</code>)
+                      </label>
+                      <span className="text-[11px] text-emerald-400 font-semibold">
+                        maks. {Math.max(1, safeArticlesPerRun) * 4} / dobę (4 cykle)
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">
+                      Docelowa maksymalna liczba nowych artykułów publikowanych w jednym uruchomieniu (zakres 1–12).
+                    </p>
+                    <input
+                      id="maxArticlesPerRunInput"
+                      type="number"
+                      min={1}
+                      max={12}
+                      step={1}
+                      value={balanceInputs.maxArticlesPerRun}
+                      onChange={(e) => updateBalanceField('maxArticlesPerRun', e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-400 rounded-xl px-3.5 py-2 text-sm font-bold text-zinc-100 focus:outline-none transition"
+                    />
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[11px] text-zinc-500 mr-1">Szybki wybór:</span>
+                      {[2, 3, 4, 5, 6].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => updateBalanceField('maxArticlesPerRun', String(preset))}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                            safeArticlesPerRun === preset
+                              ? 'bg-amber-400 text-zinc-950 border-amber-400 shadow-sm'
+                              : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:text-zinc-100'
+                          }`}
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <label htmlFor="maxCandidatesInput" className="text-xs font-bold text-zinc-200">
+                        Kandydatów z Gemini (<code className="text-amber-400 font-mono">maxCandidates</code>)
+                      </label>
+                      <span className="text-[11px] text-zinc-400 font-mono">
+                        zalecane: {Math.max(1, safeArticlesPerRun) + 3}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">
+                      Liczba propozycji w rankingu modelu przed deduplikacją i filtrami równowagi (musi być ≥ <code className="text-zinc-300">maxArticlesPerRun</code>).
+                    </p>
+                    <input
+                      id="maxCandidatesInput"
+                      type="number"
+                      min={1}
+                      max={25}
+                      step={1}
+                      value={balanceInputs.maxCandidates}
+                      onChange={(e) => updateBalanceField('maxCandidates', e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-400 rounded-xl px-3.5 py-2 text-sm font-bold text-zinc-100 focus:outline-none transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Blok 2: Proporcje typów artykułów */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-300">
+                  <Scale className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Blok 2 — Proporcje typów artykułów i limity kwotowe</span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Suwak 1: ticketedMaxShare3d */}
+                  <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <label htmlFor="ticketedMaxShare3dSlider" className="text-xs font-bold text-zinc-200">
+                        Maks. udział biletowanych w 3 dni (<code className="text-amber-400 font-mono">ticketedMaxShare3d</code>)
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          step={5}
+                          aria-label="Procent biletowanych w 3 dni"
+                          value={balanceInputs.ticketedMaxShare3d}
+                          onChange={(e) => updateBalanceField('ticketedMaxShare3d', e.target.value)}
+                          className="w-16 bg-zinc-900 border border-zinc-700 focus:border-amber-400 rounded-lg px-2 py-1 text-xs font-bold text-amber-300 text-right focus:outline-none"
+                        />
+                        <span className="text-xs font-bold text-zinc-400">%</span>
+                      </div>
+                    </div>
+
+                    <input
+                      id="ticketedMaxShare3dSlider"
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={ticketedSharePct}
+                      onChange={(e) => updateBalanceField('ticketedMaxShare3d', e.target.value)}
+                      className="w-full accent-amber-400 cursor-pointer"
+                    />
+
+                    {/* Pasek podziału wizualnego */}
+                    <div className="space-y-1.5">
+                      <div className="h-2.5 w-full rounded-full overflow-hidden bg-zinc-800 flex">
+                        <div
+                          className="bg-amber-400 transition-all duration-200"
+                          style={{ width: `${ticketedSharePct}%` }}
+                        />
+                        <div
+                          className="bg-sky-500 transition-all duration-200"
+                          style={{ width: `${otherSharePct}%` }}
+                        />
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                        <span className="text-amber-300 font-semibold">
+                          {ticketedSharePct}% Instytucje biletowane (NOSPR, Teatry, Spodek)
+                        </span>
+                        <span className="text-sky-300 font-semibold">
+                          {otherSharePct}% Życie miasta, dzieci, drogi, sport, alerty
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Suwak 2: rssPoolShare */}
+                  <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <label htmlFor="rssPoolShareSlider" className="text-xs font-bold text-zinc-200">
+                        Proporcja puli wejściowej RSS vs WEB (<code className="text-amber-400 font-mono">rssPoolShare</code>)
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min={10}
+                          max={90}
+                          step={5}
+                          aria-label="Procent źródeł RSS w puli"
+                          value={balanceInputs.rssPoolShare}
+                          onChange={(e) => updateBalanceField('rssPoolShare', e.target.value)}
+                          className="w-16 bg-zinc-900 border border-zinc-700 focus:border-amber-400 rounded-lg px-2 py-1 text-xs font-bold text-amber-300 text-right focus:outline-none"
+                        />
+                        <span className="text-xs font-bold text-zinc-400">%</span>
+                      </div>
+                    </div>
+
+                    <input
+                      id="rssPoolShareSlider"
+                      type="range"
+                      min={10}
+                      max={90}
+                      step={5}
+                      value={rssPoolPct}
+                      onChange={(e) => updateBalanceField('rssPoolShare', e.target.value)}
+                      className="w-full accent-emerald-400 cursor-pointer"
+                    />
+
+                    {/* Pasek podziału wizualnego */}
+                    <div className="space-y-1.5">
+                      <div className="h-2.5 w-full rounded-full overflow-hidden bg-zinc-800 flex">
+                        <div
+                          className="bg-emerald-400 transition-all duration-200"
+                          style={{ width: `${rssPoolPct}%` }}
+                        />
+                        <div
+                          className="bg-purple-500 transition-all duration-200"
+                          style={{ width: `${webPoolPct}%` }}
+                        />
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                        <span className="text-emerald-300 font-semibold">
+                          {rssPoolPct}% Portale lokalne RSS
+                        </span>
+                        <span className="text-purple-300 font-semibold">
+                          {webPoolPct}% Strony instytucji i repertuary WEB
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pola limitów kwotowych */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                  {(
+                    [
+                      { key: 'ticketedMaxPerRun', label: 'Bilet. / bieg', min: 0, max: 12 },
+                      { key: 'ticketedMaxPerDay', label: 'Bilet. / dzień', min: 0, max: 20 },
+                      { key: 'ticketedMinPerDay', label: 'Min. bilet. / dzień', min: 0, max: 10 },
+                      { key: 'nosprMaxPerRun', label: 'NOSPR / bieg', min: 0, max: 5 },
+                      { key: 'nosprMaxPerDay', label: 'NOSPR / dzień', min: 0, max: 10 },
+                      { key: 'otherVenueMaxPerDay', label: 'Inna scena / dzień', min: 0, max: 10 },
+                      { key: 'lastTicketsBonusPerDay', label: 'Bonus pilne / dzień', min: 0, max: 5 },
+                    ] as const
+                  ).map((field) => (
+                    <label
+                      key={field.key}
+                      className="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3 space-y-1.5 block"
+                    >
+                      <span className="block text-[11px] font-semibold text-zinc-300 truncate" title={field.key}>
+                        {field.label}
+                      </span>
+                      <span className="block text-[10px] font-mono text-zinc-500 truncate">
+                        {field.key}
+                      </span>
+                      <input
+                        type="number"
+                        min={field.min}
+                        max={field.max}
+                        step={1}
+                        value={balanceInputs[field.key]}
+                        onChange={(e) => updateBalanceField(field.key, e.target.value)}
+                        className="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-400 rounded-lg px-2.5 py-1.5 text-sm font-bold text-zinc-100 focus:outline-none transition"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Blok 3: Zwijana sekcja zaawansowana i Tydzień w kulturze */}
+              <div className="border border-zinc-800/80 rounded-xl bg-zinc-950/40 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setIsAdvancedBalanceOpen((prev) => !prev)}
+                  className="w-full flex items-center justify-between px-4 py-3 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-900/60 transition cursor-pointer"
+                >
+                  <span>Parametry zaawansowane i „Tydzień w kulturze”</span>
+                  {isAdvancedBalanceOpen ? (
+                    <ChevronUp className="w-4 h-4 text-amber-400" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-zinc-400" />
+                  )}
+                </button>
+
+                {isAdvancedBalanceOpen && (
+                  <div className="p-4 pt-2 border-t border-zinc-800/80 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div className="bg-zinc-950/80 border border-zinc-800 rounded-xl p-3 flex flex-col justify-between">
+                      <div>
+                        <span className="block text-xs font-bold text-zinc-200">
+                          Tydzień w kulturze
+                        </span>
+                        <span className="block text-[10px] font-mono text-zinc-500 mb-2">
+                          weeklySummaryEnabled
+                        </span>
+                      </div>
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={balanceInputs.weeklySummaryEnabled}
+                          onChange={(e) =>
+                            setBalanceInputs((prev) => ({
+                              ...prev,
+                              weeklySummaryEnabled: e.target.checked,
+                            }))
+                          }
+                          className="w-4 h-4 accent-amber-400 rounded cursor-pointer"
+                        />
+                        <span className="text-xs font-semibold text-zinc-300">
+                          {balanceInputs.weeklySummaryEnabled ? 'Włączone' : 'Wyłączone'}
+                        </span>
+                      </label>
+                    </div>
+
+                    {(
+                      [
+                        {
+                          key: 'weeklySummaryHorizonDays',
+                          label: 'Horyzont (dni)',
+                          min: 3,
+                          max: 30,
+                        },
+                        {
+                          key: 'cycleCooldownDays',
+                          label: 'Karencja cykli (dni)',
+                          min: 0,
+                          max: 30,
+                        },
+                        {
+                          key: 'poolMaxItemsPerTicketedSource',
+                          label: 'Poz. / źródło bilet.',
+                          min: 1,
+                          max: 15,
+                        },
+                        {
+                          key: 'maxPromptItems',
+                          label: 'Maks. poz. w prompcie',
+                          min: 20,
+                          max: 120,
+                        },
+                      ] as const
+                    ).map((field) => (
+                      <label
+                        key={field.key}
+                        className="bg-zinc-950/80 border border-zinc-800 rounded-xl p-3 space-y-1.5 block"
+                      >
+                        <span className="block text-xs font-bold text-zinc-200">
+                          {field.label}
+                        </span>
+                        <span className="block text-[10px] font-mono text-zinc-500 truncate">
+                          {field.key}
+                        </span>
+                        <input
+                          type="number"
+                          min={field.min}
+                          max={field.max}
+                          step={1}
+                          value={balanceInputs[field.key]}
+                          onChange={(e) => updateBalanceField(field.key, e.target.value)}
+                          className="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-400 rounded-lg px-2.5 py-1.5 text-sm font-bold text-zinc-100 focus:outline-none transition"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {!balanceValidation.valid && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{balanceValidation.error}</span>
+                </div>
+              )}
+
+              {balanceFeedback && (
+                <div
+                  className={`flex items-center justify-between gap-2 p-3 rounded-xl border text-xs ${
+                    balanceFeedback.type === 'success'
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                      : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {balanceFeedback.type === 'success' ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                    )}
+                    <span>{balanceFeedback.message}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setBalanceFeedback(null)}
+                    className="text-zinc-400 hover:text-white p-0.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                <div className="text-xs text-zinc-400 flex items-center gap-2 flex-wrap">
+                  <Bot className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>
+                    Zapisane w pliku:{' '}
+                    <strong className="text-zinc-200 font-mono">
+                      maxArticlesPerRun={savedBalanceSettings.maxArticlesPerRun}, ticketedMaxShare3d=
+                      {savedBalanceSettings.ticketedMaxShare3d.toFixed(2)}, rssPoolShare=
+                      {savedBalanceSettings.rssPoolShare.toFixed(2)}, maxPromptItems=
+                      {savedBalanceSettings.maxPromptItems}
+                    </strong>
+                  </span>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={!balanceValidation.valid || isSavingBalance}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-400 hover:bg-amber-300 text-zinc-950 shadow-md shadow-amber-400/15 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer shrink-0"
+                >
+                  {isSavingBalance ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Zapisywanie konfiguracji AI...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Zapisz konfigurację Workera AI</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </section>
+        );
+      })()}
+
       {/* Toast powiadomienie */}
       {toast && (
         <div
@@ -923,28 +1636,32 @@ export default function SourcesAdminDashboard({
             >
               Wszystkie ({sources.length})
             </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter('ACTIVE')}
-              className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
-                statusFilter === 'ACTIVE'
-                  ? 'bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30'
-                  : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              Aktywne ({stats.active})
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter('INACTIVE')}
-              className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
-                statusFilter === 'INACTIVE'
-                  ? 'bg-zinc-800 text-zinc-300 font-semibold border border-zinc-700'
-                  : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              Nieaktywne ({stats.inactive})
-            </button>
+            {(stats.active > 0 || statusFilter === 'ACTIVE') && (
+              <button
+                type="button"
+                onClick={() => setStatusFilter('ACTIVE')}
+                className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
+                  statusFilter === 'ACTIVE'
+                    ? 'bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                Aktywne ({stats.active})
+              </button>
+            )}
+            {(stats.inactive > 0 || statusFilter === 'INACTIVE') && (
+              <button
+                type="button"
+                onClick={() => setStatusFilter('INACTIVE')}
+                className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
+                  statusFilter === 'INACTIVE'
+                    ? 'bg-zinc-800 text-zinc-300 font-semibold border border-zinc-700'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                Nieaktywne ({stats.inactive})
+              </button>
+            )}
           </div>
 
           {/* Type filter */}
@@ -960,39 +1677,45 @@ export default function SourcesAdminDashboard({
             >
               Wszystkie typy
             </button>
-            <button
-              type="button"
-              onClick={() => setTypeFilter('RSS')}
-              className={`px-2 py-1 rounded-lg font-medium transition cursor-pointer ${
-                typeFilter === 'RSS'
-                  ? 'bg-amber-500/20 text-amber-400 font-semibold border border-amber-500/30'
-                  : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              RSS
-            </button>
-            <button
-              type="button"
-              onClick={() => setTypeFilter('WEB')}
-              className={`px-2 py-1 rounded-lg font-medium transition cursor-pointer ${
-                typeFilter === 'WEB'
-                  ? 'bg-sky-500/20 text-sky-400 font-semibold border border-sky-500/30'
-                  : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              WEB
-            </button>
-            <button
-              type="button"
-              onClick={() => setTypeFilter('DYNAMIC_WEB')}
-              className={`px-2 py-1 rounded-lg font-medium transition cursor-pointer ${
-                typeFilter === 'DYNAMIC_WEB'
-                  ? 'bg-purple-500/20 text-purple-400 font-semibold border border-purple-500/30'
-                  : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              DYNAMIC_WEB
-            </button>
+            {(stats.rss > 0 || typeFilter === 'RSS') && (
+              <button
+                type="button"
+                onClick={() => setTypeFilter('RSS')}
+                className={`px-2 py-1 rounded-lg font-medium transition cursor-pointer ${
+                  typeFilter === 'RSS'
+                    ? 'bg-amber-500/20 text-amber-400 font-semibold border border-amber-500/30'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                RSS
+              </button>
+            )}
+            {(stats.web > 0 || typeFilter === 'WEB') && (
+              <button
+                type="button"
+                onClick={() => setTypeFilter('WEB')}
+                className={`px-2 py-1 rounded-lg font-medium transition cursor-pointer ${
+                  typeFilter === 'WEB'
+                    ? 'bg-sky-500/20 text-sky-400 font-semibold border border-sky-500/30'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                WEB
+              </button>
+            )}
+            {(stats.dynamicWeb > 0 || typeFilter === 'DYNAMIC_WEB') && (
+              <button
+                type="button"
+                onClick={() => setTypeFilter('DYNAMIC_WEB')}
+                className={`px-2 py-1 rounded-lg font-medium transition cursor-pointer ${
+                  typeFilter === 'DYNAMIC_WEB'
+                    ? 'bg-purple-500/20 text-purple-400 font-semibold border border-purple-500/30'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                DYNAMIC_WEB
+              </button>
+            )}
           </div>
         </div>
       </div>

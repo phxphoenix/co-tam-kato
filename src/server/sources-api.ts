@@ -1,13 +1,17 @@
 import type { APIRoute } from 'astro';
+import { requireAdminApiAuth } from './admin-auth.ts';
 import {
   getAllSources,
   getPaginationSettings,
+  getBalanceSettings,
   addSource,
   updateSource,
   updatePaginationSettings,
+  updateBalanceSettings,
   type AddSourceInput,
   type UpdateSourceInput,
   type PaginationSettings,
+  type BalanceSettings,
 } from './sources-service';
 
 export const prerender = false;
@@ -66,14 +70,21 @@ async function getGitHubToken(request: Request): Promise<string | undefined> {
   return auth.token;
 }
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ request }) => {
+  const unauthorized = await requireAdminApiAuth(request);
+  if (unauthorized) return unauthorized;
+
   try {
     const sources = getAllSources();
     const paginationSettings = getPaginationSettings();
-    return new Response(JSON.stringify({ success: true, sources, paginationSettings }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    const balanceSettings = getBalanceSettings();
+    return new Response(
+      JSON.stringify({ success: true, sources, paginationSettings, balanceSettings }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error: any) {
     return new Response(
       JSON.stringify({ success: false, error: error?.message || 'Błąd odczytu źródeł' }),
@@ -86,6 +97,9 @@ export const GET: APIRoute = async () => {
 };
 
 export const POST: APIRoute = async ({ request }) => {
+  const unauthorized = await requireAdminApiAuth(request);
+  if (unauthorized) return unauthorized;
+
   try {
     const contentType = request.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
@@ -155,6 +169,9 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 export const PATCH: APIRoute = async ({ request }) => {
+  const unauthorized = await requireAdminApiAuth(request);
+  if (unauthorized) return unauthorized;
+
   try {
     const contentType = request.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
@@ -169,10 +186,58 @@ export const PATCH: APIRoute = async ({ request }) => {
 
     const body = (await request.json()) as UpdateSourceInput & {
       paginationSettings?: Partial<PaginationSettings>;
+      balanceSettings?: Partial<BalanceSettings>;
       homePageSize?: number;
       archivePageSize?: number;
       adminArchivePageSize?: number;
     };
+
+    if (body.balanceSettings !== undefined) {
+      const result = updateBalanceSettings(body.balanceSettings);
+
+      if (!result.success) {
+        return new Response(JSON.stringify({ success: false, error: result.error }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      let persisted = 'fs';
+
+      if (result.readOnly && result.content) {
+        const token = await getGitHubToken(request);
+        if (token) {
+          try {
+            await commitToGitHub({
+              token,
+              repo: GITHUB_REPO,
+              path: 'config/sources.md',
+              content: result.content,
+              message: 'chore(sources): update AI worker & balance settings in config/sources.md',
+            });
+            persisted = 'github';
+          } catch (ghErr: any) {
+            console.warn('[Sources API] Ostrzeżenie zapisu do GitHub API:', ghErr?.message);
+            persisted = 'client';
+          }
+        } else {
+          persisted = 'client';
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          balanceSettings: result.balanceSettings,
+          sources: result.sources,
+          persisted,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     const isPaginationUpdate =
       body.paginationSettings !== undefined ||

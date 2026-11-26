@@ -194,6 +194,10 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
   };
 
   const getItemDate = (item: FeedItem) => (item.publishedDate || '').slice(0, 10);
+  const toInputDate = (date: Date) => {
+    const offset = date.getTimezoneOffset();
+    return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 10);
+  };
   const setPreset = (preset: 'all' | '7' | '30' | 'custom') => {
     setDatePreset(preset);
     if (preset === 'all') {
@@ -205,42 +209,170 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
     const end = new Date();
     const start = new Date();
     start.setDate(start.getDate() - (Number(preset) - 1));
-    const toInputDate = (date: Date) => {
-      const offset = date.getTimezoneOffset();
-      return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 10);
-    };
     setDateFrom(toInputDate(start));
     setDateTo(toInputDate(end));
   };
 
-  // Liczba wydarzeń dla dzieci
-  const kidsCount = useMemo(() => {
-    return initialItems.filter((item) => {
-      const itemIsArchived = getStatus(item.slug, Boolean(item.archived));
-      if (isArchiveView && !itemIsArchived) return false;
-      if (!isArchiveView && !showOnlyFavorites && itemIsArchived) return false;
-      return (item.status === 'published' || showDrafts) && (item.category === 'dla-dzieci' || item.isForKids);
-    }).length;
-  }, [initialItems, showDrafts, isArchiveView, showOnlyFavorites, getStatus]);
+  const matchesFeedFilters = (
+    item: FeedItem,
+    options: {
+      ignoreCity?: boolean;
+      ignoreCategory?: boolean;
+      ignoreKids?: boolean;
+      ignoreDate?: boolean;
+    } = {}
+  ) => {
+    const { ignoreCity = false, ignoreCategory = false, ignoreKids = false, ignoreDate = false } = options;
 
-  // Zliczanie wpisów per miasto z uwzględnieniem trybu ulubionych / archiwum / dziecięcego
+    if (!showDrafts && item.status === 'draft') return false;
+    if (showDrafts && item.status !== 'draft') return false;
+
+    const itemIsArchived = getStatus(item.slug, Boolean(item.archived));
+    if (isArchiveView) {
+      if (!itemIsArchived) return false;
+    } else if (!showOnlyFavorites) {
+      if (itemIsArchived) return false;
+    }
+
+    if (showOnlyFavorites && !favorites.includes(item.slug)) {
+      return false;
+    }
+
+    if (!ignoreKids && onlyKids && item.category !== 'dla-dzieci' && !item.isForKids) {
+      return false;
+    }
+
+    if (!ignoreCity && selectedCity !== 'all' && item.city !== selectedCity) {
+      return false;
+    }
+
+    if (!ignoreCategory && selectedCategory !== 'all' && item.category !== selectedCategory) {
+      return false;
+    }
+
+    if (!ignoreDate) {
+      const itemDate = getItemDate(item);
+      if (dateFrom && itemDate < dateFrom) return false;
+      if (dateTo && itemDate > dateTo) return false;
+    }
+
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase();
+      const matchesTitle = item.title.toLowerCase().includes(query);
+      const matchesSummary = item.summary.toLowerCase().includes(query);
+      const matchesLocation = item.location?.toLowerCase().includes(query);
+      const matchesCityName = CITIES[item.city]?.name.toLowerCase().includes(query);
+      if (!matchesTitle && !matchesSummary && !matchesLocation && !matchesCityName) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  // Liczba wydarzeń dla dzieci (z uwzględnieniem pozostałych aktywnych filtrów)
+  const kidsCount = useMemo(() => {
+    return initialItems.filter(
+      (item) =>
+        matchesFeedFilters(item, { ignoreKids: true }) &&
+        (item.category === 'dla-dzieci' || item.isForKids)
+    ).length;
+  }, [
+    initialItems,
+    showDrafts,
+    isArchiveView,
+    showOnlyFavorites,
+    favorites,
+    selectedCity,
+    selectedCategory,
+    dateFrom,
+    dateTo,
+    searchQuery,
+    getStatus,
+  ]);
+
+  // Zliczanie fasetowe wpisów per miasto
   const cityCounts = useMemo(() => {
     const counts: Record<string, number> = { all: 0 };
     initialItems.forEach((item) => {
-      if (item.status === 'published' || showDrafts) {
-        const itemIsArchived = getStatus(item.slug, Boolean(item.archived));
-        if (isArchiveView && !itemIsArchived) return;
-        if (!isArchiveView && !showOnlyFavorites && itemIsArchived) return;
-
-        if (onlyKids && item.category !== 'dla-dzieci' && !item.isForKids) return;
-        if (showOnlyFavorites && !favorites.includes(item.slug)) return;
-
-        counts.all = (counts.all || 0) + 1;
-        counts[item.city] = (counts[item.city] || 0) + 1;
-      }
+      if (!matchesFeedFilters(item, { ignoreCity: true })) return;
+      counts.all = (counts.all || 0) + 1;
+      counts[item.city] = (counts[item.city] || 0) + 1;
     });
     return counts;
-  }, [initialItems, showDrafts, onlyKids, showOnlyFavorites, favorites, isArchiveView, getStatus]);
+  }, [
+    initialItems,
+    showDrafts,
+    onlyKids,
+    showOnlyFavorites,
+    favorites,
+    selectedCategory,
+    dateFrom,
+    dateTo,
+    searchQuery,
+    isArchiveView,
+    getStatus,
+  ]);
+
+  // Zliczanie fasetowe wpisów per kategoria
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: 0 };
+    initialItems.forEach((item) => {
+      if (!matchesFeedFilters(item, { ignoreCategory: true })) return;
+      counts.all = (counts.all || 0) + 1;
+      counts[item.category] = (counts[item.category] || 0) + 1;
+    });
+    return counts;
+  }, [
+    initialItems,
+    showDrafts,
+    onlyKids,
+    showOnlyFavorites,
+    favorites,
+    selectedCity,
+    dateFrom,
+    dateTo,
+    searchQuery,
+    isArchiveView,
+    getStatus,
+  ]);
+
+  // Zliczanie fasetowe dla presetów dat (7 i 30 dni)
+  const datePresetCounts = useMemo(() => {
+    const today = new Date();
+    const todayStr = toInputDate(today);
+    const start7 = new Date(today);
+    start7.setDate(start7.getDate() - 6);
+    const start7Str = toInputDate(start7);
+    const start30 = new Date(today);
+    start30.setDate(start30.getDate() - 29);
+    const start30Str = toInputDate(start30);
+
+    let any = 0;
+    let last7 = 0;
+    let last30 = 0;
+
+    initialItems.forEach((item) => {
+      if (!matchesFeedFilters(item, { ignoreDate: true })) return;
+      any += 1;
+      const d = getItemDate(item);
+      if (d && d >= start7Str && d <= todayStr) last7 += 1;
+      if (d && d >= start30Str && d <= todayStr) last30 += 1;
+    });
+
+    return { any, last7, last30 };
+  }, [
+    initialItems,
+    showDrafts,
+    onlyKids,
+    showOnlyFavorites,
+    favorites,
+    selectedCity,
+    selectedCategory,
+    searchQuery,
+    isArchiveView,
+    getStatus,
+  ]);
 
   // Liczba szkiców oczekujących na zatwierdzenie
   const draftCount = useMemo(() => {
@@ -257,67 +389,14 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
 
   // Filtrowanie wpisów (przeszukuje wszystkie aktywne artykuły przed podziałem na strony)
   const filteredItems = useMemo(() => {
-    return initialItems.filter((item) => {
-      // Filtr statusu (domyślnie tylko opublikowane)
-      if (!showDrafts && item.status === 'draft') {
-        return false;
-      }
-      if (showDrafts && item.status !== 'draft') {
-        return false;
-      }
-
-      // Filtr sekcji Archiwum vs Widok główny/kategorie (AC 2, AC 3, AC 4)
-      const itemIsArchived = getStatus(item.slug, Boolean(item.archived));
-      if (isArchiveView) {
-        if (!itemIsArchived) return false;
-      } else if (!showOnlyFavorites) {
-        if (itemIsArchived) return false;
-      }
-
-      // Filtr sekcji ulubionych
-      if (showOnlyFavorites && !favorites.includes(item.slug)) {
-        return false;
-      }
-
-      // Filtr sekcji dziecięcej
-      if (onlyKids && item.category !== 'dla-dzieci' && !item.isForKids) {
-        return false;
-      }
-
-      // Filtr miasta
-      if (selectedCity !== 'all' && item.city !== selectedCity) {
-        return false;
-      }
-
-      // Filtr kategorii
-      if (selectedCategory !== 'all' && item.category !== selectedCategory) {
-        return false;
-      }
-
-      // Filtr daty
-      const itemDate = getItemDate(item);
-      if (dateFrom && itemDate < dateFrom) return false;
-      if (dateTo && itemDate > dateTo) return false;
-
-      // Filtr wyszukiwarki
-      if (searchQuery.trim() !== '') {
-        const query = searchQuery.toLowerCase();
-        const matchesTitle = item.title.toLowerCase().includes(query);
-        const matchesSummary = item.summary.toLowerCase().includes(query);
-        const matchesLocation = item.location?.toLowerCase().includes(query);
-        const matchesCityName = CITIES[item.city]?.name.toLowerCase().includes(query);
-        if (!matchesTitle && !matchesSummary && !matchesLocation && !matchesCityName) {
-          return false;
-        }
-      }
-
-      return true;
-    }).sort((a, b) => {
-      const timeA = new Date(a.publishedDate || 0).getTime();
-      const timeB = new Date(b.publishedDate || 0).getTime();
-      const difference = timeB - timeA;
-      return sortOrder === 'newest' ? difference : -difference;
-    });
+    return initialItems
+      .filter((item) => matchesFeedFilters(item))
+      .sort((a, b) => {
+        const timeA = new Date(a.publishedDate || 0).getTime();
+        const timeB = new Date(b.publishedDate || 0).getTime();
+        const difference = timeB - timeA;
+        return sortOrder === 'newest' ? difference : -difference;
+      });
   }, [initialItems, selectedCity, selectedCategory, searchQuery, showDrafts, onlyKids, showOnlyFavorites, favorites, dateFrom, dateTo, sortOrder, isArchiveView, getStatus]);
 
   // Reset strony do 1 przy każdej zmianie filtra wyszukiwania, kategorii, miasta, daty, sortowania lub limitu na stronę
@@ -420,6 +499,26 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
     }
   };
 
+  const visibleCities = useMemo(() => {
+    return Object.entries(CITIES).filter(
+      ([cityKey]) => (cityCounts[cityKey] || 0) > 0 || selectedCity === cityKey
+    );
+  }, [cityCounts, selectedCity]);
+
+  const visibleCategories = useMemo(() => {
+    return Object.entries(CATEGORIES).filter(
+      ([catKey]) => (categoryCounts[catKey] || 0) > 0 || selectedCategory === catKey
+    );
+  }, [categoryCounts, selectedCategory]);
+
+  const showKidsButton = kidsCount > 0 || onlyKids;
+  const showFavoritesButton =
+    (isLoaded && favoritesCount > 0) || showOnlyFavorites || defaultOnlyFavorites;
+  const showDateControls = datePresetCounts.any > 0 || datePreset !== 'all';
+  const showDateAndFavoritesBlock = showDateControls || showFavoritesButton;
+  const showCitySection = visibleCities.length > 0 || selectedCity !== 'all';
+  const showCategorySection = visibleCategories.length > 0 || selectedCategory !== 'all';
+
   return (
     <div className="space-y-8">
       {/* Baner moderacji jeśli są szkice do zatwierdzenia */}
@@ -486,158 +585,173 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
           </div>
 
           {/* Duży wyróżniony przycisk strefy dziecięcej */}
-          <button
-            onClick={() => setOnlyKids(!onlyKids)}
-            className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all border sm:flex-shrink-0 ${
-              onlyKids
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-zinc-950 border-emerald-400 shadow-lg shadow-emerald-500/20'
-                : 'bg-zinc-950/80 hover:bg-emerald-950/30 text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60'
-            }`}
-          >
-            <Smile className="w-4 h-4" />
-            <span>Strefa Dzieciaka (4-10 lat)</span>
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${onlyKids ? 'bg-zinc-950 text-emerald-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
-              {kidsCount}
-            </span>
-          </button>
-        </div>
-
-        {/* Sekcja filtrów dat oraz wejście do ulubionych po lewej stronie */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4 space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-amber-400" /> Data publikacji źródła
+          {showKidsButton && (
+            <button
+              onClick={() => setOnlyKids(!onlyKids)}
+              className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all border sm:flex-shrink-0 ${
+                onlyKids
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-zinc-950 border-emerald-400 shadow-lg shadow-emerald-500/20'
+                  : 'bg-zinc-950/80 hover:bg-emerald-950/30 text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60'
+              }`}
+            >
+              <Smile className="w-4 h-4" />
+              <span>Strefa Dzieciaka (4-10 lat)</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${onlyKids ? 'bg-zinc-950 text-emerald-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
+                {kidsCount}
               </span>
-              <p className="text-xs text-zinc-500 mt-1">Starsze wpisy bez daty źródłowej używają daty dodania do portalu.</p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Dedykowany przycisk wejścia do podsekcji ulubionych po lewej stronie filtrów dat */}
-              <button
-                type="button"
-                onClick={handleToggleFavorites}
-                aria-pressed={showOnlyFavorites}
-                title={showOnlyFavorites ? 'Pokaż wszystkie artykuły' : 'Pokaż tylko artykuły z ulubionych'}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all inline-flex items-center gap-1.5 shadow-sm ${
-                  showOnlyFavorites
-                    ? 'bg-rose-500 text-white border-rose-400 shadow-rose-500/20 ring-1 ring-rose-400/50'
-                    : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:border-rose-400/60 hover:text-rose-300 hover:bg-zinc-800'
-                }`}
-              >
-                <Heart
-                  className={`w-3.5 h-3.5 transition-transform ${
-                    showOnlyFavorites ? 'fill-current text-white scale-110' : 'text-rose-400'
-                  }`}
-                />
-                <span>Ulubione</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                    showOnlyFavorites
-                      ? 'bg-rose-700 text-white'
-                      : favoritesCount > 0
-                      ? 'bg-rose-500/20 text-rose-300'
-                      : 'bg-zinc-800 text-zinc-400'
-                  }`}
-                >
-                  {isLoaded ? favoritesCount : 0}
-                </span>
-              </button>
-
-              <span className="w-px h-5 bg-zinc-800 mx-1 hidden sm:inline-block" aria-hidden="true" />
-
-              {/* Filtry z datami */}
-              {([
-                ['all', 'Dowolna data'],
-                ['7', 'Ostatnie 7 dni'],
-                ['30', 'Ostatnie 30 dni'],
-                ['custom', 'Wybierz zakres'],
-              ] as const).map(([preset, label]) => (
-                <button
-                  key={preset}
-                  onClick={() => setPreset(preset)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                    datePreset === preset
-                      ? 'bg-amber-400 text-zinc-950 border-amber-400'
-                      : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:border-zinc-500'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-          {datePreset === 'custom' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
-              <label className="text-xs text-zinc-400 space-y-1.5">
-                <span>Od</span>
-                <input
-                  type="date"
-                  value={dateFrom}
-                  max={dateTo || undefined}
-                  onChange={(event) => setDateFrom(event.target.value)}
-                  className="block w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-amber-400 focus:outline-none"
-                />
-              </label>
-              <label className="text-xs text-zinc-400 space-y-1.5">
-                <span>Do</span>
-                <input
-                  type="date"
-                  value={dateTo}
-                  min={dateFrom || undefined}
-                  onChange={(event) => setDateTo(event.target.value)}
-                  className="block w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-amber-400 focus:outline-none"
-                />
-              </label>
-            </div>
+            </button>
           )}
         </div>
 
-        {/* Pigułki miast */}
-        <div>
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-amber-400" /> Miasto lub obszar:
-            </span>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 underline underline-offset-2"
-              >
-                Resetuj filtry
-              </button>
+        {/* Sekcja filtrów dat oraz wejście do ulubionych po lewej stronie */}
+        {showDateAndFavoritesBlock && (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4 space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-amber-400" /> Data publikacji źródła
+                </span>
+                <p className="text-xs text-zinc-500 mt-1">Starsze wpisy bez daty źródłowej używają daty dodania do portalu.</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Dedykowany przycisk wejścia do podsekcji ulubionych po lewej stronie filtrów dat */}
+                {showFavoritesButton && (
+                  <button
+                    type="button"
+                    onClick={handleToggleFavorites}
+                    aria-pressed={showOnlyFavorites}
+                    title={showOnlyFavorites ? 'Pokaż wszystkie artykuły' : 'Pokaż tylko artykuły z ulubionych'}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all inline-flex items-center gap-1.5 shadow-sm ${
+                      showOnlyFavorites
+                        ? 'bg-rose-500 text-white border-rose-400 shadow-rose-500/20 ring-1 ring-rose-400/50'
+                        : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:border-rose-400/60 hover:text-rose-300 hover:bg-zinc-800'
+                    }`}
+                  >
+                    <Heart
+                      className={`w-3.5 h-3.5 transition-transform ${
+                        showOnlyFavorites ? 'fill-current text-white scale-110' : 'text-rose-400'
+                      }`}
+                    />
+                    <span>Ulubione</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                        showOnlyFavorites
+                          ? 'bg-rose-700 text-white'
+                          : favoritesCount > 0
+                          ? 'bg-rose-500/20 text-rose-300'
+                          : 'bg-zinc-800 text-zinc-400'
+                      }`}
+                    >
+                      {isLoaded ? favoritesCount : 0}
+                    </span>
+                  </button>
+                )}
+
+                {showFavoritesButton && showDateControls && (
+                  <span className="w-px h-5 bg-zinc-800 mx-1 hidden sm:inline-block" aria-hidden="true" />
+                )}
+
+                {/* Filtry z datami */}
+                {showDateControls &&
+                  ([
+                    ['all', 'Dowolna data'],
+                    ['7', 'Ostatnie 7 dni'],
+                    ['30', 'Ostatnie 30 dni'],
+                    ['custom', 'Wybierz zakres'],
+                  ] as const)
+                    .filter(([preset]) => {
+                      if (preset === '7') return datePresetCounts.last7 > 0 || datePreset === '7';
+                      if (preset === '30') return datePresetCounts.last30 > 0 || datePreset === '30';
+                      return true;
+                    })
+                    .map(([preset, label]) => (
+                      <button
+                        key={preset}
+                        onClick={() => setPreset(preset)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                          datePreset === preset
+                            ? 'bg-amber-400 text-zinc-950 border-amber-400'
+                            : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:border-zinc-500'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+              </div>
+            </div>
+            {showDateControls && datePreset === 'custom' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
+                <label className="text-xs text-zinc-400 space-y-1.5">
+                  <span>Od</span>
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    max={dateTo || undefined}
+                    onChange={(event) => setDateFrom(event.target.value)}
+                    className="block w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-amber-400 focus:outline-none"
+                  />
+                </label>
+                <label className="text-xs text-zinc-400 space-y-1.5">
+                  <span>Do</span>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    min={dateFrom || undefined}
+                    onChange={(event) => setDateTo(event.target.value)}
+                    className="block w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-amber-400 focus:outline-none"
+                  />
+                </label>
+              </div>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedCity('all')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
-                selectedCity === 'all'
-                  ? 'bg-amber-400 text-zinc-950 border-amber-400 shadow-md shadow-amber-400/10'
-                  : 'bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/60'
-              }`}
-            >
-              Wszystkie ({cityCounts.all || 0})
-            </button>
-            {Object.entries(CITIES).map(([cityKey, cityData]) => {
-              const count = cityCounts[cityKey] || 0;
-              const isSelected = selectedCity === cityKey;
-              return (
+        )}
+
+        {/* Pigułki miast */}
+        {showCitySection ? (
+          <div>
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-amber-400" /> Miasto lub obszar:
+              </span>
+              {hasActiveFilters && (
                 <button
-                  key={cityKey}
-                  onClick={() => setSelectedCity(cityKey)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border flex items-center gap-1.5 ${
-                    isSelected
-                      ? 'bg-amber-400 text-zinc-950 border-amber-400 font-semibold shadow-md shadow-amber-400/10'
-                      : 'bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/60'
-                  }`}
+                  onClick={clearFilters}
+                  className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 underline underline-offset-2"
                 >
-                  <span
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ backgroundColor: isSelected ? '#18181b' : cityData.color }}
-                  ></span>
-                  {cityData.name}
-                  {count > 0 && (
+                  Resetuj filtry
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedCity('all')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                  selectedCity === 'all'
+                    ? 'bg-amber-400 text-zinc-950 border-amber-400 shadow-md shadow-amber-400/10'
+                    : 'bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/60'
+                }`}
+              >
+                Wszystkie ({cityCounts.all || 0})
+              </button>
+              {visibleCities.map(([cityKey, cityData]) => {
+                const count = cityCounts[cityKey] || 0;
+                const isSelected = selectedCity === cityKey;
+                return (
+                  <button
+                    key={cityKey}
+                    onClick={() => setSelectedCity(cityKey)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-amber-400 text-zinc-950 border-amber-400 font-semibold shadow-md shadow-amber-400/10'
+                        : 'bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/60'
+                    }`}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: isSelected ? '#18181b' : cityData.color }}
+                    ></span>
+                    {cityData.name}
                     <span
                       className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                         isSelected ? 'bg-zinc-900/30 text-zinc-950' : 'bg-zinc-800 text-zinc-400'
@@ -645,47 +759,68 @@ export const InteractiveFeed: React.FC<InteractiveFeedProps> = ({
                     >
                       {count}
                     </span>
-                  )}
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        ) : (
+          hasActiveFilters && (
+            <div className="flex justify-end">
+              <button
+                onClick={clearFilters}
+                className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 underline underline-offset-2"
+              >
+                Resetuj filtry
+              </button>
+            </div>
+          )
+        )}
 
         {/* Kategorie (Chips) */}
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5 mb-2.5">
-            <Filter className="w-3.5 h-3.5 text-amber-400" /> Kategoria:
-          </span>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all border ${
-                selectedCategory === 'all'
-                  ? 'bg-zinc-100 text-zinc-950 border-zinc-100 font-semibold'
-                  : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
-              }`}
-            >
-              Wszystkie kategorie
-            </button>
-            {Object.entries(CATEGORIES).map(([catKey, catData]) => {
-              const isSelected = selectedCategory === catKey;
-              return (
-                <button
-                  key={catKey}
-                  onClick={() => setSelectedCategory(catKey)}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-all border ${
-                    isSelected
-                      ? 'bg-amber-400 text-zinc-950 border-amber-400 font-semibold'
-                      : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
-                  }`}
-                >
-                  {catData.name}
-                </button>
-              );
-            })}
+        {showCategorySection && (
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5 mb-2.5">
+              <Filter className="w-3.5 h-3.5 text-amber-400" /> Kategoria:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedCategory('all')}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all border ${
+                  selectedCategory === 'all'
+                    ? 'bg-zinc-100 text-zinc-950 border-zinc-100 font-semibold'
+                    : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
+                }`}
+              >
+                Wszystkie kategorie ({categoryCounts.all || 0})
+              </button>
+              {visibleCategories.map(([catKey, catData]) => {
+                const count = categoryCounts[catKey] || 0;
+                const isSelected = selectedCategory === catKey;
+                return (
+                  <button
+                    key={catKey}
+                    onClick={() => setSelectedCategory(catKey)}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-all border inline-flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-amber-400 text-zinc-950 border-amber-400 font-semibold'
+                        : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
+                    }`}
+                  >
+                    <span>{catData.name}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        isSelected ? 'bg-zinc-900/20 text-zinc-950' : 'bg-zinc-800 text-zinc-400'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Kotwica dla Scroll-to-Top przy zmianie strony */}

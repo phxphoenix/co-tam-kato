@@ -4,8 +4,10 @@ import {
   parseSourcesMarkdown,
   loadActiveSources,
   serializeSourcesMarkdown,
+  serializeBalanceSettingsInMarkdown,
   DEFAULT_BALANCE_SETTINGS,
   parseBalanceSettings,
+  validateBalanceSettings,
 } from './sources-parser.mjs';
 
 console.log('Testing parseSourcesMarkdown...');
@@ -87,6 +89,49 @@ assert.equal(found.name, 'Klub Muzyczny A|B');
 assert.equal(found.category, 'Kluby | Muzyka');
 assert.equal(found.hints, 'Spodek | NOSPR | MCK Katowice');
 console.log('✓ Pipe escaping and unescaping roundtrip works perfectly');
+
+// 6. Test new AI worker parameters and serializeBalanceSettingsInMarkdown roundtrip
+const parsedBalance = parseBalanceSettings(originalSourcesMd);
+assert.equal(parsedBalance.maxArticlesPerRun, 4);
+assert.equal(parsedBalance.rssPoolShare, 0.50);
+assert.equal(parsedBalance.maxPromptItems, 60);
+assert.equal(
+  serializeBalanceSettingsInMarkdown(originalSourcesMd, parsedBalance),
+  originalSourcesMd,
+  'serializeBalanceSettingsInMarkdown roundtrip must match original config/sources.md'
+);
+
+const customBalanceMd = serializeBalanceSettingsInMarkdown(originalSourcesMd, {
+  ...DEFAULT_BALANCE_SETTINGS,
+  maxArticlesPerRun: 6,
+  maxCandidates: 9,
+  ticketedMaxShare3d: 0.35,
+  rssPoolShare: 0.65,
+  maxPromptItems: 80,
+});
+const reparsedCustom = parseBalanceSettings(customBalanceMd);
+assert.equal(reparsedCustom.maxArticlesPerRun, 6);
+assert.equal(reparsedCustom.maxCandidates, 9);
+assert.equal(reparsedCustom.ticketedMaxShare3d, 0.35);
+assert.equal(reparsedCustom.rssPoolShare, 0.65);
+assert.equal(reparsedCustom.maxPromptItems, 80);
+assert.equal(parseSourcesMarkdown(customBalanceMd).length, allSources.length);
+assert.ok(customBalanceMd.includes('## Instrukcje operacyjne dla Agenta AI'));
+
+// Cross-validation check: maxCandidates < maxArticlesPerRun is auto-raised
+const origWarn = console.warn;
+console.warn = () => {};
+try {
+  const crossValidated = validateBalanceSettings({
+    ...DEFAULT_BALANCE_SETTINGS,
+    maxArticlesPerRun: 8,
+    maxCandidates: 4,
+  });
+  assert.equal(crossValidated.maxCandidates, 8);
+} finally {
+  console.warn = origWarn;
+}
+console.log('✓ AI worker settings parsing, cross-validation and markdown serialization roundtrip work');
 
 console.log('All parser and serialization tests passed successfully!');
 

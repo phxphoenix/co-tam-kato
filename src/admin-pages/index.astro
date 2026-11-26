@@ -1,0 +1,15 @@
+---
+import { isAdminAuthenticated } from '../server/admin-auth';
+
+export const prerender = false;
+
+const rawBase = import.meta.env.BASE_URL || '/';
+const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+
+const authenticated = await isAdminAuthenticated(Astro.request);
+if (authenticated) {
+  return Astro.redirect(`${base}admin/sources`, 302);
+}
+
+return Astro.redirect(`${base}admin/login`, 302);
+---

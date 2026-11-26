@@ -42,6 +42,8 @@ const serializedItems = sortedNews.map((item) => ({
   summary: item.data.summary,
   location: item.data.location,
   isAlert: item.data.isAlert,
+  isForKids: item.data.isForKids || item.data.category === 'dla-dzieci',
+  ageRange: item.data.ageRange,
   archived: Boolean(item.data.archived),
   manualOverride: Boolean(item.data.manualOverride),
   sourceUrl: item.data.sourceUrl,

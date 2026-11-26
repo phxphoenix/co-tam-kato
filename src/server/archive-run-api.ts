@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { requireAdminApiAuth } from './admin-auth.ts';
 // @ts-ignore - archive-worker jest modułem ESM w scripts/
 import { runArchiveWorker } from '../../scripts/archive-worker.mjs';
 import { validateArchivePeriod } from './archive-settings-service';
@@ -6,6 +7,9 @@ import { validateArchivePeriod } from './archive-settings-service';
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
+  const unauthorized = await requireAdminApiAuth(request);
+  if (unauthorized) return unauthorized;
+
   try {
     let customDays: number | undefined = undefined;
 

@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AdminLoginForm from '../components/admin/AdminLoginForm';
+import {
+  isAdminAuthenticated,
+  isAdminSecretConfigured,
+  sanitizeAdminRedirect,
+} from '../server/admin-auth';
+
+export const prerender = false;
+
+const rawBase = import.meta.env.BASE_URL || '/';
+const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+
+const nextParam = Astro.url.searchParams.get('next');
+const safeNext = sanitizeAdminRedirect(nextParam, base);
+
+if (await isAdminAuthenticated(Astro.request)) {
+  return Astro.redirect(safeNext, 302);
+}
+
+const isConfigured = isAdminSecretConfigured();
+---
+
+<BaseLayout
+  title="Logowanie Administratora | Co Tam KATO"
+  description="Autoryzacja dostępu do panelu administracyjnego Co Tam KATO."
+  showAdmin={false}
+>
+  <AdminLoginForm client:load nextUrl={safeNext} isConfigured={isConfigured} baseUrl={base} />
+</BaseLayout>

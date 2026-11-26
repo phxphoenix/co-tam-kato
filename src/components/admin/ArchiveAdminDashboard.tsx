@@ -649,39 +649,45 @@ export default function ArchiveAdminDashboard({
               >
                 Wszystkie ({stats.total})
               </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('active')}
-                className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
-                  statusFilter === 'active'
-                    ? 'bg-emerald-500/20 text-emerald-300'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                Główna ({stats.active})
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('archived')}
-                className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
-                  statusFilter === 'archived'
-                    ? 'bg-indigo-500/20 text-indigo-300'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                Archiwum ({stats.archived})
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('override')}
-                className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
-                  statusFilter === 'override'
-                    ? 'bg-amber-500/20 text-amber-300'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                🛡️ Override ({stats.overrides})
-              </button>
+              {(stats.active > 0 || statusFilter === 'active') && (
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('active')}
+                  className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
+                    statusFilter === 'active'
+                      ? 'bg-emerald-500/20 text-emerald-300'
+                      : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  Główna ({stats.active})
+                </button>
+              )}
+              {(stats.archived > 0 || statusFilter === 'archived') && (
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('archived')}
+                  className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
+                    statusFilter === 'archived'
+                      ? 'bg-indigo-500/20 text-indigo-300'
+                      : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  Archiwum ({stats.archived})
+                </button>
+              )}
+              {(stats.overrides > 0 || statusFilter === 'override') && (
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('override')}
+                  className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
+                    statusFilter === 'override'
+                      ? 'bg-amber-500/20 text-amber-300'
+                      : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  🛡️ Override ({stats.overrides})
+                </button>
+              )}
             </div>
           </div>
         </div>

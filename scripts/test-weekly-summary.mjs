@@ -355,11 +355,16 @@ console.log('\n--- 3. Format §6: sekcje, sortowanie, polskie daty, ⚠️ Ostat
   assert.ok(summaryArticle.content.includes('### Teatr Rozrywki'), 'Treść musi zawierać sekcję ### Teatr Rozrywki');
   assert.equal(summaryArticle.content.includes('### Spodek'), false, 'Pusta sekcja ### Spodek musi zostać pominięta');
 
-  // Kolejność sekcji: NOSPR -> Teatr Śląski -> Teatr Rozrywki
+  // Kolejność sekcji: NOSPR -> Teatr Śląski -> Teatr Rozrywki oraz separatory Markdown ---
   const idxNospr = summaryArticle.content.indexOf('### NOSPR');
   const idxSlaski = summaryArticle.content.indexOf('### Teatr Śląski');
   const idxRozrywki = summaryArticle.content.indexOf('### Teatr Rozrywki');
   assert.ok(idxNospr < idxSlaski && idxSlaski < idxRozrywki, 'Sekcje muszą być w kolejności §6');
+  const separatorMatches = summaryArticle.content.match(/\n---\n/g) || [];
+  assert.ok(
+    separatorMatches.length >= 3,
+    `Wpis zbiorczy musi zawierać separatory --- między placówkami i przed stopką (znaleziono ${separatorMatches.length})`
+  );
 
   // Sortowanie po dacie wewnątrz sekcji NOSPR (14.11 przed 23.11)
   const idx14 = summaryArticle.content.indexOf('14.11 (sobota), godz. 18:00');

@@ -1,12 +1,23 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import ArchiveAdminDashboard from '../../components/admin/ArchiveAdminDashboard';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArchiveAdminDashboard from '../components/admin/ArchiveAdminDashboard';
 import { getCollection } from 'astro:content';
-import { getArchiveSettings } from '../../server/archive-settings-service';
-import { getPaginationSettings } from '../../server/sources-service';
+import { getArchiveSettings } from '../server/archive-settings-service';
+import { getPaginationSettings } from '../server/sources-service';
+import { isAdminAuthenticated } from '../server/admin-auth';
+
+export const prerender = false;
 
 const rawBase = import.meta.env.BASE_URL || '/';
 const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+
+const authenticated = await isAdminAuthenticated(Astro.request);
+if (!authenticated) {
+  return Astro.redirect(
+    `${base}admin/login?next=${encodeURIComponent(`${base}admin/archive`)}`,
+    302
+  );
+}
 
 // Pobranie bieżących ustawień archiwizacji oraz paginacji z config/sources.md
 const settings = getArchiveSettings();

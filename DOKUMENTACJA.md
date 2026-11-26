@@ -10,7 +10,7 @@ Dokument opisuje kod znajdujący się w repozytorium w chwili przeglądu (27 wrz
 
 - **Astro 5** generuje HTML stron podczas budowania (SSG) oraz obsługuje Serverless na Vercelu (`@astrojs/vercel`).
 - **React 19** obsługuje interaktywne wyspy: filtrowanie listy, ulubione i pasek alertów.
-- **Tailwind CSS 4** wraz z pluginem Vite dostarcza style; dodatkowe reguły są w `src/styles/global.css`.
+- **Tailwind CSS 4** wraz z pluginem Vite oraz wtyczką `@tailwindcss/typography` dostarcza style; dodatkowe reguły (w tym dedykowana klasa `.weekly-culture-prose` dla zestawień „Tydzień w kulturze”) są w `src/styles/global.css`.
 - **TypeScript** opisuje konfigurację i komponenty React.
 - **Keystatic CMS** edytuje kolekcję artykułów Markdown lokalnie (zapis na dysk) oraz w chmurze na Vercelu (zapis commitów bezpośrednio do repozytorium GitHub via GitHub App OAuth).
 - **Vercel** obsługuje produkcyjne wdrożenie strony oraz dynamiczne trasy API (`/api/keystatic/*`) i panel administracyjny (`/keystatic`).
@@ -74,13 +74,13 @@ Strona główna zawiera sekcję wprowadzającą oraz `InteractiveFeed` uruchamia
 
 ### Lista i filtry (`src/components/InteractiveFeed.tsx`)
 
-Komponent umożliwia filtrowanie według miasta, kategorii, wydarzeń dla dzieci, zakresu dat publikacji (`publishedDate`), statusu publikacji oraz zapytania tekstowego. Wyszukiwanie sprawdza tytuł, streszczenie, lokalizację i polską nazwę miasta. Wyniki można sortować od najnowszych lub najstarszych według daty publikacji artykułu (`publishedDate`). Można wyczyścić aktywne filtry. Karty pokazują miasto, kategorię, datę publikacji oraz opcjonalną datę wydarzenia (`eventDate`), lokalizację, oznaczenie AI i odnośnik do szczegółów.
+Komponent umożliwia filtrowanie według miasta, kategorii, wydarzeń dla dzieci, zakresu dat publikacji (`publishedDate`), statusu publikacji oraz zapytania tekstowego. Wyszukiwanie sprawdza tytuł, streszczenie, lokalizację i polską nazwę miasta. Zastosowano kontekstowe zliczanie fasetowe (*cross-faceting*) dla miast, kategorii (z licznikami na chipach), Strefy Dzieciaka, Ulubionych oraz presetów dat (7/30 dni) — przyciski filtrów z zerową liczbą pasujących artykułów są dynamicznie ukrywane (z zachowaniem widoczności aktywnego filtra, aby można go było wyłączyć; analogiczna zasada obowiązuje w panelach administracyjnych). Wyniki można sortować od najnowszych lub najstarszych według daty publikacji artykułu (`publishedDate`). Można wyczyścić aktywne filtry. Karty pokazują miasto, kategorię, datę publikacji oraz opcjonalną datę wydarzenia (`eventDate`), lokalizację, oznaczenie AI i odnośnik do szczegółów.
 
 Domyślnie lista pokazuje wyłącznie `published`. Jeśli w danych znajdują się szkice, widoczny jest licznik i przełącznik podglądu szkiców oraz link do Keystatic. Przełączenie podglądu pokazuje szkice zamiast opublikowanych wpisów. W statycznym publicznym buildzie szkice również są częścią wygenerowanych danych i tras — ukrywa je interfejs, a nie serwer z uwierzytelnianiem. Dlatego status `draft` nie stanowi kontroli dostępu ani poufności.
 
 ### Artykuł (`src/pages/wpis/[slug].astro`)
 
-Astro generuje stronę dla każdego wpisu, którego status nie jest `deleted`; identyfikatorem adresu jest nazwa pliku bez `.md`/`.mdx`. Strona pokazuje metadane (w tym datę publikacji `publishedDate` oraz opcjonalną datę samego wydarzenia `eventDate`), streszczenie i renderowaną treść Markdown, a także link do źródła, jeśli podano. Wyświetla do dwóch pierwszych opublikowanych wpisów z tego samego miasta jako powiązane. Wpis `draft` ma etykietę szkicu, lecz sam route również jest generowany, więc nie należy traktować go jako prywatnego.
+Astro generuje stronę dla każdego wpisu, którego status nie jest `deleted`; identyfikatorem adresu jest nazwa pliku bez `.md`/`.mdx`. Strona pokazuje metadane (w tym datę publikacji `publishedDate` oraz opcjonalną datę samego wydarzenia `eventDate`), streszczenie i renderowaną treść Markdown (z aktywną wtyczką `@tailwindcss/typography`; wpisy zawierające `tydzien-w-kulturze` w slugu otrzymują dodatkową klasę `.weekly-culture-prose` z kartami nagłówków placówek, separatorami `hr` i wydzielonymi wierszami wydarzeń), a także link do źródła, jeśli podano. Wyświetla do dwóch pierwszych opublikowanych wpisów z tego samego miasta jako powiązane. Wpis `draft` ma etykietę szkicu, lecz sam route również jest generowany, więc nie należy traktować go jako prywatnego.
 
 ### Strona „Dla dzieci” (`src/pages/dla-dzieci.astro`)
 
@@ -174,7 +174,7 @@ Błąd pojedynczego źródła jest izolowany blokiem try/catch i nie przerywa pr
 
 ### Redakcja, Model Fallback i zabezpieczenia limitów (RPM / TPM Guard)
 
-Do Gemini wysyłanych jest maksymalnie 60 elementów źródłowych wyselekcjonowanych przez `selectPromptItems` (po wstępnym odfiltrowaniu już opublikowanych lub usuniętych konkretnych adresów URL oraz ze zbalansowanym przydziałem round-robin pomiędzy źródłami `RSS` i `WEB`, domyślnie po 30 pozycji z automatyczną realokacją wolnej puli). Prompt generowany przez czystą funkcję `buildDigestPrompt` żąda maksymalnie `MAX_CANDIDATES = 7` kandydatów w kolejności ważności (z których system publikuje maksymalnie `MAX_ARTICLES = 4`) i zawiera dynamiczny blok **`RÓWNOWAGA TEMATYCZNA`** wyliczany z `computeBalanceBudget` (bieżące limity `ticketedAllowed`, `nosprAllowed`, informacja `floorRequired`, rozkład kategorii z ostatnich 3 dni oraz łagodna zasada wczesnego zapowiadania wydarzeń biletowanych w ramach limitu z bloku `RÓWNOWAGA`, zastępująca dawny sztywny nakaz priorytetu NOSPR).
+Do Gemini wysyłanych jest domyślnie do `60` (konfigurowalne przez `maxPromptItems` w `config/sources.md`, zakres `20–120`) elementów źródłowych wyselekcjonowanych przez `selectPromptItems` (po wstępnym odfiltrowaniu już opublikowanych lub usuniętych konkretnych adresów URL oraz ze zbalansowanym przydziałem round-robin pomiędzy źródłami `RSS` i `WEB` według parametru `rssPoolShare`, domyślnie `0.50` = 50% / 50%, z automatyczną realokacją wolnej puli). Prompt generowany przez czystą funkcję `buildDigestPrompt` żąda maksymalnie `maxCandidates` (domyślnie `7`) kandydatów w kolejności ważności (z których system publikuje maksymalnie `maxArticlesPerRun`, domyślnie `4`, konfigurowalne `1–12` w Panelu Źródeł) i zawiera dynamiczny blok **`RÓWNOWAGA TEMATYCZNA`** wyliczany z `computeBalanceBudget` (bieżące limity `ticketedAllowed`, `nosprAllowed`, informacja `floorRequired`, rozkład kategorii z ostatnich 3 dni oraz łagodna zasada wczesnego zapowiadania wydarzeń biletowanych w ramach limitu z bloku `RÓWNOWAGA`, zastępująca dawny sztywny nakaz priorytetu NOSPR).
 
 W ramach puli `WEB` funkcje `selectPromptItems` i `interleaveWebItems` rozdzielają przynależność do grupy biletowanej (`isTicketedVenueItem`) od wyjątkowości wydarzenia (`isHighPriorityItem`):
 - Flaga `highPriority: true` nadawana jest selektywnie wyłącznie pozycjom ze statusem „Ostatnie bilety” / „Ostatnie wolne miejsca”, zawierającym słowa kluczowe (`premiera`, `prapremiera`, `start sprzedaży`, `ruszyła sprzedaż`, `sylwester`, `gala`, `festiwal`, `nowy sezon`) lub komunikatom z `NOSPR – Aktualności` (ID 30) dotyczącym sprzedaży biletów i sezonu; zwykłe pozycje repertuarowe zachowują `ticketStatus`, lecz mają `highPriority: false`.
@@ -209,17 +209,19 @@ Przed zapisem skrypt przeprowadza wielowarstwową deduplikację (`resolveCandida
 
 Aby utrzymać docelowy udział **grupy biletowanej** (`nospr`, `teatr-slaski`, `teatr-rozrywki`, `spodek`) na poziomie **30–40%** (w tym NOSPR ok. **12–20%**) przy jednoczesnym gwarantowanym minimum dziennym (`≥ 1` wpis dziennie) i ochronie „Ostatnich biletów”, proces digestu wykorzystuje deterministyczny silnik równowagi kategorii (`scripts/balance.mjs`):
 
-1. **Parametry w `config/sources.md` (`## Ustawienia równowagi treści (Agent AI)`)**:
-   - Parsowane i walidowane przez `parseBalanceSettings` / `validateBalanceSettings` w `scripts/sources-parser.mjs` (błędne lub brakujące wartości są zastępowane domyślnymi z `DEFAULT_BALANCE_SETTINGS` wraz z ostrzeżeniem w logu; zapis z panelu admina w `src/server/sources-service.ts` zachowuje tę sekcję bez zmian):
+1. **Parametry w `config/sources.md` (`## Ustawienia równowagi treści (Agent AI)`)** — edytowalne także w UI Panelu Źródeł (`/admin/sources`, sekcja „Konfiguracja Workera AI i Proporcji Treści”):
+   - Parsowane i walidowane przez `parseBalanceSettings` / `validateBalanceSettings` w `scripts/sources-parser.mjs` oraz `src/server/sources-service.ts` (błędne lub brakujące wartości są zastępowane domyślnymi z `DEFAULT_BALANCE_SETTINGS` wraz z ostrzeżeniem w logu; zapis z panelu admina aktualizuje tę sekcję przez `serializeBalanceSettingsInMarkdown` z zachowaniem reszty pliku):
+     - `maxArticlesPerRun: 4` (zakres `1–12`) — maks. liczba nowych artykułów publikowanych w jednym przebiegu workera,
+     - `maxCandidates: 7` (zakres `1–25`, `≥ maxArticlesPerRun`) — liczba kandydatów w kolejności ważności zwracana przez Gemini przed deduplikacją i selekcją równowagi,
+     - `ticketedMaxShare3d: 0.40` (zakres `0.00–1.00`) — maksymalny udział grupy biletowanej w oknie 3 dni (dziś + 2 poprzednie); po jego przekroczeniu (przy min. 4 artykułach w 3 dni i `today.ticketed ≥ 1`) budżet uruchomienia wynosi `0` poza bonusem pilnym,
+     - `rssPoolShare: 0.50` (zakres `0.10–0.90`) — docelowy udział źródeł informacyjnych `RSS` względem `WEB` w puli promptu,
      - `ticketedMaxPerRun: 2` — maks. artykułów z grupy biletowanej w jednym uruchomieniu,
      - `ticketedMaxPerDay: 3` — maks. artykułów z grupy biletowanej w danym dniu (wg prefiksu daty pliku `addedDate` w strefie `Europe/Warsaw`),
      - `ticketedMinPerDay: 1` — gwarantowane minimum dzienne dla grupy biletowanej,
-     - `ticketedMaxShare3d: 0.40` — maksymalny udział grupy biletowanej w oknie 3 dni (dziś + 2 poprzednie); po jego przekroczeniu (przy min. 4 artykułach w 3 dni i `today.ticketed ≥ 1`) budżet uruchomienia wynosi `0` poza bonusem pilnym,
      - `nosprMaxPerRun: 1`, `nosprMaxPerDay: 2` — limity dla NOSPR,
      - `otherVenueMaxPerDay: 1` — dzienny limit dla każdego z obiektów: `teatr-slaski`, `teatr-rozrywki`, `spodek`,
      - `lastTicketsBonusPerDay: 1` — dzienny bonus dla kandydatów pilnych (`urgent`: status „Ostatnie bilety” / „Ostatnie wolne miejsca” i `eventDate ≤ 14` dni), pozwalający przekroczyć wyczerpany limit dzienny lub próg udziału,
-     - `maxCandidates: 7` — liczba kandydatów w kolejności ważności zwracana przez Gemini (`MAX_CANDIDATES = 7`), z których po walidacji, deduplikacji i selekcji równowagi publikowane są maksymalnie `MAX_ARTICLES = 4` artykuły,
-     - `poolMaxItemsPerTicketedSource: 5`, `cycleCooldownDays: 7`, `weeklySummaryEnabled: true`, `weeklySummaryHorizonDays: 14`.
+     - `poolMaxItemsPerTicketedSource: 5`, `maxPromptItems: 60` (`20–120`), `cycleCooldownDays: 7`, `weeklySummaryEnabled: true`, `weeklySummaryHorizonDays: 14`.
 2. **Przepływ w `main()` i selekcja (`computeBalanceBudget` → `selectBalancedArticles`)**:
    - Kolejność przetwarzania: `analyzeWithGemini` (do `maxCandidates` kandydatów, nadmiar przycinany z ostrzeżeniem) → filtr usuniętych (`matchesDeletedArticle`) → `validateArticle` (błąd pojedynczego kandydata odrzuca tylko tego kandydata z ostrzeżeniem, nie przerywając uruchomienia) → `resolveCandidateArticles` (deduplikacja przed wyborem kwotowym) → `selectBalancedArticles` → `writeArticle`.
    - `selectBalancedArticles` egzekwuje limity budżetu, obsługuje bonus `urgent`, realizuje gwarantowane minimum dzienne (przez zamianę ostatniego zaakceptowanego artykułu `other` na najlepszego kandydata `ticketed` – z pierwszeństwem dla `urgent` – lub dodanie, gdy zaakceptowano `< 4` pozycje) i nie dopycha zestawienia ponad limit, gdy pozostali wyłącznie kandydaci `ticketed`.
@@ -262,7 +264,7 @@ W katalogu `src/content/news/` znajdują się artykuły opisujące wydarzenia i 
 
 - Strona jest generowana statycznie; filtry działają wyłącznie na wbudowanym zbiorze danych i nie pobierają świeżych danych podczas wizyty.
 - Status `draft` nie chroni treści w statycznym wdrożeniu: dane są w JS strony, a trasa wpisu może być bezpośrednio dostępna. Nie zapisuj poufnych szkiców w repozytorium publicznym.
-- **Dualizm architektoniczny (SSG vs Vercel SSR)**: Serwis obsługuje dwa tryby budowy kontrolowane zmienną `isVercel` (`process.env.VERCEL === '1'` lub `DEPLOY_TARGET === 'vercel'`). Na Vercelu aktywny jest adapter `@astrojs/vercel` oraz dynamicznie wstrzykiwana trasa `/api/keystatic/*` (`src/server/keystatic-api.ts`), co pozwala na działanie chmurowego panelu Keystatic z autoryzacją GitHub OAuth. W czystym buildzie statycznym (lokalnym, w GitHub Actions CI dla walidacji digestu oraz wdrożeniu GitHub Pages) adapter jest pomijany (`undefined`), a żadne trasy SSR nie znajdują się w katalogu `src/pages/`, co chroni proces przed błędem `[NoAdapterInstalled]`.
+- **Dualizm architektoniczny (SSG vs Vercel SSR) i Autoryzacja Admina (`ADMIN_SECRET`)**: Serwis obsługuje dwa tryby budowy kontrolowane zmienną `isVercel` (`process.env.VERCEL === '1'` lub `DEPLOY_TARGET === 'vercel'`). Na Vercelu oraz w trybie dev aktywny jest adapter `@astrojs/vercel` (na produkcji Vercel) oraz dynamicznie wstrzykiwane trasy `/api/keystatic/*`, `/api/admin/[action]`, `/admin`, `/admin/login`, `/admin/sources`, `/admin/archive` (szablony w `src/admin-pages/` poza `src/pages/`). Moduł `src/server/admin-auth.ts` weryfikuje hasło przez `timingSafeEqual`, podpisuje ciasteczka `HttpOnly` (`kato_admin_session`) algorytmem HMAC-SHA256, obsługuje nagłówki `Authorization: Bearer <ADMIN_SECRET>` / `x-admin-secret` i ogranicza próby logowania (rate-limit 8 prób / 15 min). Zabezpieczone endpointy (`sources-api.ts`, `archive-settings-api.ts`, `archive-run-api.ts` oraz mutacje `POST` w `archive-api.ts`) wymagają aktywnej sesji administratora (lub OAuth Keystatic z ciasteczka w przypadku `archive-api.ts`). Na Vercelu w środowisku produkcyjnym wymagane są zmienne `ADMIN_SECRET` oraz `GITHUB_TOKEN` (PAT z uprawnieniem zapisu repozytorium do commitów z panelu). W czystym buildzie statycznym GitHub Actions (`npm run build` bez adaptera) trasy `/admin/*` nie są rejestrowane ani budowane do `dist/`, co chroni przed błędem `[NoAdapterInstalled]` i nie publikuje paneli administracyjnych na GitHub Pages. Szablon zmiennych środowiskowych znajduje się w `.env.example`.
 - Harmonogram w UTC (`23:00`, `05:00`, `11:00`, `17:00`) odpowiada godzinom 01:00, 07:00, 13:00 i 19:00 w Polsce w czasie letnim CEST (oraz 00:00, 06:00, 12:00, 18:00 zimą CET).
 - Lista miast/kategorii występuje w kilku plikach; jej rozbudowa wymaga synchronizacji walidacji, CMS, skryptu i UI.
 - `npm run digest` zapisuje zmiany w working tree; lokalnie nie publikuje ich samodzielnie. Commit/push wykonuje wyłącznie workflow GitHub Actions.
@@ -293,7 +295,11 @@ W katalogu `src/content/news/` znajdują się artykuły opisujące wydarzenia i 
 - `scripts/archive-worker.mjs` — nocny worker automatycznej archiwizacji (02:00 Europe/Warsaw).
 - `.github/workflows/archive-worker.yml` — harmonogram GitHub Actions dla workera.
 - `src/pages/archiwum.astro` — podstrona publiczna sekcji „Archiwum”.
-- `src/pages/admin/archive.astro` — dedykowany panel administracyjny sekcji „Archive”.
+- `src/admin-pages/` (`index.astro`, `login.astro`, `sources.astro`, `archive.astro`) — chronione serwerowo (SSR `prerender = false`) podstrony panelu administracyjnego, wstrzykiwane w `astro.config.mjs`.
+- `src/server/admin-auth.ts` & `src/server/admin-auth-api.ts` — uwierzytelnianie administratora (`ADMIN_SECRET`, ciasteczko HMAC-SHA256 `kato_admin_session`, `timingSafeEqual`, rate-limiting, `/api/admin/login|logout|session`).
+- `src/components/admin/AdminLoginForm.tsx` — formularz logowania administratora.
+- `.env.example` — szablon zmiennych środowiskowych (`ADMIN_SECRET`, `GITHUB_TOKEN`, `GEMINI_API_KEY`, Keystatic).
+- `scripts/test-admin-auth.mjs` — testy jednostkowe autoryzacji `ADMIN_SECRET`, tokenów HMAC, rate-limitera oraz ochrony `archive-api.ts`.
 - `src/components/ArchiveButton.tsx` — przycisk z ikoną „A” do manualnej archiwizacji na kafelkach wpisów.
 - `src/components/admin/ArchiveAdminDashboard.tsx` — interaktywny dashboard administracyjny.
 - `src/server/archive-api.ts` & `src/server/archive-service.ts` — endpoint i serwis aktualizacji flagi w Markdown.
@@ -360,7 +366,7 @@ Schemat artykułów w `src/content.config.ts` oraz `keystatic.config.ts` został
    - Zdefiniowany singleton `archive` z etykietą **`Archive`**.
    - Pole `archiveAfterDays` typu integer z etykietą *„Okres archiwizacji (w dniach)”*, wartością domyślną 10 oraz walidacją `{ min: 1, max: 365 }`.
    - Kolumna `archived` w tabeli listy kolekcji artykułów (`columns: [..., 'archived', ...]`), informująca jednoznacznie o statusie wpisu.
-2. **Dedykowany panel administracyjny `/admin/archive` (`src/pages/admin/archive.astro`)**:
+2. **Dedykowany panel administracyjny `/admin/archive` (`src/admin-pages/archive.astro`, chroniony przez `ADMIN_SECRET`)**:
    - Komponent `ArchiveAdminDashboard.tsx` z nowoczesnym interfejsem graficznym.
    - **Formularz konfiguracji retencji**: Pole numeryczne z natychmiastową walidacją (blokada zera, liczb ujemnych, ułamków, tekstu, wartości > 365 dni i pustych pól). Zapis do `src/content/settings/archive.json` via POST `/api/archive-settings`.
    - **Przycisk „Uruchom teraz (Przelicz archiwum)”**: Wyzwala worker archiwizacji na żądanie via POST `/api/archive-run` i natychmiast renderuje kartę raportu (liczba przeskanowanych, nowo zarchiwizowanych wpisów, wpisów chronionych przez override oraz czas operacji).

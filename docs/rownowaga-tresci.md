@@ -34,21 +34,24 @@ Kopia w repozytorium (tworzona w Prompcie 1): `docs/rownowaga-tresci.md`
 
 ## 2. Parametry (konfigurowalne w `config/sources.md`)
 
-Nowa sekcja w `config/sources.md`, analogiczna do „Ustawienia wyświetlania i paginacji” (ten sam styl `- \`klucz\`: wartość`). Parser i domyślne wartości w `scripts/sources-parser.mjs` (wzorzec: `DEFAULT_PAGINATION_SETTINGS` / `parsePaginationSettings`).
+Nowa sekcja w `config/sources.md`, analogiczna do „Ustawienia wyświetlania i paginacji” (ten sam styl `- \`klucz\`: wartość`). Parser i domyślne wartości w `scripts/sources-parser.mjs` oraz serwis edycji z Panelu Źródeł (`/admin/sources`) w `src/server/sources-service.ts` i `src/components/admin/SourcesAdminDashboard.tsx`.
 
 ```markdown
 ## Ustawienia równowagi treści (Agent AI)
 
+- `maxArticlesPerRun`: 4
+- `maxCandidates`: 7
+- `ticketedMaxShare3d`: 0.40
+- `rssPoolShare`: 0.50
 - `ticketedMaxPerRun`: 2
 - `ticketedMaxPerDay`: 3
 - `ticketedMinPerDay`: 1
-- `ticketedMaxShare3d`: 0.40
 - `nosprMaxPerRun`: 1
 - `nosprMaxPerDay`: 2
 - `otherVenueMaxPerDay`: 1
 - `lastTicketsBonusPerDay`: 1
-- `maxCandidates`: 7
 - `poolMaxItemsPerTicketedSource`: 5
+- `maxPromptItems`: 60
 - `cycleCooldownDays`: 7
 - `weeklySummaryEnabled`: true
 - `weeklySummaryHorizonDays`: 14
@@ -56,19 +59,22 @@ Nowa sekcja w `config/sources.md`, analogiczna do „Ustawienia wyświetlania i 
 
 | Klucz | Znaczenie |
 |---|---|
+| `maxArticlesPerRun` | maks. artykułów publikowanych w jednym uruchomieniu workera (`1–12`, zastępuje stałą `MAX_ARTICLES`) |
+| `maxCandidates` | ile kandydatów w kolejności ważności zwraca Gemini (`1–25`, `≥ maxArticlesPerRun`) |
+| `ticketedMaxShare3d` | jeśli udział grupy w ostatnich 3 dniach (dziś + 2 poprzednie) > progu (`0.00–1.00`) i dziś już jest ≥1 wpis, budżet uruchomienia = 0 (poza bonusem pilnym) |
+| `rssPoolShare` | docelowy udział źródeł informacyjnych `RSS` względem `WEB` w puli promptu (`0.10–0.90`, domyślnie `0.50`) |
 | `ticketedMaxPerRun` | maks. artykułów z grupy biletowanej w jednym uruchomieniu |
 | `ticketedMaxPerDay` | maks. artykułów z grupy w danym dniu (łącznie ze wszystkich uruchomień) |
 | `ticketedMinPerDay` | minimum dzienne; gdy dziś jeszcze 0, uruchomienie **musi** wybrać ≥1, jeśli jest kandydat |
-| `ticketedMaxShare3d` | jeśli udział grupy w ostatnich 3 dniach (dziś + 2 poprzednie) > progu i dziś już jest ≥1 wpis, budżet uruchomienia = 0 (poza bonusem pilnym) |
 | `nosprMaxPerRun` / `nosprMaxPerDay` | limity dla samego NOSPR |
 | `otherVenueMaxPerDay` | limit dzienny dla **każdego** z: `teatr-slaski`, `teatr-rozrywki`, `spodek` |
 | `lastTicketsBonusPerDay` | ile dodatkowych wpisów `urgent` dziennie może przekroczyć `ticketedMaxPerDay` / próg udziału (ochrona D2/D4) |
-| `maxCandidates` | ile kandydatów w kolejności ważności zwraca Gemini (zamiast maks. 4) |
-| `poolMaxItemsPerTicketedSource` | maks. pozycji z jednego źródła biletowanego w puli promptu |
-| `cycleCooldownDays` | maks. 1 artykuł z tego samego cyklu (np. „JazzKLUB”) w tym oknie |
-| `weeklySummaryEnabled` / `weeklySummaryHorizonDays` | wpis zbiorczy (§6) |
+| `poolMaxItemsPerTicketedSource` | maks. pozycji z jednego źródła biletowanego w puli promptu (`1–15`) |
+| `maxPromptItems` | łączna liczba materiałów źródłowych wysyłanych w jednym zapytaniu do Gemini (`20–120`, domyślnie `60`) |
+| `cycleCooldownDays` | maks. 1 artykuł z tego samego cyklu (np. „JazzKLUB”) w tym oknie (`0–30`) |
+| `weeklySummaryEnabled` / `weeklySummaryHorizonDays` | wpis zbiorczy (§6, horyzont `3–30` dni) |
 
-Walidacja: liczby całkowite ≥ 0 (share: 0–1). Wartości błędne lub brakujące zastępowane są domyślnymi z ostrzeżeniem w logu. Zapis z panelu admina (`src/server/sources-service.ts`) **musi zachować** tę sekcję bez zmian.
+Walidacja: liczby całkowite w zadanych przedziałach (`ticketedMaxShare3d`: `0.00–1.00`, `rssPoolShare`: `0.10–0.90`) oraz walidacja krzyżowa (`maxCandidates >= maxArticlesPerRun`, `ticketedMinPerDay <= ticketedMaxPerDay`, `nosprMaxPerRun <= ticketedMaxPerRun`, `nosprMaxPerDay <= ticketedMaxPerDay`). Wartości błędne lub brakujące zastępowane są domyślnymi z ostrzeżeniem w logu. Zapis z panelu admina (`src/server/sources-service.ts` przez `serializeBalanceSettingsInMarkdown`) aktualizuje wyłącznie sekcję równowagi, zachowując preambułę, paginację i tabelę źródeł bez zmian.
 
 ---
 

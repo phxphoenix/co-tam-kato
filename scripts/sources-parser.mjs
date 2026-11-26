@@ -8,19 +8,43 @@ export const DEFAULT_PAGINATION_SETTINGS = {
 };
 
 export const DEFAULT_BALANCE_SETTINGS = {
+  maxArticlesPerRun: 4,
+  maxCandidates: 7,
+  ticketedMaxShare3d: 0.40,
+  rssPoolShare: 0.50,
   ticketedMaxPerRun: 2,
   ticketedMaxPerDay: 3,
   ticketedMinPerDay: 1,
-  ticketedMaxShare3d: 0.40,
   nosprMaxPerRun: 1,
   nosprMaxPerDay: 2,
   otherVenueMaxPerDay: 1,
   lastTicketsBonusPerDay: 1,
-  maxCandidates: 7,
   poolMaxItemsPerTicketedSource: 5,
+  maxPromptItems: 60,
   cycleCooldownDays: 7,
   weeklySummaryEnabled: true,
   weeklySummaryHorizonDays: 14,
+};
+
+const BALANCE_INTEGER_RANGES = {
+  maxArticlesPerRun: [1, 12],
+  maxCandidates: [1, 25],
+  ticketedMaxPerRun: [0, 12],
+  ticketedMaxPerDay: [0, 20],
+  ticketedMinPerDay: [0, 10],
+  nosprMaxPerRun: [0, 5],
+  nosprMaxPerDay: [0, 10],
+  otherVenueMaxPerDay: [0, 10],
+  lastTicketsBonusPerDay: [0, 5],
+  poolMaxItemsPerTicketedSource: [1, 15],
+  maxPromptItems: [20, 120],
+  cycleCooldownDays: [0, 30],
+  weeklySummaryHorizonDays: [3, 30],
+};
+
+const BALANCE_FLOAT_RANGES = {
+  ticketedMaxShare3d: [0, 1],
+  rssPoolShare: [0.10, 0.90],
 };
 
 /**
@@ -57,35 +81,54 @@ export function validateBalanceSettings(raw = {}) {
       continue;
     }
 
-    if (key === 'ticketedMaxShare3d') {
+    if (key in BALANCE_FLOAT_RANGES) {
+      const [min, max] = BALANCE_FLOAT_RANGES[key];
       let num = NaN;
       if (typeof val === 'number') {
         num = val;
       } else if (typeof val === 'string' && /^-?\d+(?:\.\d+)?$/.test(val.trim())) {
         num = Number(val.trim());
       }
-      if (Number.isFinite(num) && num >= 0 && num <= 1) {
-        result[key] = num;
+      if (Number.isFinite(num) && num >= min && num <= max) {
+        result[key] = Math.round(num * 100) / 100;
       } else {
-        console.warn(`[BalanceSettings] Nieprawidłowa wartość udziału (0–1) dla "${key}": ${JSON.stringify(val)} – użyto wartości domyślnej (${defaultVal}).`);
+        console.warn(`[BalanceSettings] Nieprawidłowa wartość udziału (${min}–${max}) dla "${key}": ${JSON.stringify(val)} – użyto wartości domyślnej (${defaultVal}).`);
         result[key] = defaultVal;
       }
       continue;
     }
 
-    // Integer >= 0
+    const [minInt, maxInt] = BALANCE_INTEGER_RANGES[key] || [0, Number.MAX_SAFE_INTEGER];
     let intVal = NaN;
     if (typeof val === 'number') {
       intVal = val;
     } else if (typeof val === 'string' && /^-?\d+$/.test(val.trim())) {
       intVal = Number(val.trim());
     }
-    if (Number.isInteger(intVal) && intVal >= 0) {
+    if (Number.isInteger(intVal) && intVal >= minInt && intVal <= maxInt) {
       result[key] = intVal;
     } else {
-      console.warn(`[BalanceSettings] Nieprawidłowa wartość całkowita (>= 0) dla "${key}": ${JSON.stringify(val)} – użyto wartości domyślnej (${defaultVal}).`);
+      console.warn(`[BalanceSettings] Nieprawidłowa wartość całkowita (${minInt}–${maxInt}) dla "${key}": ${JSON.stringify(val)} – użyto wartości domyślnej (${defaultVal}).`);
       result[key] = defaultVal;
     }
+  }
+
+  // Walidacja krzyżowa zależności między parametrami
+  if (result.maxCandidates < result.maxArticlesPerRun) {
+    console.warn(`[BalanceSettings] maxCandidates (${result.maxCandidates}) < maxArticlesPerRun (${result.maxArticlesPerRun}) – podniesiono do ${result.maxArticlesPerRun}.`);
+    result.maxCandidates = result.maxArticlesPerRun;
+  }
+  if (result.ticketedMinPerDay > result.ticketedMaxPerDay) {
+    console.warn(`[BalanceSettings] ticketedMinPerDay (${result.ticketedMinPerDay}) > ticketedMaxPerDay (${result.ticketedMaxPerDay}) – ograniczono do ${result.ticketedMaxPerDay}.`);
+    result.ticketedMinPerDay = result.ticketedMaxPerDay;
+  }
+  if (result.nosprMaxPerRun > result.ticketedMaxPerRun) {
+    console.warn(`[BalanceSettings] nosprMaxPerRun (${result.nosprMaxPerRun}) > ticketedMaxPerRun (${result.ticketedMaxPerRun}) – ograniczono do ${result.ticketedMaxPerRun}.`);
+    result.nosprMaxPerRun = result.ticketedMaxPerRun;
+  }
+  if (result.nosprMaxPerDay > result.ticketedMaxPerDay) {
+    console.warn(`[BalanceSettings] nosprMaxPerDay (${result.nosprMaxPerDay}) > ticketedMaxPerDay (${result.ticketedMaxPerDay}) – ograniczono do ${result.ticketedMaxPerDay}.`);
+    result.nosprMaxPerDay = result.ticketedMaxPerDay;
   }
 
   return result;
@@ -216,6 +259,61 @@ export function serializePaginationSettingsInMarkdown(originalContent, settings)
       updated.slice(balanceHeadingIdx)
     );
   }
+
+  const tableHeadingIdx = updated.indexOf('## Tabela Źródeł');
+  if (tableHeadingIdx !== -1) {
+    return (
+      updated.slice(0, tableHeadingIdx) +
+      sectionBlock +
+      updated.slice(tableHeadingIdx)
+    );
+  }
+
+  return sectionBlock + updated;
+}
+
+/**
+ * Updates or inserts AI worker & balance settings inside markdown content while preserving the rest of the file.
+ *
+ * @param {string} originalContent
+ * @param {Partial<typeof DEFAULT_BALANCE_SETTINGS>} settings
+ * @returns {string}
+ */
+export function serializeBalanceSettingsInMarkdown(originalContent, settings) {
+  const lineEnding = originalContent && originalContent.includes('\r\n') ? '\r\n' : '\n';
+  const normalized = validateBalanceSettings({
+    ...DEFAULT_BALANCE_SETTINGS,
+    ...(settings || {}),
+  });
+
+  const formattedLines = Object.entries(DEFAULT_BALANCE_SETTINGS).map(([key]) => {
+    const val = normalized[key];
+    if (key === 'ticketedMaxShare3d' || key === 'rssPoolShare') {
+      return `- \`${key}\`: ${Number(val).toFixed(2)}`;
+    }
+    return `- \`${key}\`: ${val}`;
+  });
+
+  const updated = originalContent || '';
+  const sectionRegex =
+    /(^|\r?\n)(##\s+Ustawienia równowagi treści[^\r\n]*\r?\n)([\s\S]*?)(\r?\n---\r?\n|\r?\n##\s+|$)/;
+
+  if (sectionRegex.test(updated)) {
+    return updated.replace(
+      sectionRegex,
+      (_, prefix, headingLine, _body, suffix) =>
+        `${prefix}${headingLine}${lineEnding}${formattedLines.join(lineEnding)}${lineEnding}${suffix}`
+    );
+  }
+
+  const sectionBlock = [
+    '## Ustawienia równowagi treści (Agent AI)',
+    '',
+    ...formattedLines,
+    '',
+    '---',
+    '',
+  ].join(lineEnding);
 
   const tableHeadingIdx = updated.indexOf('## Tabela Źródeł');
   if (tableHeadingIdx !== -1) {

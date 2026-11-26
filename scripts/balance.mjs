@@ -778,7 +778,7 @@ export function buildWeeklyVenueSummary(
   const footerNote =
     '*Lista została wygenerowana automatycznie na podstawie aktualnych repertuarów instytucji. Przed zakupem zachęcamy do sprawdzenia bieżącej dostępności biletów bezpośrednio na stronie organizatora.*';
 
-  const content = [...sectionBlocks, footerNote].join('\n\n');
+  const content = `${sectionBlocks.join('\n\n---\n\n')}\n\n---\n\n${footerNote}`;
 
   return {
     title,
@@ -1053,7 +1053,7 @@ export function selectBalancedArticles(
   const {
     sourceItems = [],
     now = new Date(),
-    maxArticles = MAX_ARTICLES,
+    maxArticles = s.maxArticlesPerRun ?? MAX_ARTICLES,
   } = options;
 
   const effectiveBudget = budget || computeBalanceBudget([], s, now);

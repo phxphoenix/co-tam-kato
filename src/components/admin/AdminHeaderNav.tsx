@@ -1,5 +1,5 @@
-import React from 'react';
-import { Database, Archive, Settings, ExternalLink } from 'lucide-react';
+import React, { useState } from 'react';
+import { Database, Archive, Settings, ExternalLink, LogOut } from 'lucide-react';
 
 interface AdminHeaderNavProps {
   currentTab: 'sources' | 'archive';
@@ -8,6 +8,21 @@ interface AdminHeaderNavProps {
 
 export default function AdminHeaderNav({ currentTab, baseUrl = '/' }: AdminHeaderNavProps) {
   const cleanBase = baseUrl.replace(/\/$/, '');
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await fetch(`${cleanBase}/api/admin/logout`, {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+    } catch {
+      // ignore
+    } finally {
+      window.location.assign(`${cleanBase}/admin/login`);
+    }
+  };
 
   const tabs = [
     {
@@ -68,6 +83,16 @@ export default function AdminHeaderNav({ currentTab, baseUrl = '/' }: AdminHeade
           <span>Podgląd portalu</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </a>
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-rose-300 bg-rose-500/10 border border-rose-500/25 hover:bg-rose-500/20 transition disabled:opacity-50 cursor-pointer"
+          title="Wyloguj z panelu administratora"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>{isLoggingOut ? 'Wylogowywanie...' : 'Wyloguj'}</span>
+        </button>
       </div>
     </div>
   );

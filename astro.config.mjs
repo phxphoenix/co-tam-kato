@@ -73,6 +73,31 @@ function keystaticCustomIntegration() {
           pattern: '/api/sources',
           prerender: false,
         });
+        injectRoute({
+          entrypoint: fileURLToPath(new URL('./src/server/admin-auth-api.ts', import.meta.url)),
+          pattern: '/api/admin/[action]',
+          prerender: false,
+        });
+        injectRoute({
+          entrypoint: fileURLToPath(new URL('./src/admin-pages/index.astro', import.meta.url)),
+          pattern: '/admin',
+          prerender: false,
+        });
+        injectRoute({
+          entrypoint: fileURLToPath(new URL('./src/admin-pages/login.astro', import.meta.url)),
+          pattern: '/admin/login',
+          prerender: false,
+        });
+        injectRoute({
+          entrypoint: fileURLToPath(new URL('./src/admin-pages/sources.astro', import.meta.url)),
+          pattern: '/admin/sources',
+          prerender: false,
+        });
+        injectRoute({
+          entrypoint: fileURLToPath(new URL('./src/admin-pages/archive.astro', import.meta.url)),
+          pattern: '/admin/archive',
+          prerender: false,
+        });
       },
     },
   };

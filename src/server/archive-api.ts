@@ -7,6 +7,7 @@ import {
   type ArchiveItemState,
 } from './archive-service.ts';
 import { resolveGitHubAuth } from './github-auth.ts';
+import { isAdminAuthenticated } from './admin-auth.ts';
 
 export const prerender = false;
 
@@ -195,6 +196,24 @@ export const GET: APIRoute = async ({ request }) => {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const adminAuthed = await isAdminAuthenticated(request);
+    if (!adminAuthed) {
+      const ghAuth = await resolveGitHubAuth(request);
+      const hasUserOAuthToken = Boolean(ghAuth.token && ghAuth.source !== 'env');
+      if (!hasUserOAuthToken) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Wymagane uwierzytelnienie administratora.',
+          }),
+          {
+            status: 401,
+            headers: buildResponseHeaders(ghAuth.setCookieHeaders, true),
+          }
+        );
+      }
+    }
+
     const contentType = request.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
       return new Response(JSON.stringify({ error: 'Content-Type must be application/json' }), {

@@ -9,7 +9,7 @@ const ROOT_DIR = process.cwd();
 const SETTINGS_FILE = path.join(ROOT_DIR, 'src', 'content', 'settings', 'archive.json');
 const KEYSTATIC_CONFIG = path.join(ROOT_DIR, 'keystatic.config.ts');
 const ASTRO_CONFIG = path.join(ROOT_DIR, 'astro.config.mjs');
-const ADMIN_PAGE = path.join(ROOT_DIR, 'src', 'pages', 'admin', 'archive.astro');
+const ADMIN_PAGE = path.join(ROOT_DIR, 'src', 'admin-pages', 'archive.astro');
 const DASHBOARD_COMPONENT = path.join(ROOT_DIR, 'src', 'components', 'admin', 'ArchiveAdminDashboard.tsx');
 
 let passedTests = 0;
@@ -57,7 +57,7 @@ test('AC 1.1: keystatic.config.ts definiuje singleton sekcji o etykiecie "Archiv
 });
 
 test('AC 1.2: Dedykowana podstrona panelu /admin/archive istnieje i montuje dashboard', () => {
-  assert.ok(fs.existsSync(ADMIN_PAGE), 'Plik src/pages/admin/archive.astro musi istnieć');
+  assert.ok(fs.existsSync(ADMIN_PAGE), 'Plik src/admin-pages/archive.astro musi istnieć');
   const pageContent = fs.readFileSync(ADMIN_PAGE, 'utf8');
   assert.ok(pageContent.includes('ArchiveAdminDashboard'), 'Strona musi renderować ArchiveAdminDashboard');
   assert.ok(fs.existsSync(DASHBOARD_COMPONENT), 'Komponent ArchiveAdminDashboard.tsx musi istnieć');
@@ -177,10 +177,11 @@ test('AC 5.1: Zmiana okresu zapisuje się w pliku i worker odczytuje zaktualizow
 });
 
 // 6. Przycisk "Uruchom teraz" i endpoint API
-test('AC 6.1: astro.config.mjs wstrzykuje endpointy /api/archive-settings i /api/archive-run', () => {
+test('AC 6.1: astro.config.mjs wstrzykuje endpointy /api/archive-settings, /api/archive-run oraz trasę /admin/archive', () => {
   const content = fs.readFileSync(ASTRO_CONFIG, 'utf8');
   assert.ok(content.includes('/api/archive-settings'), 'astro.config.mjs musi wstrzykiwać /api/archive-settings');
   assert.ok(content.includes('/api/archive-run'), 'astro.config.mjs musi wstrzykiwać /api/archive-run');
+  assert.ok(content.includes('/admin/archive'), 'astro.config.mjs musi wstrzykiwać /admin/archive');
 });
 
 await testAsync('AC 6.2: Worker archiwizacji wykonuje się na żądanie po wyzwoleniu force=true', async () => {

@@ -22,16 +22,19 @@
 
 ## Ustawienia równowagi treści (Agent AI)
 
+- `maxArticlesPerRun`: 4
+- `maxCandidates`: 7
+- `ticketedMaxShare3d`: 0.40
+- `rssPoolShare`: 0.50
 - `ticketedMaxPerRun`: 2
 - `ticketedMaxPerDay`: 3
 - `ticketedMinPerDay`: 1
-- `ticketedMaxShare3d`: 0.40
 - `nosprMaxPerRun`: 1
 - `nosprMaxPerDay`: 2
 - `otherVenueMaxPerDay`: 1
 - `lastTicketsBonusPerDay`: 1
-- `maxCandidates`: 7
 - `poolMaxItemsPerTicketedSource`: 5
+- `maxPromptItems`: 60
 - `cycleCooldownDays`: 7
 - `weeklySummaryEnabled`: true
 - `weeklySummaryHorizonDays`: 14
