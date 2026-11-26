@@ -10,7 +10,7 @@ location: "Kino Kosmos w Katowicach"
 isAlert: false
 sourceUrl: "https://kosmos.katowice.pl/repertuar/kf-ambasada-diably/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowickie Kino Kosmos zaprasza na kolejne spotkanie w ramach uznanego cyklu Klub Filmowy Ambasada. W wtorek, 17 listopada 2026 roku o godzinie 18:30 w sali Nostromo wyemitowany zostanie słynny film Kena Russella „Diabły”.

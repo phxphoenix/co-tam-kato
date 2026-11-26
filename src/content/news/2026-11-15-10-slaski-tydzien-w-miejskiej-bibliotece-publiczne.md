@@ -10,7 +10,7 @@ location: "Miejska Biblioteka Publiczna w Gliwicach"
 isAlert: false
 sourceUrl: "http://gliwice.eu/aktualnosci/podsumowanie-tygodnia/podsumowanie-tygodnia-9-14-listopada"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Jubileuszowa, 10. edycja Śląskiego Tygodnia rozpoczyna się w Miejskiej Bibliotece Publicznej w Gliwicach. W ramach cyklu na mieszkańców czeka bogaty program wydarzeń poświęconych historii, kulturze, językowi i tożsamości Górnego Śląska.

@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "od 4 lat"
 sourceUrl: "https://ateneumteatr.pl/event/czworka-z-papieru-i-sznurka-5-2-3-2-3-2-2-2-2-2-2/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Śląski Teatr Lalki i Aktora Ateneum prezentuje spektakl familijny „Czwórka z papieru i sznurka” według utworu Erharda Schmieda. Przedstawienie odbędzie się 25 i 26 listopada o godzinie 09:30 w Domu Kultury na osiedlu Witosa przy ul. Kwiatkowskiego 32 w Katowicach.

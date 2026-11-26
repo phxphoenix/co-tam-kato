@@ -10,7 +10,7 @@ location: "Teatr Śląski, Scena w Malarni"
 isAlert: false
 sourceUrl: "https://teatrslaski.art.pl/repertuar/milosz-pieczonka-trio-asleep-xxxv-festiwal-ars-cameralis/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Tegoroczna, 35. edycja Festiwalu Ars Cameralis przynosi wyjątkowe propozycje muzyczne. 27 listopada 2026 roku na Scenie w Malarni Teatru Śląskiego w Katowicach zaprezentuje się Miłosz Pieczonka Trio z projektem Asleep.

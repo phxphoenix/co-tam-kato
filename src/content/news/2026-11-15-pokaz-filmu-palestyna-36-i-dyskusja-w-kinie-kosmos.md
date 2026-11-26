@@ -10,7 +10,7 @@ location: "Kino Kosmos w Katowicach"
 isAlert: false
 sourceUrl: "https://kosmos.katowice.pl/repertuar/palestyna-36-dyskusja/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Katowickie Kino Kosmos zaprasza 16 listopada o godzinie 19:00 na seans z cyklu Wydarzeń Specjalnych. W Sali Nostromo wyświetlony zostanie film „Palestyna 36” w reżyserii Annemarie Jacir.

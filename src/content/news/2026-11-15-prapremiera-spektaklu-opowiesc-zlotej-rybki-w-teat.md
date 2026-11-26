@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "dla dzieci"
 sourceUrl: "https://ateneumteatr.pl/event/opowiesc-o-zlotej-rybce-prapremiera-2-2-2-2/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Śląski Teatr Lalki i Aktora Ateneum w Katowicach zapowiada prapremierę nowego spektaklu familijnego „Opowieść Złotej Rybki” w reżyserii i według autorskiego opracowania Jolanty Fainstein.

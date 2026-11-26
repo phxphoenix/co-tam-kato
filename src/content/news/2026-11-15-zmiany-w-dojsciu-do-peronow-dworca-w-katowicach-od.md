@@ -10,7 +10,7 @@ location: "Dworzec PKP Katowice"
 isAlert: true
 sourceUrl: "https://silesion.pl/tunel-pod-peronem-4-katowice-przebudowa/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Pasażerów korzystających z dworca kolejowego w Katowicach czekają istotne zmiany w organizacji ruchu pieszego. W piątek, 20 listopada, PKP Polskie Linie Kolejowe rozpoczną kolejny etap modernizacji infrastruktury, obejmujący przebudowę tunelu pod peronem 4.

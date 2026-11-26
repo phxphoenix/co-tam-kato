@@ -10,7 +10,7 @@ location: "Teatr Rozrywki w Chorzowie"
 isAlert: false
 sourceUrl: "https://teatr-rozrywki.pl/repertuar/948.html?view=event"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Teatr Rozrywki w Chorzowie zaprasza na wyjątkowy koncert widowiskowy zatytułowany „Męskie Brzmienia”. Na Dużej Scenie zaprezentowane zostaną znane utwory w wybitnych aranżacjach wokalno-instrumentalnych w wykonaniu artystów chorzowskiej estrady.
