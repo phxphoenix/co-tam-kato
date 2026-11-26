@@ -22,8 +22,8 @@
 
 ## Ustawienia równowagi treści (Agent AI)
 
-- `maxArticlesPerRun`: 4
-- `maxCandidates`: 7
+- `maxArticlesPerRun`: 5
+- `maxCandidates`: 8
 - `ticketedMaxShare3d`: 0.40
 - `rssPoolShare`: 0.50
 - `ticketedMaxPerRun`: 2
