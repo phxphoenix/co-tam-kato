@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/xix-europejski-kongres-gospodarczy,4170.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W kompleksie katowickiego Spodka oraz Międzynarodowego Centrum Kongresowego zaplanowano XIX edycję Europejskiego Kongresu Gospodarczego. Wydarzenie odbędzie się w dniach 19–21 kwietnia 2027 roku.

@@ -10,7 +10,7 @@ location: "Kino Kosmos Katowice"
 isAlert: false
 sourceUrl: "https://kosmos.katowice.pl/repertuar/skocz-do-kina-2026-festiwal-filmow-rowerowych/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Kino Kosmos przy ul. Sokolskiej 66 w Katowicach zaprasza na wydarzenie specjalne z cyklu rowerowego. Festiwal filmów rowerowych „SKOCZ DO KINA 2026” odbędzie się w piątek, 20 listopada 2026 roku o godzinie 19:00.

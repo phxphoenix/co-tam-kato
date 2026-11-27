@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "bez ograniczeń"
 sourceUrl: "https://mojbytom.pl/artykuly/artykul/kazdy-moze-byc-swietym-mikolajem-xiv-bytomski-bieg-swietych-mikolajow"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Już po raz czternasty miłośnicy biegania i Nordic Walking spotkają się na bytomskim Rynku, aby połączyć aktywność fizyczną z pomaganiem. Bieg odbędzie się 5 grudnia. 

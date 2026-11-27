@@ -10,7 +10,7 @@ location: "aleja Korfantego, Katowice"
 isAlert: false
 sourceUrl: "https://silesion.pl/remont-al-korfantego-katowice-przetarg-mzuim/?utm_source=rss&utm_medium=rss&utm_campaign=remont-al-korfantego-katowice-przetarg-mzuim"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Kierowcy poruszający się aleją Korfantego w stronę centrum Katowic jeszcze w tym roku zyskają nową nawierzchnię jezdni. Miejski Zarząd Ulic i Mostów ogłosił przetarg na wyłonienie wykonawcy prac modernizacyjnych.

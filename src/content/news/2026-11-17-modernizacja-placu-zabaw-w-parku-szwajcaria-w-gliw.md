@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "dla dzieci w każdym wieku"
 sourceUrl: "http://gliwice.eu/aktualnosci/gliwice-buduja/nowa-odslona-placu-zabaw-w-parku-szwajcaria-prace-juz-trwaja"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Rozpoczęła się kompleksowa modernizacja placu zabaw położonego w Parku Szwajcaria w Gliwicach. W ramach inwestycji dotychczasowe zużyte wyposażenie zastąpi siedem nowych urządzeń, w tym zestaw zabawowy z tyrolką, huśtawka modułowa oraz bujaki.

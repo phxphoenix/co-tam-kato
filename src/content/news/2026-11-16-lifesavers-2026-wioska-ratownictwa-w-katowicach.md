@@ -10,7 +10,7 @@ location: "Plac Sławika i Antalla, Katowice"
 isAlert: false
 sourceUrl: "https://mojekatowice.pl/artykuly/artykul/tu-bedzie-mozna-nauczyc-sie-ratowac-zycie-duze-wydarzenie-przed-mck-w-katowicach"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Pokazy służb, szkolenia z pierwszej pomocy i praktyczna nauka reagowania w sytuacjach kryzysowych – to wszystko czeka mieszkańców Katowic podczas wydarzenia LifeSavers 2026. 

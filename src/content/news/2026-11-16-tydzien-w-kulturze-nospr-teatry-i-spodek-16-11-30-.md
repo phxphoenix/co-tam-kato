@@ -10,7 +10,7 @@ location: "Katowice i Chorzów (NOSPR, Teatr Śląski, Teatr Rozrywki, Spodek)"
 isAlert: false
 sourceUrl: "https://nospr.org.pl/pl/kalendarz"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 ### NOSPR

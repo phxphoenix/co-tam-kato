@@ -10,7 +10,7 @@ location: "Muzeum Hutnictwa w Chorzowie"
 isAlert: false
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/black-metal-w-chorzowie-muzeum-hutnictwa-pokaze-jak-pracowali-dawni-kowale"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Jak wytwarzano metal setki lat temu? Odpowiedzi będzie można znaleźć w Muzeum Hutnictwa w Chorzowie, gdzie 26 listopada otwarta zostanie wystawa czasowa „Black Metal. Kowalstwo wczesnośredniowieczne”.

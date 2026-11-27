@@ -10,7 +10,7 @@ location: "Stadion Śląski w Chorzowie"
 isAlert: false
 sourceUrl: "https://superautostadionslaski.pl/wydarzenie/andrea-bocelli-romanza-world-tour"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Na Stadionie Śląskim w Chorzowie zapowiedziano widowisko muzyczne rangi światowej. 30 maja 2027 roku o godzinie 20:00 na scenie wystąpi Andrea Bocelli w ramach jubileuszowej trasy „Romanza World Tour”.
