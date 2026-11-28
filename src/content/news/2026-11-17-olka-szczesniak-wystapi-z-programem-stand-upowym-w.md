@@ -10,7 +10,7 @@ location: "Spodek Katowice"
 isAlert: false
 sourceUrl: "https://www.spodekkatowice.pl/pl/wydarzenia/olka-szczesniak-stand-up,4175.html"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W niedzielę, 22 listopada 2026 roku, w katowickim Spodku odbędzie się występ stand-upowy Olki Szczęśniak. Artystka zaprezentuje swój najnowszy solowy program przed śląską publicznością.

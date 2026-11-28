@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "4-12 lat"
 sourceUrl: "https://mojchorzow.pl/artykuly/artykul/swiateczne-warsztaty-dla-calych-rodzin-w-chorzowie-powstana-wyjatkowe-kalendarze-adwentowe"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W niedzielę, 29 listopada 2026 roku o godzinie 12:00, Muzeum „Górnośląski Park Etnograficzny w Chorzowie” organizuje wyjątkowe, rodzinne warsztaty świąteczne. Dzieci wraz z opiekunami będą mogły własnoręcznie przygotować unikalne kalendarze adwentowe.

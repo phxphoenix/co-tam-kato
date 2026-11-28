@@ -12,7 +12,7 @@ isForKids: true
 ageRange: "5-10 lat"
 sourceUrl: "https://kosmos.katowice.pl/repertuar/rodzina-w-kinie-block-5-warsztaty/"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 W ramach cyklu „Rodzina w kinie” katowickie Kino Kosmos przygotowało wyjątkowe wydarzenie dla najmłodszych miłośników sztuki filmowej. W niedzielę, 22 listopada 2026 roku o godzinie 15:00 na sali Solaris odbędzie się pokaz filmu „Block 5” w reżyserii Klemena Dvornika.

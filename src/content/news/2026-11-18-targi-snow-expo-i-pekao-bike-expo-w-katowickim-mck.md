@@ -10,7 +10,7 @@ location: "Międzynarodowe Centrum Kongresowe w Katowicach"
 isAlert: false
 sourceUrl: "https://www.wkatowicach.eu/informacje/w-katowicach/Dwa-wydarzenia-jeden-bilet-SNOW-EXPO-i-PEKAO-BIKE-EXPO-w-Katowicach/idn:13724"
 aiGenerated: true
-archived: false
+archived: true
 ---
 
 Miłośnicy aktywnego wypoczynku nie mogą przegapić nadchodzącego weekendu w Katowicach. W dniach 21–22 listopada Międzynarodowe Centrum Kongresowe połączy siły, organizując równocześnie targi SNOW EXPO oraz PEKAO BIKE EXPO Winter.
